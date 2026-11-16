@@ -45,11 +45,39 @@ npm run dev         # Vite dev server with hot reload
 
 Then open <http://127.0.0.1:8000> to see the welcome page.
 
-You can also start the server, queue worker, log tail (`pail`) and Vite together:
+You can also start the server, queue worker, log tail (`pail`), Vite and the
+Reverb websocket server together:
 
 ```bash
 composer dev
 ```
+
+## Realtime (Laravel Reverb)
+
+Broadcasting uses [Laravel Reverb](https://laravel.com/docs/reverb), a websocket
+server that runs on `localhost:8080` (`php artisan reverb:start`, included in `composer dev`).
+The browser connects with Laravel Echo + `pusher-js` (`resources/js/echo.js`).
+
+- `.env.example` sets `BROADCAST_CONNECTION=reverb` and local `REVERB_*` credentials.
+  `VITE_REVERB_*` passes them to the frontend. Restart `npm run dev` after you change them.
+  In production, set your own random `REVERB_APP_KEY` / `REVERB_APP_SECRET`.
+- Private channel rules live in `routes/channels.php`.
+
+### Smoke test
+
+1. Run `composer dev` and open <http://127.0.0.1:8000> with the browser console open.
+2. In another terminal, run:
+
+   ```bash
+   php artisan tinker
+   > event(new App\Events\TestBroadcast('Hello from tinker'));
+   ```
+
+3. The console logs `[Reverb] test.message received: {message: 'Hello from tinker', ...}`.
+
+`TestBroadcast` broadcasts right away (`ShouldBroadcastNow`) on the public `test` channel,
+so it doesn't need the queue worker. The console listener is only active in the Vite
+dev server, not in `npm run build` output.
 
 ## Database
 
