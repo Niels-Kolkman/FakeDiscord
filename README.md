@@ -90,6 +90,10 @@ php artisan migrate:fresh
 
 To use MySQL or another database instead, set the `DB_*` variables in `.env`.
 
+`DB_FOREIGN_KEYS=true` (on by default) makes SQLite enforce foreign keys and
+`ON DELETE` rules. [docs/database-schema.md](docs/database-schema.md) has the
+schema, the ERD, the indexes and the delete rules.
+
 ## Frontend
 
 - Entry points: `resources/css/app.css` and `resources/js/app.js`, set in `vite.config.js`.
