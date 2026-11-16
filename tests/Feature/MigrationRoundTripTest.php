@@ -64,6 +64,36 @@ class MigrationRoundTripTest extends TestCase
         $this->assertDomainTables(exist: true);
     }
 
+    public function test_each_migration_rolls_back_on_its_own_in_reverse_order(): void
+    {
+        $this->artisan('migrate', ['--force' => true, '--step' => true])->assertSuccessful();
+        $total = DB::table('migrations')->count();
+        $this->assertSame(count(glob(database_path('migrations/*.php'))), $total);
+
+        for ($remaining = $total; $remaining > 0; $remaining--) {
+            $latest = DB::table('migrations')->orderByDesc('id')->value('migration');
+
+            $this->artisan('migrate:rollback', ['--force' => true, '--step' => 1])->assertSuccessful();
+
+            $this->assertSame($remaining - 1, DB::table('migrations')->count(), "Rolling back [{$latest}] did not remove it.");
+            $this->assertSame(1, (int) DB::selectOne('PRAGMA foreign_keys')->foreign_keys);
+        }
+
+        $this->assertDomainTables(exist: false);
+    }
+
+    public function test_migrate_fresh_wipes_existing_rows(): void
+    {
+        $this->artisan('migrate:fresh', ['--force' => true])->assertSuccessful();
+        $user = DB::table('users')->insertGetId(['name' => 'A', 'username' => 'a', 'email' => 'a@example.test', 'password' => 'x']);
+        DB::table('servers')->insert(['owner_id' => $user, 'name' => 'S']);
+
+        $this->artisan('migrate:fresh', ['--force' => true])->assertSuccessful();
+
+        $this->assertSame(0, DB::table('users')->count());
+        $this->assertSame(0, DB::table('servers')->count());
+    }
+
     private function assertDomainTables(bool $exist): void
     {
         foreach (self::DOMAIN_TABLES as $table) {
