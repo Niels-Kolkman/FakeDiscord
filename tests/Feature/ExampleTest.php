@@ -16,4 +16,14 @@ class ExampleTest extends TestCase
 
         $response->assertStatus(200);
     }
+
+    public function test_the_root_route_renders_the_welcome_page(): void
+    {
+        $this->withoutVite();
+
+        $this->get('/')
+            ->assertOk()
+            ->assertViewIs('welcome')
+            ->assertSee('<title>'.config('app.name').'</title>', false);
+    }
 }
