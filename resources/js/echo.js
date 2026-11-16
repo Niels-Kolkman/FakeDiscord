@@ -12,3 +12,10 @@ window.Echo = new Echo({
     forceTLS: (import.meta.env.VITE_REVERB_SCHEME ?? 'https') === 'https',
     enabledTransports: ['ws', 'wss'],
 });
+
+// Dev-only smoke test: App\Events\TestBroadcast shows up in the browser console.
+if (import.meta.env.DEV) {
+    window.Echo.channel('test').listen('.test.message', (event) => {
+        console.log('[Reverb] test.message received:', event);
+    });
+}
