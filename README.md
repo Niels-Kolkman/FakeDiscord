@@ -88,6 +88,24 @@ uses `database/database.sqlite`. Git ignores that file. To reset it, run:
 php artisan migrate:fresh
 ```
 
+### Demo data
+
+To fill the database with demo data for manual testing, run:
+
+```bash
+php artisan migrate:fresh --seed
+```
+
+`DemoSeeder` creates 10 users, two servers ("Laravel Lounge" and "Pixel Pals") with
+roles, channels and invites, about 300 channel messages with replies, edits,
+reactions and attachments, a direct message, a group DM, friendships and a ban.
+Log in as `test@example.com`. Every demo user has the password `password`. The
+invite codes are `lounge` and `pixelpals`; `expired` is an expired invite.
+
+Every model in `app/Models` has a factory in `database/factories`. The factories
+create only their own row plus the parents it needs. For example,
+`Server::factory()` does not add the owner as a member.
+
 To use MySQL or another database instead, set the `DB_*` variables in `.env`.
 
 `DB_FOREIGN_KEYS=true` (on by default) makes SQLite enforce foreign keys and
