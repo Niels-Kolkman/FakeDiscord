@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Support\MessageFeed;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Tests\TestCase;
 
 /**
@@ -135,7 +136,33 @@ class ChannelMessagesPageTest extends TestCase
         $this->actingAs($this->member)->get($this->channelUrl($voice))
             ->assertOk()
             ->assertDontSee('data-channel-messages', false)
-            ->assertDontSee('data-message-form', false);
+            ->assertDontSee('data-message-form', false)
+            ->assertDontSee('data-typing-indicator', false);
+    }
+
+    public function test_text_channels_have_a_polite_live_typing_indicator(): void
+    {
+        // ISSUE-17: typing-indicator.js fills it; empty on page load.
+        $content = (string) $this->actingAs($this->member)->get($this->channelUrl())->assertOk()->getContent();
+
+        $this->assertMatchesRegularExpression('/<p[^>]*aria-live="polite"[^>]*data-typing-indicator><\/p>/', $content);
+        $this->assertLessThan(
+            strpos($content, 'data-typing-indicator'),
+            strpos($content, 'data-message-form'),
+            'the indicator sits below the composer',
+        );
+    }
+
+    public function test_viewers_who_cannot_send_still_get_the_typing_indicator(): void
+    {
+        // ISSUE-17: the indicator is outside the composer, so it stays once
+        // roles (ISSUE-26) can take "Send Messages" away.
+        Gate::before(fn (User $user, string $ability) => $ability === 'sendMessages' ? false : null);
+
+        $this->actingAs($this->member)->get($this->channelUrl())
+            ->assertOk()
+            ->assertDontSee('data-message-form', false)
+            ->assertSee('data-typing-indicator', false);
     }
 
     public function test_a_validation_error_from_a_form_post_is_shown_on_the_channel(): void

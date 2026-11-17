@@ -23,10 +23,14 @@
  *   data-message-url). Edits from others arrive as ".message.updated" and
  *   replace the content and show "(edited)"; ".message.deleted" removes
  *   the message. The buttons are only a hint, MessagePolicy decides.
+ * - Typing indicators (ISSUE-17): see typing-indicator.js. The composer
+ *   whispers while you type; [data-typing-indicator] shows who else is.
  *
  * All user-provided text is inserted with textContent, never parsed as HTML.
  * renderMessage() must match resources/views/messages/item.blade.php.
  */
+
+import { initTypingIndicator } from './typing-indicator';
 
 const NEAR_BOTTOM_PX = 120;
 const LOAD_OLDER_PX = 400;
@@ -320,8 +324,17 @@ function initChannel(root) {
     updateJump();
     maybeLoadOlder();
 
+    const typing = initTypingIndicator({
+        echo: window.Echo,
+        channelId,
+        viewerId: context.viewerId,
+        input: form?.querySelector('[data-message-input]') ?? null,
+        output: root.querySelector('[data-typing-indicator]'),
+    });
+
     const append = (message, own = false) => {
         if (!message || String(message.channel_id) !== channelId) return;
+        if (!own) typing?.messageArrived(message.author?.id);
         const id = String(message.id);
         if (seen.has(id)) return;
 
@@ -531,6 +544,7 @@ function initChannel(root) {
         if (!content || sending) return;
 
         sending = true;
+        typing?.sent();
 
         window.axios
             .post(form.action, { content }, { headers: socketHeaders() })

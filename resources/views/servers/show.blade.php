@@ -7,6 +7,8 @@
     appends the ones others send (received over Reverb on "channel.{id}"),
     loads older pages from data-history-url while you scroll up and shows
     the "jump to latest" button when you are far from the bottom.
+    It also shows who else is typing in [data-typing-indicator] (ISSUE-17,
+    resources/js/typing-indicator.js), also for members who cannot send.
 
     The "start of the channel" header is always there but hidden while
     older pages exist; the script shows it once the last page is loaded.
@@ -88,7 +90,7 @@
             @endunless
 
             @if (! $channel->isVoice() && auth()->user()?->can('sendMessages', $server))
-                <form method="POST" action="{{ route('messages.store', [$server, $channel]) }}" class="px-4 pb-6" data-message-form>
+                <form method="POST" action="{{ route('messages.store', [$server, $channel]) }}" class="px-4" data-message-form>
                     @csrf
                     <label for="message-content" class="sr-only">Message #{{ $channel->name }}</label>
                     <div class="flex items-end gap-2 rounded-lg bg-[#383a40] px-4 py-2">
@@ -108,6 +110,11 @@
                     <p id="message-error" role="alert" class="mt-1 text-sm text-red-400 @unless ($errors->has('content')) hidden @endunless" data-message-error>{{ $errors->first('content') }}</p>
                 </form>
             @endif
+
+            @unless ($channel->isVoice())
+                {{-- Filled by typing-indicator.js; empty (but keeping its height) while nobody types. --}}
+                <p class="h-6 truncate px-4 pb-1 text-xs leading-5 text-[#b5bac1]" aria-live="polite" data-typing-indicator></p>
+            @endunless
         </section>
     @else
         <section class="flex flex-1 flex-col items-center justify-center p-8 text-center">
