@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AccountSettingsController;
+use App\Http\Controllers\InviteController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ServerController;
 use App\Http\Controllers\UserProfileController;
@@ -46,4 +47,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/servers/{server}/settings', [ServerController::class, 'edit'])->name('servers.edit');
     Route::patch('/servers/{server}', [ServerController::class, 'update'])->name('servers.update');
     Route::delete('/servers/{server}', [ServerController::class, 'destroy'])->name('servers.destroy');
+
+    // Invites (ISSUE-11). Any member can create one; the owner and the
+    // inviter can revoke it (App\Policies\InvitePolicy).
+    Route::get('/servers/{server}/invites', [InviteController::class, 'index'])->name('servers.invites.index');
+    Route::post('/servers/{server}/invites', [InviteController::class, 'store'])
+        ->middleware('throttle:20,1')
+        ->name('servers.invites.store');
+    Route::delete('/servers/{server}/invites/{invite}', [InviteController::class, 'destroy'])
+        ->scopeBindings()
+        ->name('servers.invites.destroy');
+
+    // Opening and accepting an invite. Guests are sent to log in and come back here.
+    Route::middleware('throttle:30,1')->group(function () {
+        Route::get('/invite/{code}', [InviteController::class, 'show'])->name('invites.show');
+        Route::post('/invite/{code}', [InviteController::class, 'accept'])->name('invites.accept');
+    });
 });

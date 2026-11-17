@@ -40,4 +40,20 @@ class ServerPolicy
     {
         return $server->isOwnedBy($user);
     }
+
+    /**
+     * Like Discord's default @everyone permission, any member can invite.
+     */
+    public function createInvite(User $user, Server $server): bool
+    {
+        return $server->hasMember($user);
+    }
+
+    /**
+     * See and revoke every invite of the server, not only your own.
+     */
+    public function manageInvites(User $user, Server $server): bool
+    {
+        return $server->isOwnedBy($user);
+    }
 }

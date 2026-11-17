@@ -11,6 +11,10 @@
         @endforeach
     </ul>
 
+    @can('createInvite', $server)
+        <a href="{{ route('servers.invites.index', $server) }}" class="mb-3 block w-full rounded bg-[#5865f2] py-2 text-center font-medium text-white hover:bg-[#4752c4]">Invite people</a>
+    @endcan
+
     @can('update', $server)
         <a href="{{ route('servers.edit', $server) }}" class="mb-3 block w-full rounded bg-[#4e5058] py-2 text-center font-medium text-white hover:bg-[#6d6f78]">Server settings</a>
     @endcan

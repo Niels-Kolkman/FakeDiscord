@@ -3,10 +3,18 @@
 namespace App\Models;
 
 use Database\Factories\InviteFactory;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int|null $max_uses NULL = unlimited
+ * @property int $uses
+ * @property Carbon|null $expires_at NULL = never
+ */
 class Invite extends Model
 {
     /** @use HasFactory<InviteFactory> */
@@ -35,6 +43,42 @@ class Invite extends Model
             'uses' => 'integer',
             'expires_at' => 'datetime',
         ];
+    }
+
+    public function isExpired(): bool
+    {
+        return $this->expires_at !== null && $this->expires_at->isPast();
+    }
+
+    /**
+     * Every use is taken (max_uses NULL means unlimited).
+     */
+    public function isFull(): bool
+    {
+        return $this->max_uses !== null && $this->uses >= $this->max_uses;
+    }
+
+    public function isUsable(): bool
+    {
+        return ! $this->isExpired() && ! $this->isFull();
+    }
+
+    /**
+     * Invites that can still be used.
+     *
+     * @param  Builder<Invite>  $query
+     */
+    #[Scope]
+    protected function usable(Builder $query): void
+    {
+        $query
+            ->where(fn (Builder $q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
+            ->where(fn (Builder $q) => $q->whereNull('max_uses')->orWhereColumn('uses', '<', 'max_uses'));
+    }
+
+    public function url(): string
+    {
+        return route('invites.show', $this->code);
     }
 
     /**

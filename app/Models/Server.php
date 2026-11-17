@@ -39,6 +39,11 @@ class Server extends Model
         return $this->memberships()->where('user_id', $user->getKey())->exists();
     }
 
+    public function hasBanned(User $user): bool
+    {
+        return $this->bans()->where('user_id', $user->getKey())->exists();
+    }
+
     /**
      * URL of the uploaded icon, or null; views fall back to initials().
      */
