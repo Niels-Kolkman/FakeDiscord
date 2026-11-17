@@ -74,7 +74,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/servers/{server}/channels/{channel}', [ChannelController::class, 'destroy'])->name('channels.destroy');
 
         // Messages (ISSUE-14): any member can post; MessageSent broadcasts
-        // the message on the private "channel.{id}" channel.
+        // the message on the private "channel.{id}" channel. History
+        // (ISSUE-15) is cursor paginated: ?before={cursor} for older pages.
+        Route::get('/servers/{server}/channels/{channel}/messages', [MessageController::class, 'index'])
+            ->middleware('throttle:60,1')
+            ->name('messages.index');
         Route::post('/servers/{server}/channels/{channel}/messages', [MessageController::class, 'store'])
             ->middleware('throttle:30,1')
             ->name('messages.store');
