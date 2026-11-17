@@ -386,6 +386,37 @@ The broadcast payload is the same as the JSON response (`Message::toPayload()`):
 `author` is `null` for messages of deleted accounts, which show as "Deleted User".
 `edited_at` is `null` until the message is edited.
 
+### Typing indicators
+
+While you type in a text channel, everyone else viewing it sees "**Ann** is
+typing…" under the composer. Two or three people read "Ann and Bob are typing…"
+or "Ann, Bob and Cy are typing…", and more read "Several people are typing…". No
+request goes through Laravel. Everything happens over Reverb
+(`resources/js/typing-indicator.js`):
+
+- Each viewer joins the **presence** channel `typing.{id}`. `routes/channels.php`
+  allows only members of the channel's server, the same rule as `channel.{id}`,
+  and gives every subscriber `{id, name}` as member info. `name` is the server
+  nickname, or the user's name if they have none.
+- Typing sends the client event (whisper) `client-typing` with
+  `{"typing": true}`, throttled to **once every 3 seconds**. Sending the message
+  or clearing the box whispers `{"typing": false}`, so the indicator goes away
+  at once.
+- Receivers drop a person **5 seconds** after their last whisper. They also drop
+  them right away when the person leaves the presence channel (closes the tab)
+  or when their message arrives.
+- The sender is taken from the `user_id` that Reverb adds to whispers on
+  presence channels, never from the payload. That `user_id` must belong to a
+  current presence member, and the name comes from the member info. This relies
+  on `REVERB_APP_ACCEPT_CLIENT_EVENTS_FROM=members` (the default in
+  `config/reverb.php`): with `all`, whispers carry no trusted `user_id` and are
+  ignored, and with `none` there are no typing indicators.
+- Members who cannot send messages still see who is typing. Whispers cannot be
+  authorised one by one, so a member without the send permission could still
+  whisper "typing".
+
+`npm test` runs the JavaScript tests in `tests/js` with Node's built-in test runner.
+
 ## Invites
 
 Invites (`InviteController`, also in the `['auth', 'verified']` group) let
