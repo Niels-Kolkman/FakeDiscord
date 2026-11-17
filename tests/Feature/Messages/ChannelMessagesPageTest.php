@@ -90,9 +90,11 @@ class ChannelMessagesPageTest extends TestCase
 
         $response = $this->actingAs($this->member)->get($this->channelUrl())->assertOk();
 
+        // The header is rendered hidden; channel-messages.js shows it once
+        // the last older page has been loaded.
         $response->assertDontSee('Message number 001')
-            ->assertSeeInOrder(['Message number 002', sprintf('Message number %03d', MessageFeed::LIMIT + 1)])
-            ->assertDontSee('This is the start of the #general channel.');
+            ->assertSeeInOrder(['Message number 002', sprintf('Message number %03d', MessageFeed::LIMIT + 1)]);
+        $this->assertMatchesRegularExpression('/data-channel-start\s+hidden/', (string) $response->getContent());
         $this->assertSame(MessageFeed::LIMIT, substr_count((string) $response->getContent(), 'data-message-id='));
     }
 
@@ -100,8 +102,10 @@ class ChannelMessagesPageTest extends TestCase
     {
         Message::factory()->count(MessageFeed::LIMIT)->inChannel($this->channel)->create();
 
-        $this->actingAs($this->member)->get($this->channelUrl())
-            ->assertSee('This is the start of the #general channel.');
+        $response = $this->actingAs($this->member)->get($this->channelUrl())
+            ->assertSee('This is the start of the #general channel.')
+            ->assertSee('data-older-cursor=""', false);
+        $this->assertDoesNotMatchRegularExpression('/data-channel-start\s+hidden/', (string) $response->getContent());
     }
 
     public function test_messages_of_deleted_users_show_deleted_user(): void

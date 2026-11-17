@@ -3,8 +3,13 @@
     channel) and /servers/{id}/channels/{channel}.
 
     Text channels show their newest messages ($feed, App\Support\MessageFeed)
-    and a composer. resources/js/channel-messages.js posts new messages and
-    appends the ones others send, received over Reverb on "channel.{id}".
+    and a composer. resources/js/channel-messages.js posts new messages,
+    appends the ones others send (received over Reverb on "channel.{id}"),
+    loads older pages from data-history-url while you scroll up and shows
+    the "jump to latest" button when you are far from the bottom.
+
+    The "start of the channel" header is always there but hidden while
+    older pages exist; the script shows it once the last page is loaded.
 --}}
 <x-layouts.app :title="$channel ? '#'.$channel->name.' · '.$server->name : $server->name">
     <x-slot:sidebar>
@@ -26,26 +31,35 @@
         </header>
 
         <section
-            class="flex min-h-0 flex-1 flex-col"
+            class="relative flex min-h-0 flex-1 flex-col"
             @unless ($channel->isVoice())
                 data-channel-messages
                 data-channel-id="{{ $channel->id }}"
+                data-history-url="{{ route('messages.index', [$server, $channel]) }}"
+                data-older-cursor="{{ $feed->olderCursor }}"
             @endunless
         >
-            <div class="min-h-0 flex-1 overflow-y-auto" data-message-scroller>
+            {{-- overflow-anchor: none, the script keeps the scroll position itself when it prepends a page. --}}
+            <div class="min-h-0 flex-1 overflow-y-auto [overflow-anchor:none]" data-message-scroller>
                 <div class="flex min-h-full flex-col justify-end pt-4 pb-2">
-                    @unless ($feed->hasOlder)
-                        <div class="mb-4 px-4">
-                            <div aria-hidden="true" class="mb-2 flex h-16 w-16 items-center justify-center rounded-full bg-[#41434a] text-4xl text-white">{{ $channel->isVoice() ? '🔊' : '#' }}</div>
-                            <h2 class="text-3xl font-bold text-white">Welcome to #{{ $channel->name }}!</h2>
-                            <p class="text-[#b5bac1]">This is the start of the #{{ $channel->name }} channel.</p>
-                            @if ($channel->topic)
-                                <p class="mt-1 whitespace-pre-line break-words text-[#b5bac1]">{{ $channel->topic }}</p>
-                            @endif
-                        </div>
-                    @endunless
+                    <div class="mb-4 px-4" data-channel-start @if ($feed->hasOlder) hidden @endif>
+                        <div aria-hidden="true" class="mb-2 flex h-16 w-16 items-center justify-center rounded-full bg-[#41434a] text-4xl text-white">{{ $channel->isVoice() ? '🔊' : '#' }}</div>
+                        <h2 class="text-3xl font-bold text-white">Welcome to #{{ $channel->name }}!</h2>
+                        <p class="text-[#b5bac1]">This is the start of the #{{ $channel->name }} channel.</p>
+                        @if ($channel->topic)
+                            <p class="mt-1 whitespace-pre-line break-words text-[#b5bac1]">{{ $channel->topic }}</p>
+                        @endif
+                    </div>
 
                     @unless ($channel->isVoice())
+                        <div role="status" class="px-4 py-2 text-center text-sm text-[#949ba4]" data-history-status hidden>
+                            <span data-history-loading>Loading older messages…</span>
+                            <span data-history-error hidden>
+                                Older messages could not be loaded.
+                                <button type="button" class="text-[#00a8fc] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]" data-history-retry>Try again</button>
+                            </span>
+                        </div>
+
                         <ol role="log" aria-label="Messages in #{{ $channel->name }}" data-message-list>
                             @foreach ($feed->messages as $message)
                                 @include('messages.item')
@@ -54,6 +68,16 @@
                     @endunless
                 </div>
             </div>
+
+            @unless ($channel->isVoice())
+                <button
+                    type="button"
+                    class="absolute left-1/2 z-10 -translate-x-1/2 rounded-full bg-[#5865f2] px-4 py-1.5 text-sm font-medium text-white shadow-lg hover:bg-[#4752c4] focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                    style="bottom: 6rem"
+                    data-jump-latest
+                    hidden
+                >Jump to latest <span data-jump-latest-count></span></button>
+            @endunless
 
             @if (! $channel->isVoice() && auth()->user()?->can('sendMessages', $server))
                 <form method="POST" action="{{ route('messages.store', [$server, $channel]) }}" class="px-4 pb-6" data-message-form>

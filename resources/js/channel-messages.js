@@ -10,12 +10,20 @@
  *   de-duplicated by id in case one arrives both ways.
  * - The list sticks to the bottom when a message arrives, unless you have
  *   scrolled up to read older ones.
+ * - History (ISSUE-15): close to the top, the next older page is fetched
+ *   from GET data-history-url?before={cursor} (MessageController::index)
+ *   and prepended. The scroll position is kept by restoring the distance
+ *   from the bottom, so what you were reading stays where it was. When
+ *   next_cursor is null the "start of the channel" header is shown.
+ * - "Jump to latest" appears once you are more than a screen away from the
+ *   bottom, and counts the messages that arrived meanwhile.
  *
  * All user-provided text is inserted with textContent, never parsed as HTML.
  * renderMessage() must match resources/views/messages/item.blade.php.
  */
 
 const NEAR_BOTTOM_PX = 120;
+const LOAD_OLDER_PX = 400;
 
 function el(tag, className, text) {
     const node = document.createElement(tag);
@@ -105,11 +113,113 @@ function initChannel(root) {
         time.textContent = formatTime(time.dateTime) || time.textContent;
     });
 
-    const nearBottom = () => scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < NEAR_BOTTOM_PX;
+    const distanceFromBottom = () => scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight;
+    const nearBottom = () => distanceFromBottom() < NEAR_BOTTOM_PX;
     const scrollToBottom = () => {
         scroller.scrollTop = scroller.scrollHeight;
     };
+
+    // --- Jump to latest ------------------------------------------------
+    const jump = root.querySelector('[data-jump-latest]');
+    const jumpCount = root.querySelector('[data-jump-latest-count]');
+    let unseen = 0;
+
+    const updateJump = () => {
+        if (!jump) return;
+        const away = distanceFromBottom() > Math.max(scroller.clientHeight, NEAR_BOTTOM_PX);
+        if (nearBottom()) unseen = 0;
+        jump.hidden = !(away || unseen > 0);
+        if (jumpCount) jumpCount.textContent = unseen > 0 ? `(${unseen} new)` : '';
+    };
+
+    jump?.addEventListener('click', () => {
+        scroller.scrollTo({ top: scroller.scrollHeight, behavior: 'smooth' });
+        unseen = 0;
+        updateJump();
+        root.querySelector('[data-message-input]')?.focus({ preventScroll: true });
+    });
+
+    // --- Older messages --------------------------------------------------
+    const historyUrl = root.dataset.historyUrl;
+    const start = root.querySelector('[data-channel-start]');
+    const status = root.querySelector('[data-history-status]');
+    const statusLoading = root.querySelector('[data-history-loading]');
+    const statusError = root.querySelector('[data-history-error]');
+    let olderCursor = root.dataset.olderCursor || null;
+    let loadingOlder = false;
+    let failed = false;
+
+    // Everything that grows or shrinks above the viewport goes through
+    // here: keep the distance from the bottom, so the messages on screen
+    // stay where they are (the scroller has overflow-anchor: none).
+    const keepPosition = (change) => {
+        const fromBottom = scroller.scrollHeight - scroller.scrollTop;
+        change();
+        scroller.scrollTop = scroller.scrollHeight - fromBottom;
+    };
+
+    const showStatus = (state) => {
+        if (!status) return;
+        status.hidden = state === null;
+        if (statusLoading) statusLoading.hidden = state !== 'loading';
+        if (statusError) statusError.hidden = state !== 'error';
+    };
+
+    const prepend = (messages) => {
+        const fragment = document.createDocumentFragment();
+        messages.forEach((message) => {
+            const id = String(message.id);
+            if (seen.has(id)) return;
+            seen.add(id);
+            fragment.appendChild(renderMessage(message));
+        });
+        list.insertBefore(fragment, list.firstChild);
+    };
+
+    const loadOlder = () => {
+        if (!historyUrl || !olderCursor || loadingOlder || failed) return;
+
+        loadingOlder = true;
+        keepPosition(() => showStatus('loading'));
+
+        window.axios
+            .get(historyUrl, { params: { before: olderCursor }, headers: { Accept: 'application/json' } })
+            .then((response) => {
+                olderCursor = response.data.next_cursor ?? null;
+                keepPosition(() => {
+                    showStatus(null);
+                    prepend(response.data.messages ?? []);
+                    if (!olderCursor && start) start.hidden = false;
+                });
+            })
+            .catch(() => {
+                failed = true;
+                keepPosition(() => showStatus('error'));
+            })
+            .finally(() => {
+                loadingOlder = false;
+                // A short page may not fill the screen: keep going.
+                if (!failed) requestAnimationFrame(maybeLoadOlder);
+            });
+    };
+
+    const maybeLoadOlder = () => {
+        if (scroller.scrollTop < LOAD_OLDER_PX) loadOlder();
+    };
+
+    root.querySelector('[data-history-retry]')?.addEventListener('click', () => {
+        failed = false;
+        loadOlder();
+    });
+
+    scroller.addEventListener('scroll', () => {
+        maybeLoadOlder();
+        updateJump();
+    }, { passive: true });
+
     scrollToBottom();
+    updateJump();
+    maybeLoadOlder();
 
     const append = (message, own = false) => {
         if (!message || String(message.channel_id) !== channelId) return;
@@ -119,7 +229,12 @@ function initChannel(root) {
         const stick = own || nearBottom();
         seen.add(id);
         list.appendChild(renderMessage(message));
-        if (stick) scrollToBottom();
+        if (stick) {
+            scrollToBottom();
+        } else {
+            unseen += 1;
+        }
+        updateJump();
     };
 
     window.Echo?.private(`channel.${channelId}`).listen('.message.sent', (message) => append(message));

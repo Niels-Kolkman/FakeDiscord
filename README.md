@@ -310,8 +310,26 @@ Reverb are not part of this feature.
 ## Messages
 
 An open text channel shows its newest 50 messages (`App\Support\MessageFeed`),
-oldest at the top, with a composer below. Loading older messages is ISSUE-15.
+oldest at the top, with a composer below. Scrolling up loads older messages.
 Voice channels have no messages.
+
+- **History**: `GET /servers/{id}/channels/{channel}/messages` returns one page
+  of 50 messages, oldest first, as
+  `{"messages": [...], "next_cursor": "..."}`. Pages come from Laravel's
+  `cursorPaginate()` on the message id, so new messages never shift the older
+  pages. Pass `?before={next_cursor}` for the page before. `next_cursor` is
+  `null` on the page that holds the first message of the channel. Only cursors
+  the API hands out are accepted (others are a `422`). Members only; voice
+  channels are a `404`; limited to 60 requests per minute. The channel page
+  puts the first cursor in `data-older-cursor`.
+- **Infinite scroll**: `resources/js/channel-messages.js` fetches the next older
+  page when you are within 400px of the top and prepends it. It keeps your
+  distance from the bottom, so the message you were reading does not move.
+  After the last page it shows the "Welcome to #channel" header. If a page fails
+  to load, a "Try again" button appears.
+- **Jump to latest**: when you are more than a screen away from the bottom, a
+  button scrolls back down. It counts the new messages that arrived while you
+  were scrolled up.
 
 - **Sending**: any server member may post (`ServerPolicy::sendMessages`) with
   `POST /servers/{id}/channels/{channel}/messages`, field `content`. The content is
