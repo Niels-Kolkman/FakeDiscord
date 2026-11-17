@@ -3,7 +3,7 @@
 namespace App\Actions\Profile;
 
 use App\Models\User;
-use GdImage;
+use App\Support\SquarePng;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -29,7 +29,12 @@ class UpdateUserAvatar
      */
     public function update(User $user, UploadedFile $file): void
     {
-        $png = $this->resize((string) file_get_contents($file->getRealPath()));
+        $png = SquarePng::fromString((string) file_get_contents($file->getRealPath()), self::SIZE);
+        if ($png === null) {
+            throw ValidationException::withMessages([
+                'avatar' => 'The avatar could not be read as an image.',
+            ]);
+        }
 
         $path = 'avatars/'.$user->getKey().'/'.Str::random(40).'.png';
         Storage::disk(self::disk())->put($path, $png, 'public');
@@ -50,69 +55,5 @@ class UpdateUserAvatar
 
         Storage::disk(self::disk())->delete($user->avatar_path);
         $user->forceFill(['avatar_path' => null])->save();
-    }
-
-    /**
-     * @throws ValidationException
-     */
-    private function resize(string $contents): string
-    {
-        $source = $contents === '' ? false : @imagecreatefromstring($contents);
-        if (! $source instanceof GdImage) {
-            throw ValidationException::withMessages([
-                'avatar' => 'The avatar could not be read as an image.',
-            ]);
-        }
-
-        $source = $this->applyExifOrientation($source, $contents);
-
-        $width = imagesx($source);
-        $height = imagesy($source);
-        $side = min($width, $height);
-
-        $canvas = imagecreatetruecolor(self::SIZE, self::SIZE);
-        imagealphablending($canvas, false);
-        imagesavealpha($canvas, true);
-        imagefill($canvas, 0, 0, (int) imagecolorallocatealpha($canvas, 0, 0, 0, 127));
-
-        imagecopyresampled(
-            $canvas, $source,
-            0, 0,
-            intdiv($width - $side, 2), intdiv($height - $side, 2),
-            self::SIZE, self::SIZE,
-            $side, $side,
-        );
-
-        ob_start();
-        imagepng($canvas);
-
-        return (string) ob_get_clean();
-    }
-
-    /**
-     * Phone photos are often stored sideways with an EXIF orientation flag;
-     * rotate them upright before cropping. No-op without the exif extension.
-     */
-    private function applyExifOrientation(GdImage $image, string $contents): GdImage
-    {
-        if (! function_exists('exif_read_data') || ! str_starts_with($contents, "\xFF\xD8")) {
-            return $image;
-        }
-
-        $exif = @exif_read_data('data://image/jpeg;base64,'.base64_encode($contents));
-        $angle = match (is_array($exif) ? ($exif['Orientation'] ?? 1) : 1) {
-            3 => 180,
-            6 => -90,
-            8 => 90,
-            default => 0,
-        };
-
-        if ($angle === 0) {
-            return $image;
-        }
-
-        $rotated = imagerotate($image, $angle, 0);
-
-        return $rotated instanceof GdImage ? $rotated : $image;
     }
 }

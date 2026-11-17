@@ -23,9 +23,30 @@
         </div>
     @endunless
 
-    <p class="mb-4 text-center">
-        <a href="{{ route('settings.account') }}" class="font-medium text-[#00a8fc] hover:underline">Account settings</a>
-    </p>
+    @php($servers = auth()->user()?->servers()->orderBy('name')->get() ?? collect())
+
+    <section aria-labelledby="servers-heading" class="mb-6">
+        <h2 id="servers-heading" class="mb-2 text-xs font-semibold uppercase tracking-wide text-[#949ba4]">Your servers</h2>
+
+        @if ($servers->isEmpty())
+            <p class="mb-3 text-sm text-[#b5bac1]">You are not in any servers yet.</p>
+        @else
+            <ul class="mb-3 space-y-1">
+                @foreach ($servers as $server)
+                    <li>
+                        <a href="{{ route('servers.show', $server) }}" class="flex items-center gap-3 rounded px-2 py-1.5 hover:bg-[#35373c]">
+                            <x-server-icon :server="$server" :size="32" />
+                            <span class="truncate text-white">{{ $server->name }}</span>
+                        </a>
+                    </li>
+                @endforeach
+            </ul>
+        @endif
+
+        @can('create', \App\Models\Server::class)
+            <a href="{{ route('servers.create') }}" class="block w-full rounded bg-[#248046] py-2 text-center font-medium text-white hover:bg-[#1a6334]">Create a server</a>
+        @endcan
+    </section>
 
     <form method="POST" action="{{ route('logout') }}">
         @csrf

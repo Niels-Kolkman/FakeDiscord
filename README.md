@@ -210,6 +210,32 @@ Signed-in users edit their profile at `/settings/profile` (`ProfileController`).
   profile card (`resources/js/profile-popover.js`). Escape or an outside click
   closes it.
 
+## Servers
+
+Users with a verified email address manage servers under `/servers`
+(`ServerController`, routes in the `['auth', 'verified']` group).
+
+- **Create** (`/servers/create`): name (2–100 characters; surrounding and
+  repeated whitespace is collapsed) and an optional icon. `App\Actions\Servers\CreateServer`
+  creates, in one transaction, the server with the creator as `owner_id`, the
+  owner's `server_members` row, the default `@everyone` role and a `#general`
+  text channel.
+- **Open** (`/servers/{id}`): members only. For now this is a placeholder page
+  that lists the channels.
+- **Settings** (`/servers/{id}/settings`): the owner can rename the server and
+  replace or remove the icon. A failed icon upload also rolls back the rename.
+- **Delete**: the owner types the server name to confirm. Channels, messages,
+  roles, invites, bans and memberships are removed by `ON DELETE CASCADE`, and
+  the icon file is deleted.
+- **Icons** use the same rules and processing as avatars (PNG, JPG, GIF or
+  WebP, up to 4 MB and 4096×4096 px, centre-cropped and resized to a 256×256
+  PNG by `App\Support\SquarePng`). They are stored under `server-icons/{server_id}/`
+  on the disk set by `SERVER_ICON_DISK` (default `public`). Servers without an
+  icon show their initials (`<x-server-icon :server="$server" />`).
+- **Authorisation** is in `App\Policies\ServerPolicy`: `create` needs a
+  verified email, `view` needs membership, and `update` and `delete` are owner
+  only until role permissions arrive (ISSUE-26).
+
 ## Frontend
 
 - Entry points: `resources/css/app.css` and `resources/js/app.js`, set in `vite.config.js`.
