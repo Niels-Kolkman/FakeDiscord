@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Controllers\AccountSettingsController;
+use App\Http\Controllers\ChannelCategoryController;
+use App\Http\Controllers\ChannelController;
+use App\Http\Controllers\ChannelLayoutController;
 use App\Http\Controllers\InviteController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ServerController;
@@ -47,6 +50,29 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/servers/{server}/settings', [ServerController::class, 'edit'])->name('servers.edit');
     Route::patch('/servers/{server}', [ServerController::class, 'update'])->name('servers.update');
     Route::delete('/servers/{server}', [ServerController::class, 'destroy'])->name('servers.destroy');
+
+    // Channels and categories (ISSUE-12). Members can open channels; the
+    // rest needs ServerPolicy::manageChannels. Scoped bindings make a
+    // channel or category of another server a 404.
+    Route::scopeBindings()->group(function () {
+        Route::get('/servers/{server}/channels/create', [ChannelController::class, 'create'])->name('channels.create');
+        Route::post('/servers/{server}/channels', [ChannelController::class, 'store'])->name('channels.store');
+        Route::get('/servers/{server}/channels/{channel}', [ChannelController::class, 'show'])->name('channels.show');
+        Route::get('/servers/{server}/channels/{channel}/settings', [ChannelController::class, 'edit'])->name('channels.edit');
+        Route::patch('/servers/{server}/channels/{channel}', [ChannelController::class, 'update'])->name('channels.update');
+        Route::delete('/servers/{server}/channels/{channel}', [ChannelController::class, 'destroy'])->name('channels.destroy');
+
+        // Drag and drop saves the whole sidebar order as JSON.
+        Route::put('/servers/{server}/layout', [ChannelLayoutController::class, 'update'])
+            ->middleware('throttle:60,1')
+            ->name('channels.layout');
+
+        Route::get('/servers/{server}/categories/create', [ChannelCategoryController::class, 'create'])->name('categories.create');
+        Route::post('/servers/{server}/categories', [ChannelCategoryController::class, 'store'])->name('categories.store');
+        Route::get('/servers/{server}/categories/{category}/settings', [ChannelCategoryController::class, 'edit'])->name('categories.edit');
+        Route::patch('/servers/{server}/categories/{category}', [ChannelCategoryController::class, 'update'])->name('categories.update');
+        Route::delete('/servers/{server}/categories/{category}', [ChannelCategoryController::class, 'destroy'])->name('categories.destroy');
+    });
 
     // Invites (ISSUE-11). Any member can create one; the owner and the
     // inviter can revoke it (App\Policies\InvitePolicy).

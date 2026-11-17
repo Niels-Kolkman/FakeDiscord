@@ -49,9 +49,14 @@ class ServerController extends Controller
     {
         Gate::authorize('view', $server);
 
+        // Opens on the first text channel, like Discord. The URL stays
+        // /servers/{id} so links and redirects to the server keep working.
+        $layout = $server->channelLayout();
+
         return view('servers.show', [
             'server' => $server,
-            'channels' => $server->channels()->get(),
+            'layout' => $layout,
+            'channel' => $layout->defaultChannel(),
         ]);
     }
 
