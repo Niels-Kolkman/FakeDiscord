@@ -9,6 +9,7 @@ use App\Http\Requests\UpdateServerRequest;
 use App\Models\Server;
 use App\Models\ServerMember;
 use App\Models\User;
+use App\Support\MessageFeed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -53,11 +54,13 @@ class ServerController extends Controller
         // Opens on the first text channel, like Discord. The URL stays
         // /servers/{id} so links and redirects to the server keep working.
         $layout = $server->channelLayout();
+        $channel = $layout->defaultChannel();
 
         return view('servers.show', [
             'server' => $server,
             'layout' => $layout,
-            'channel' => $layout->defaultChannel(),
+            'channel' => $channel,
+            'feed' => MessageFeed::for($channel),
             'members' => $server->memberList(),
         ]);
     }

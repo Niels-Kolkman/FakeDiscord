@@ -1,6 +1,10 @@
 {{--
     A server with one channel open. Used by /servers/{id} (the first text
-    channel) and /servers/{id}/channels/{channel}. Messages arrive in a later story.
+    channel) and /servers/{id}/channels/{channel}.
+
+    Text channels show their newest messages ($feed, App\Support\MessageFeed)
+    and a composer. resources/js/channel-messages.js posts new messages and
+    appends the ones others send, received over Reverb on "channel.{id}".
 --}}
 <x-layouts.app :title="$channel ? '#'.$channel->name.' · '.$server->name : $server->name">
     <x-slot:sidebar>
@@ -21,15 +25,57 @@
             @endif
         </header>
 
-        <section class="flex flex-1 flex-col justify-end p-4">
-            <div class="mb-4">
-                <div aria-hidden="true" class="mb-2 flex h-16 w-16 items-center justify-center rounded-full bg-[#41434a] text-4xl text-white">{{ $channel->isVoice() ? '🔊' : '#' }}</div>
-                <h2 class="text-3xl font-bold text-white">Welcome to #{{ $channel->name }}!</h2>
-                <p class="text-[#b5bac1]">This is the start of the #{{ $channel->name }} channel.</p>
-                @if ($channel->topic)
-                    <p class="mt-1 whitespace-pre-line break-words text-[#b5bac1]">{{ $channel->topic }}</p>
-                @endif
+        <section
+            class="flex min-h-0 flex-1 flex-col"
+            @unless ($channel->isVoice())
+                data-channel-messages
+                data-channel-id="{{ $channel->id }}"
+            @endunless
+        >
+            <div class="min-h-0 flex-1 overflow-y-auto" data-message-scroller>
+                <div class="flex min-h-full flex-col justify-end pt-4 pb-2">
+                    @unless ($feed->hasOlder)
+                        <div class="mb-4 px-4">
+                            <div aria-hidden="true" class="mb-2 flex h-16 w-16 items-center justify-center rounded-full bg-[#41434a] text-4xl text-white">{{ $channel->isVoice() ? '🔊' : '#' }}</div>
+                            <h2 class="text-3xl font-bold text-white">Welcome to #{{ $channel->name }}!</h2>
+                            <p class="text-[#b5bac1]">This is the start of the #{{ $channel->name }} channel.</p>
+                            @if ($channel->topic)
+                                <p class="mt-1 whitespace-pre-line break-words text-[#b5bac1]">{{ $channel->topic }}</p>
+                            @endif
+                        </div>
+                    @endunless
+
+                    @unless ($channel->isVoice())
+                        <ol role="log" aria-label="Messages in #{{ $channel->name }}" data-message-list>
+                            @foreach ($feed->messages as $message)
+                                @include('messages.item')
+                            @endforeach
+                        </ol>
+                    @endunless
+                </div>
             </div>
+
+            @if (! $channel->isVoice() && auth()->user()?->can('sendMessages', $server))
+                <form method="POST" action="{{ route('messages.store', [$server, $channel]) }}" class="px-4 pb-6" data-message-form>
+                    @csrf
+                    <label for="message-content" class="sr-only">Message #{{ $channel->name }}</label>
+                    <div class="flex items-end gap-2 rounded-lg bg-[#383a40] px-4 py-2">
+                        <textarea
+                            id="message-content"
+                            name="content"
+                            rows="1"
+                            maxlength="{{ \App\Models\Message::MAX_CONTENT_LENGTH }}"
+                            required
+                            placeholder="Message #{{ $channel->name }}"
+                            aria-describedby="message-error"
+                            class="max-h-64 min-h-6 flex-1 resize-none bg-transparent py-1 text-[#dbdee1] placeholder-[#6d6f78] focus:outline-none"
+                            data-message-input
+                        >{{ old('content') }}</textarea>
+                        <button type="submit" class="shrink-0 rounded px-2 py-1 text-sm font-medium text-[#b5bac1] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]">Send</button>
+                    </div>
+                    <p id="message-error" role="alert" class="mt-1 text-sm text-red-400 @unless ($errors->has('content')) hidden @endunless" data-message-error>{{ $errors->first('content') }}</p>
+                </form>
+            @endif
         </section>
     @else
         <section class="flex flex-1 flex-col items-center justify-center p-8 text-center">

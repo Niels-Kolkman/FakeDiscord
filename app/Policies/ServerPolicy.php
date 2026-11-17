@@ -51,6 +51,15 @@ class ServerPolicy
     }
 
     /**
+     * Like Discord's default @everyone "Send Messages" permission, any
+     * member can post in the server's text channels.
+     */
+    public function sendMessages(User $user, Server $server): bool
+    {
+        return $server->hasMember($user);
+    }
+
+    /**
      * Discord's "Manage Channels": create, rename, reorder and delete
      * channels and categories.
      */

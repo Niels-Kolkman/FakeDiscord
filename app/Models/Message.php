@@ -17,6 +17,9 @@ class Message extends Model
     /** @use HasFactory<MessageFactory> */
     use HasFactory;
 
+    /** Discord's limit for a message without Nitro. */
+    public const MAX_CONTENT_LENGTH = 2000;
+
     /**
      * @var list<string>
      */
@@ -71,6 +74,32 @@ class Message extends Model
     public function authorName(): string
     {
         return $this->author === null ? __('Deleted User') : $this->author->name;
+    }
+
+    /**
+     * The JSON a browser gets for a message: in the MessageSent broadcast and
+     * in the response to the sender. resources/js/channel-messages.js renders
+     * it the same way as resources/views/messages/item.blade.php.
+     *
+     * @return array{id: int, channel_id: int|null, content: string, created_at: string|null, author: array{id: int, name: string, username: string, avatar_url: string, profile_url: string}|null}
+     */
+    public function toPayload(): array
+    {
+        $author = $this->author;
+
+        return [
+            'id' => (int) $this->id,
+            'channel_id' => $this->channel_id === null ? null : (int) $this->channel_id,
+            'content' => (string) $this->content,
+            'created_at' => $this->created_at?->toIso8601String(),
+            'author' => $author === null ? null : [
+                'id' => (int) $author->id,
+                'name' => $author->name,
+                'username' => $author->username,
+                'avatar_url' => $author->avatarUrl(),
+                'profile_url' => route('users.profile', $author),
+            ],
+        ];
     }
 
     /**

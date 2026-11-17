@@ -8,6 +8,7 @@ use App\Http\Requests\StoreChannelRequest;
 use App\Http\Requests\UpdateChannelRequest;
 use App\Models\Channel;
 use App\Models\Server;
+use App\Support\MessageFeed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -30,6 +31,7 @@ class ChannelController extends Controller
             'server' => $server,
             'layout' => $server->channelLayout(),
             'channel' => $channel,
+            'feed' => MessageFeed::for($channel),
             'members' => $server->memberList(),
         ]);
     }

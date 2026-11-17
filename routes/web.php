@@ -5,6 +5,7 @@ use App\Http\Controllers\ChannelCategoryController;
 use App\Http\Controllers\ChannelController;
 use App\Http\Controllers\ChannelLayoutController;
 use App\Http\Controllers\InviteController;
+use App\Http\Controllers\MessageController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ServerController;
 use App\Http\Controllers\ServerMembershipController;
@@ -71,6 +72,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/servers/{server}/channels/{channel}/settings', [ChannelController::class, 'edit'])->name('channels.edit');
         Route::patch('/servers/{server}/channels/{channel}', [ChannelController::class, 'update'])->name('channels.update');
         Route::delete('/servers/{server}/channels/{channel}', [ChannelController::class, 'destroy'])->name('channels.destroy');
+
+        // Messages (ISSUE-14): any member can post; MessageSent broadcasts
+        // the message on the private "channel.{id}" channel.
+        Route::post('/servers/{server}/channels/{channel}/messages', [MessageController::class, 'store'])
+            ->middleware('throttle:30,1')
+            ->name('messages.store');
 
         // Drag and drop saves the whole sidebar order as JSON.
         Route::put('/servers/{server}/layout', [ChannelLayoutController::class, 'update'])
