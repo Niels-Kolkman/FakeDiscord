@@ -36,7 +36,7 @@ class UpdateUserEmail
                 'max:255',
                 Rule::unique(User::class)->ignore($user->id),
             ],
-            'current_password' => ['required', 'string', 'current_password:web'],
+            'current_password' => ['bail', 'required', 'string', 'current_password:web'],
         ], [
             'current_password.current_password' => __('The provided password does not match your current password.'),
         ])->validateWithBag('updateEmail');

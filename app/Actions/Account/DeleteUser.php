@@ -29,7 +29,7 @@ class DeleteUser
     public function delete(User $user, array $input): void
     {
         Validator::make($input, [
-            'password' => ['required', 'string', 'current_password:web'],
+            'password' => ['bail', 'required', 'string', 'current_password:web'],
         ], [
             'password.current_password' => __('The provided password is incorrect.'),
         ])->validateWithBag('deleteAccount');

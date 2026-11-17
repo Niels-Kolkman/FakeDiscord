@@ -73,7 +73,6 @@ class AvatarProcessingTest extends TestCase
      */
     private function pixel(GdImage $image, int $x, int $y): array
     {
-        /** @var array{red: int, green: int, blue: int, alpha: int} */
         return imagecolorsforindex($image, imagecolorat($image, $x, $y));
     }
 

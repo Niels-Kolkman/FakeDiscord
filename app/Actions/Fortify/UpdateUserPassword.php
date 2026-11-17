@@ -23,7 +23,7 @@ class UpdateUserPassword implements UpdatesUserPasswords
     {
         /** @var array{current_password: string, password: string} $validated */
         $validated = Validator::make($input, [
-            'current_password' => ['required', 'string', 'current_password:web'],
+            'current_password' => ['bail', 'required', 'string', 'current_password:web'],
             'password' => [...$this->passwordRules(), 'different:current_password'],
         ], [
             'current_password.current_password' => __('The provided password does not match your current password.'),
