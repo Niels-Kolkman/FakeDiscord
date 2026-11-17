@@ -65,7 +65,7 @@ class MessageController extends Controller
         /** @var User $user */
         $user = $request->user();
 
-        $message = $messages->send($user, $channel, $request->content());
+        $message = $messages->send($user, $channel, $request->content(), $request->attachments());
 
         if ($request->expectsJson()) {
             return response()->json(['message' => $message->toPayload()], 201);

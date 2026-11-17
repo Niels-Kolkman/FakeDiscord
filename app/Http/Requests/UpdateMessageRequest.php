@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Models\Message;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 /**
  * Edit a message. Only its author may (MessagePolicy::update). The content
@@ -22,8 +23,15 @@ class UpdateMessageRequest extends FormRequest
      */
     public function rules(): array
     {
+        // A message with attachments (ISSUE-19) may lose its text, like on
+        // Discord; it still shows its files.
         return [
-            'content' => ['required', 'string', 'max:'.Message::MAX_CONTENT_LENGTH],
+            'content' => [
+                Rule::requiredIf(fn (): bool => ! $this->message()->hasAttachments()),
+                'nullable',
+                'string',
+                'max:'.Message::MAX_CONTENT_LENGTH,
+            ],
         ];
     }
 

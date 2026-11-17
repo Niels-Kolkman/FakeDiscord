@@ -100,8 +100,9 @@ class Message extends Model
      *
      * `reactions` are the grouped reactions (App\Support\Reactions::groups());
      * with a $viewer each group also says whether they reacted (`me`).
+     * `attachments` (ISSUE-19) carry signed URLs (MessageAttachment::toPayload()).
      *
-     * @return array{id: int, channel_id: int|null, content: string, created_at: string|null, edited_at: string|null, author: array{id: int, name: string, username: string, avatar_url: string, profile_url: string}|null, reactions: list<array<string, mixed>>}
+     * @return array{id: int, channel_id: int|null, content: string, created_at: string|null, edited_at: string|null, author: array{id: int, name: string, username: string, avatar_url: string, profile_url: string}|null, reactions: list<array<string, mixed>>, attachments: list<array<string, mixed>>}
      */
     public function toPayload(?User $viewer = null): array
     {
@@ -109,6 +110,10 @@ class Message extends Model
 
         if (! $this->relationLoaded('reactions')) {
             $this->load(Reactions::relations());
+        }
+
+        if (! $this->relationLoaded('attachments')) {
+            $this->load('attachments');
         }
 
         return [
@@ -125,6 +130,10 @@ class Message extends Model
                 'profile_url' => route('users.profile', $author),
             ],
             'reactions' => Reactions::groups($this, $viewer === null ? null : (int) $viewer->id),
+            'attachments' => $this->attachments
+                ->map(fn (MessageAttachment $attachment): array => $attachment->toPayload())
+                ->values()
+                ->all(),
         ];
     }
 
@@ -145,11 +154,20 @@ class Message extends Model
     }
 
     /**
+     * In upload order.
+     *
      * @return HasMany<MessageAttachment, $this>
      */
     public function attachments(): HasMany
     {
-        return $this->hasMany(MessageAttachment::class);
+        return $this->hasMany(MessageAttachment::class)->orderBy('id');
+    }
+
+    public function hasAttachments(): bool
+    {
+        return $this->relationLoaded('attachments')
+            ? $this->attachments->isNotEmpty()
+            : $this->attachments()->exists();
     }
 
     /**

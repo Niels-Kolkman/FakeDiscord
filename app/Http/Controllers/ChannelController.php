@@ -7,6 +7,7 @@ use App\Actions\Channels\UpdateChannel;
 use App\Http\Requests\StoreChannelRequest;
 use App\Http\Requests\UpdateChannelRequest;
 use App\Models\Channel;
+use App\Models\MessageAttachment;
 use App\Models\Server;
 use App\Support\MessageFeed;
 use Illuminate\Http\RedirectResponse;
@@ -97,7 +98,11 @@ class ChannelController extends Controller
     {
         Gate::authorize('manageChannels', $server);
 
+        // Messages and attachment rows go through ON DELETE CASCADE; the
+        // attachment files are removed once that is committed.
+        $attachmentFiles = MessageAttachment::filesInChannels([(int) $channel->id]);
         DB::transaction(fn () => $channel->delete());
+        MessageAttachment::deleteFiles($attachmentFiles);
 
         return redirect()
             ->route('servers.show', $server)

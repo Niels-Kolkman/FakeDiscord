@@ -91,16 +91,48 @@
             @endunless
 
             @if (! $channel->isVoice() && auth()->user()?->can('sendMessages', $server))
-                <form method="POST" action="{{ route('messages.store', [$server, $channel]) }}" class="px-4" data-message-form>
+                {{--
+                    Attachments (ISSUE-19): up to MAX_FILES files in attachments[].
+                    With files the text is optional, so the textarea is not
+                    `required`; StoreMessageRequest checks it. The script lists
+                    the chosen files ([data-attachment-list]) and lets you
+                    remove them; without it the form still posts multipart.
+                --}}
+                @php($messageError = $errors->first('content') ?: ($errors->first('attachments') ?: $errors->first('attachments.*')))
+                <form
+                    method="POST"
+                    action="{{ route('messages.store', [$server, $channel]) }}"
+                    enctype="multipart/form-data"
+                    class="px-4"
+                    data-message-form
+                    data-max-files="{{ \App\Models\MessageAttachment::MAX_FILES }}"
+                    data-max-file-bytes="{{ \App\Models\MessageAttachment::MAX_KILOBYTES * 1024 }}"
+                >
                     @csrf
+                    <ul class="mb-1 flex flex-wrap gap-2" aria-label="Files to upload" data-attachment-list hidden></ul>
                     <label for="message-content" class="sr-only">Message #{{ $channel->name }}</label>
                     <div class="flex items-end gap-2 rounded-lg bg-[#383a40] px-4 py-2">
+                        <label
+                            class="shrink-0 cursor-pointer rounded-full px-1 py-0.5 text-xl leading-none text-[#b5bac1] hover:text-white has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-[#5865f2]"
+                            title="Attach files (up to {{ \App\Models\MessageAttachment::MAX_FILES }}, {{ \App\Models\MessageAttachment::MAX_KILOBYTES / 1024 }} MB each)"
+                        >
+                            <span aria-hidden="true">＋</span>
+                            <span class="sr-only">Attach files (up to {{ \App\Models\MessageAttachment::MAX_FILES }}, {{ \App\Models\MessageAttachment::MAX_KILOBYTES / 1024 }} MB each)</span>
+                            <input
+                                type="file"
+                                name="attachments[]"
+                                multiple
+                                accept="{{ collect(\App\Models\MessageAttachment::ALLOWED_EXTENSIONS)->map(fn ($extension) => '.'.$extension)->implode(',') }}"
+                                class="sr-only"
+                                aria-describedby="message-error"
+                                data-attachment-input
+                            >
+                        </label>
                         <textarea
                             id="message-content"
                             name="content"
                             rows="1"
                             maxlength="{{ \App\Models\Message::MAX_CONTENT_LENGTH }}"
-                            required
                             placeholder="Message #{{ $channel->name }}"
                             aria-describedby="message-error"
                             class="max-h-64 min-h-6 flex-1 resize-none bg-transparent py-1 text-[#dbdee1] placeholder-[#6d6f78] focus:outline-none"
@@ -108,7 +140,7 @@
                         >{{ old('content') }}</textarea>
                         <button type="submit" class="shrink-0 rounded px-2 py-1 text-sm font-medium text-[#b5bac1] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]">Send</button>
                     </div>
-                    <p id="message-error" role="alert" class="mt-1 text-sm text-red-400 @unless ($errors->has('content')) hidden @endunless" data-message-error>{{ $errors->first('content') }}</p>
+                    <p id="message-error" role="alert" class="mt-1 text-sm text-red-400 @unless ($messageError) hidden @endunless" data-message-error>{{ $messageError }}</p>
                 </form>
             @endif
 
