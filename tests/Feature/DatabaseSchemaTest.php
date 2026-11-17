@@ -20,6 +20,7 @@ class DatabaseSchemaTest extends TestCase
         'users', 'servers', 'server_members', 'channels', 'messages',
         'message_attachments', 'reactions', 'friendships', 'conversations',
         'conversation_participants', 'roles', 'role_user', 'invites', 'bans',
+        'channel_categories',
     ];
 
     public function test_all_domain_tables_exist(): void
@@ -50,6 +51,8 @@ class DatabaseSchemaTest extends TestCase
         $this->assertHasIndex('invites', ['code'], unique: true);
         $this->assertHasIndex('users', ['username'], unique: true);
         $this->assertHasIndex('channels', ['server_id', 'position']);
+        $this->assertHasIndex('channels', ['category_id']);
+        $this->assertHasIndex('channel_categories', ['server_id', 'position']);
     }
 
     public function test_every_foreign_key_column_leads_an_index(): void
@@ -71,7 +74,8 @@ class DatabaseSchemaTest extends TestCase
     {
         $expected = [
             'servers' => ['owner_id' => ['users', 'cascade']],
-            'channels' => ['server_id' => ['servers', 'cascade']],
+            'channels' => ['server_id' => ['servers', 'cascade'], 'category_id' => ['channel_categories', 'set null']],
+            'channel_categories' => ['server_id' => ['servers', 'cascade']],
             'roles' => ['server_id' => ['servers', 'cascade']],
             'server_members' => ['server_id' => ['servers', 'cascade'], 'user_id' => ['users', 'cascade']],
             'role_user' => ['role_id' => ['roles', 'cascade'], 'user_id' => ['users', 'cascade']],

@@ -1,25 +1,41 @@
-{{-- Placeholder server page until the app shell and channel views arrive (ISSUE-12). --}}
-<x-layouts.auth :title="$server->name">
-    <div class="mb-6 flex justify-center">
-        <x-server-icon :server="$server" :size="80" />
-    </div>
+{{--
+    A server with one channel open. Used by /servers/{id} (the first text
+    channel) and /servers/{id}/channels/{channel}. Messages arrive in a later story.
+--}}
+<x-layouts.app :title="$channel ? '#'.$channel->name.' · '.$server->name : $server->name">
+    <x-slot:sidebar>
+        @include('servers.partials.sidebar', ['activeChannel' => $channel])
+    </x-slot:sidebar>
 
-    <h2 class="mb-2 text-xs font-semibold uppercase tracking-wide text-[#949ba4]">Text channels</h2>
-    <ul class="mb-6 space-y-1">
-        @foreach ($channels as $channel)
-            <li class="rounded px-2 py-1 text-[#dbdee1] hover:bg-[#35373c]"><span class="text-[#80848e]">#</span> {{ $channel->name }}</li>
-        @endforeach
-    </ul>
+    @if ($channel)
+        <header class="flex min-h-12 items-center gap-2 border-b border-[#1f2023] px-4 py-2 shadow-sm">
+            <span aria-hidden="true" class="text-xl text-[#80848e]">{{ $channel->isVoice() ? '🔊' : '#' }}</span>
+            <h1 class="shrink-0 font-semibold text-white">{{ $channel->name }}</h1>
+            @if ($channel->topic)
+                <span aria-hidden="true" class="h-6 w-px shrink-0 bg-[#3f4147]"></span>
+                <p class="truncate text-sm text-[#b5bac1]" title="{{ $channel->topic }}" data-channel-topic>{{ $channel->topic }}</p>
+            @endif
+        </header>
 
-    @can('createInvite', $server)
-        <a href="{{ route('servers.invites.index', $server) }}" class="mb-3 block w-full rounded bg-[#5865f2] py-2 text-center font-medium text-white hover:bg-[#4752c4]">Invite people</a>
-    @endcan
-
-    @can('update', $server)
-        <a href="{{ route('servers.edit', $server) }}" class="mb-3 block w-full rounded bg-[#4e5058] py-2 text-center font-medium text-white hover:bg-[#6d6f78]">Server settings</a>
-    @endcan
-
-    <p class="text-sm text-[#949ba4]">
-        <a href="{{ route('dashboard') }}" class="text-[#00a8fc] hover:underline">Back</a>
-    </p>
-</x-layouts.auth>
+        <section class="flex flex-1 flex-col justify-end p-4">
+            <div class="mb-4">
+                <div aria-hidden="true" class="mb-2 flex h-16 w-16 items-center justify-center rounded-full bg-[#41434a] text-4xl text-white">{{ $channel->isVoice() ? '🔊' : '#' }}</div>
+                <h2 class="text-3xl font-bold text-white">Welcome to #{{ $channel->name }}!</h2>
+                <p class="text-[#b5bac1]">This is the start of the #{{ $channel->name }} channel.</p>
+                @if ($channel->topic)
+                    <p class="mt-1 whitespace-pre-line break-words text-[#b5bac1]">{{ $channel->topic }}</p>
+                @endif
+            </div>
+        </section>
+    @else
+        <section class="flex flex-1 flex-col items-center justify-center p-8 text-center">
+            <h1 class="mb-2 text-xl font-semibold text-white">No text channels</h1>
+            <p class="text-[#b5bac1]">
+                This server has no text channels yet.
+                @can('manageChannels', $server)
+                    <a href="{{ route('channels.create', $server) }}" class="text-[#00a8fc] hover:underline">Create one</a>.
+                @endcan
+            </p>
+        </section>
+    @endif
+</x-layouts.app>

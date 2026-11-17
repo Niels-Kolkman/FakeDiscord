@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Actions\Servers\UpdateServerIcon;
+use App\Support\ChannelLayout;
 use Database\Factories\ServerFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -80,7 +81,39 @@ class Server extends Model
      */
     public function channels(): HasMany
     {
-        return $this->hasMany(Channel::class)->orderBy('position');
+        return $this->hasMany(Channel::class)->orderBy('position')->orderBy('id');
+    }
+
+    /**
+     * @return HasMany<ChannelCategory, $this>
+     */
+    public function categories(): HasMany
+    {
+        return $this->hasMany(ChannelCategory::class)->orderBy('position')->orderBy('id');
+    }
+
+    /**
+     * The sidebar: uncategorised channels first, then each category with its
+     * channels, all in display order.
+     */
+    public function channelLayout(): ChannelLayout
+    {
+        $channels = $this->channels()->get();
+        $categories = $this->categories()->get();
+        $byCategory = $channels->groupBy(fn (Channel $channel): int => (int) $channel->category_id);
+
+        foreach ($categories as $category) {
+            $category->setRelation('channels', $byCategory->get($category->id, collect())->values());
+        }
+
+        // A category_id that is not one of this server's categories cannot
+        // be created through the app; list such channels as uncategorised.
+        $known = $categories->modelKeys();
+        $uncategorized = $channels
+            ->filter(fn (Channel $channel): bool => $channel->category_id === null || ! in_array($channel->category_id, $known, true))
+            ->values();
+
+        return new ChannelLayout($uncategorized, $categories);
     }
 
     /**

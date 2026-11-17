@@ -46,9 +46,18 @@ erDiagram
         timestamps timestamps
     }
 
+    channel_categories {
+        bigint id PK
+        bigint server_id FK "cascade"
+        string name
+        int position
+        timestamps timestamps
+    }
+
     channels {
         bigint id PK
         bigint server_id FK "cascade"
+        bigint category_id FK "nullable, channel_categories, set null"
         string name
         string type "text|voice|announcement"
         string topic "nullable"
@@ -154,6 +163,8 @@ erDiagram
     users ||--o{ server_members : "joins via"
     servers ||--o{ server_members : has
     servers ||--o{ channels : has
+    servers ||--o{ channel_categories : has
+    channel_categories |o--o{ channels : groups
     servers ||--o{ roles : defines
     roles ||--o{ role_user : "assigned via"
     users ||--o{ role_user : has
@@ -188,6 +199,8 @@ erDiagram
 | `messages` | `(conversation_id, created_at)` | Paging through a DM's history |
 | `messages` | `user_id`, `reply_to_id` | FK lookups and `ON DELETE` actions |
 | `channels` | `(server_id, position)` | Sidebar order |
+| `channels` | `category_id` | A category's channels; `ON DELETE SET NULL` |
+| `channel_categories` | `(server_id, position)` | Sidebar order of categories |
 | `roles` | `(server_id, position)` | Role hierarchy |
 | `server_members` | unique `(server_id, user_id)`, `user_id` | Member list / "my servers" |
 | `role_user` | PK `(role_id, user_id)`, `user_id` | A user's roles |
@@ -203,8 +216,11 @@ column of a composite one.
 
 ## Delete behaviour
 
-- **Deleting a server** also deletes its channels, roles, members, invites, bans
-  and, through channels, its messages with their attachments and reactions.
+- **Deleting a server** also deletes its channels, channel categories, roles,
+  members, invites, bans and, through channels, its messages with their
+  attachments and reactions.
+- **Deleting a channel category** keeps its channels: `category_id` is set to
+  NULL (the app also moves them to the bottom of the uncategorised list).
 - **Deleting a user** deletes their memberships, role assignments, reactions,
   friendships, DM participation and owned servers. Their **messages stay**, with
   `user_id` set to NULL (shown as "Deleted User"). Invites they created and bans
@@ -218,6 +234,9 @@ A CHECK constraint or partial index would need raw SQL that only works on one
 database, so these rules live in the app layer (validation, model events or policies):
 
 - A message has **exactly one** of `channel_id` or `conversation_id`.
+- `channels.category_id` points at a category of the **same** server.
+  `channels.position` and `channel_categories.position` order items within their
+  group (a category, or the uncategorised channels).
 - `role_user`: the user must be a member of the role's server. Each server has
   exactly one `is_default` role.
 - `friendships`: the reverse pair (B→A when A→B already exists) is not allowed.

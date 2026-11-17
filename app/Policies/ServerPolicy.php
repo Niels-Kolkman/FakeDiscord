@@ -50,6 +50,15 @@ class ServerPolicy
     }
 
     /**
+     * Discord's "Manage Channels": create, rename, reorder and delete
+     * channels and categories.
+     */
+    public function manageChannels(User $user, Server $server): bool
+    {
+        return $server->isOwnedBy($user);
+    }
+
+    /**
      * See and revoke every invite of the server, not only your own.
      */
     public function manageInvites(User $user, Server $server): bool

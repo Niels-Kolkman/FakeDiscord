@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Ban;
 use App\Models\Channel;
+use App\Models\ChannelCategory;
 use App\Models\Conversation;
 use App\Models\Friendship;
 use App\Models\Invite;
@@ -157,13 +158,25 @@ class DemoSeeder extends Seeder
         // One non-owner moderator per server.
         $moderator->users()->attach($members->first(fn (User $u) => ! $u->is($owner)));
 
-        foreach ($channels as $position => [$channelName, $type, $topic]) {
+        // Like a fresh Discord server: announcements on top, then a "Text
+        // Channels" and a "Voice Channels" category (ISSUE-12).
+        $categories = [
+            Channel::TYPE_TEXT => ChannelCategory::factory()->create(['server_id' => $server->id, 'name' => 'Text Channels', 'position' => 0]),
+            Channel::TYPE_VOICE => ChannelCategory::factory()->create(['server_id' => $server->id, 'name' => 'Voice Channels', 'position' => 1]),
+        ];
+        $positions = [];
+
+        foreach ($channels as [$channelName, $type, $topic]) {
+            $categoryId = isset($categories[$type]) ? $categories[$type]->id : null;
+            $positions[$categoryId ?? 0] ??= 0;
+
             Channel::factory()->create([
                 'server_id' => $server->id,
+                'category_id' => $categoryId,
                 'name' => $channelName,
                 'type' => $type,
                 'topic' => $topic,
-                'position' => $position,
+                'position' => $positions[$categoryId ?? 0]++,
             ]);
         }
 

@@ -220,8 +220,8 @@ Users with a verified email address manage servers under `/servers`
   creates, in one transaction, the server with the creator as `owner_id`, the
   owner's `server_members` row, the default `@everyone` role and a `#general`
   text channel.
-- **Open** (`/servers/{id}`): members only. For now this is a placeholder page
-  that lists the channels.
+- **Open** (`/servers/{id}`): members only. Shows the channel sidebar and
+  opens the first text channel (see [Channels and categories](#channels-and-categories)).
 - **Settings** (`/servers/{id}/settings`): the owner can rename the server and
   replace or remove the icon. A failed icon upload also rolls back the rename.
 - **Delete**: the owner types the server name to confirm. Channels, messages,
@@ -235,6 +235,51 @@ Users with a verified email address manage servers under `/servers`
 - **Authorisation** is in `App\Policies\ServerPolicy`: `create` needs a
   verified email, `view` needs membership, and `update` and `delete` are owner
   only until role permissions arrive (ISSUE-26).
+
+## Channels and categories
+
+A server's sidebar lists its uncategorised channels first, then its
+**categories** (`channel_categories`), each with its own channels. Members can
+open any channel at `/servers/{id}/channels/{channel}`. The header shows the
+channel name and **topic**. Everything else needs
+`ServerPolicy::manageChannels`, which is owner only until role permissions
+arrive (ISSUE-26).
+
+- **Create channel** (`/servers/{id}/channels/create`, optional `?category={id}`):
+  name, optional topic (up to 1024 characters) and optional category. Text
+  channel names are normalised like Discord by `Channel::normalizeName()`:
+  lower case, whitespace becomes `-`, only letters, digits, `-` and `_` are kept
+  ("My Cool Chat!" → `my-cool-chat`). New channels go to the bottom of their
+  group. A server can have at most 500 channels.
+- **Channel settings** (`/servers/{id}/channels/{channel}/settings`): rename,
+  change or clear the topic, move to another category (it goes to the bottom of
+  that category), or delete. Deleting removes the channel's messages. Invites
+  that pointed at it stay, with no channel. Voice channels keep spaces and
+  capitals in their names and have no topic.
+- **Categories** (`/servers/{id}/categories/create` and
+  `/servers/{id}/categories/{category}/settings`): create, rename (up to 100
+  characters) and delete. Deleting a category keeps its channels and moves them,
+  in order, to the bottom of the uncategorised list. A server can have at most
+  50 categories.
+- **Collapsing**: click a category name to collapse or expand it. The collapsed
+  categories are remembered per server in the browser's `localStorage`. A
+  collapsed category still shows the channel you have open.
+- **Reordering** (`resources/js/channel-sidebar.js`): managers can drag
+  channels within or between categories, and drag categories. Or focus a
+  channel or category and press <kbd>Alt</kbd>+<kbd>↑</kbd>/<kbd>↓</kbd>. Each
+  change sends the whole sidebar to `PUT /servers/{id}/layout`:
+
+  ```json
+  {"uncategorized": [1, 2], "categories": [{"id": 3, "channels": [4, 5]}]}
+  ```
+
+  `App\Actions\Channels\ReorderChannels` accepts it only if it names every
+  channel and category of the server exactly once. Otherwise (another tab
+  added or deleted one in the meantime) it answers 422 and the sidebar asks you
+  to reload, so a stale order never overwrites a newer one.
+
+Changes made by other users show up after a reload. Live sidebar updates over
+Reverb are not part of this feature.
 
 ## Invites
 

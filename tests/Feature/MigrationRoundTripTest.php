@@ -19,7 +19,7 @@ class MigrationRoundTripTest extends TestCase
     private const DOMAIN_TABLES = [
         'servers', 'server_members', 'channels', 'messages', 'message_attachments',
         'reactions', 'friendships', 'conversations', 'conversation_participants',
-        'roles', 'role_user', 'invites', 'bans',
+        'roles', 'role_user', 'invites', 'bans', 'channel_categories',
     ];
 
     private string $databasePath;
