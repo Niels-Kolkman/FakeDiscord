@@ -1,6 +1,7 @@
 // ISSUE-19: attachment helpers of the channel page. Run with `npm test`
-// (node --test, no deps). The DOM rendering is covered by the Blade tests
-// (tests/Feature/Messages/AttachmentTest.php); these are the pure parts.
+// (node --test, no deps). The Blade markup is covered by
+// tests/Feature/Messages/AttachmentTest.php; renderAttachments() is
+// checked here against a minimal fake DOM.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
@@ -8,6 +9,7 @@ import {
     formatSize,
     previewSize,
     queueFiles,
+    renderAttachments,
     uploadErrorMessage,
 } from '../../resources/js/channel-messages.js';
 
@@ -63,6 +65,148 @@ test('queueFiles accepts a FileList-like iterable or nothing', () => {
     assert.deepEqual(queueFiles([], null, limits), { files: [], error: null });
     const set = new Set([file('x.txt')]);
     assert.equal(queueFiles([], set, limits).files.length, 1);
+});
+
+// --- renderAttachments, with a minimal fake DOM -----------------------
+//
+// Just enough of `document` for el(): nodes record textContent and
+// attributes. innerHTML throws, so a test fails loudly if the renderer
+// ever tried to parse a file name as HTML.
+
+function fakeNode(tag) {
+    return {
+        tagName: tag.toUpperCase(),
+        className: '',
+        textContent: '',
+        dataset: {},
+        attributes: {},
+        children: [],
+        setAttribute(name, value) { this.attributes[name] = String(value); },
+        appendChild(child) { this.children.push(child); return child; },
+        append(...children) { this.children.push(...children); },
+        get innerHTML() { throw new Error('innerHTML must not be used'); },
+        set innerHTML(_) { throw new Error('innerHTML must not be used'); },
+    };
+}
+
+function withFakeDocument(fn) {
+    const previous = globalThis.document;
+    globalThis.document = { createElement: fakeNode };
+    try {
+        return fn();
+    } finally {
+        if (previous === undefined) delete globalThis.document;
+        else globalThis.document = previous;
+    }
+}
+
+const find = (node, predicate) => {
+    if (predicate(node)) return node;
+    for (const child of node.children ?? []) {
+        const hit = find(child, predicate);
+        if (hit) return hit;
+    }
+    return null;
+};
+const byTag = (tag) => (node) => node.tagName === tag;
+
+const imagePayload = {
+    id: 1,
+    name: 'cat.png',
+    size: 2048,
+    mime_type: 'image/png',
+    is_image: true,
+    width: 1600,
+    height: 600,
+    url: '/attachments/1/cat.png?expires=1&signature=a',
+    download_url: '/attachments/1/cat.png?download=1&expires=1&signature=b',
+};
+const filePayload = {
+    id: 2,
+    name: 'report.pdf',
+    size: 1536 * 1024,
+    mime_type: 'application/pdf',
+    is_image: false,
+    width: null,
+    height: null,
+    url: '/attachments/2/report.pdf?expires=1&signature=c',
+    download_url: '/attachments/2/report.pdf?download=1&expires=1&signature=d',
+};
+
+test('renderAttachments returns null without attachments', () => {
+    withFakeDocument(() => {
+        assert.equal(renderAttachments(undefined), null);
+        assert.equal(renderAttachments(null), null);
+        assert.equal(renderAttachments([]), null);
+        assert.equal(renderAttachments('nope'), null);
+    });
+});
+
+test('renderAttachments shows images as a sized, lazy preview with a download link', () => {
+    const list = withFakeDocument(() => renderAttachments([imagePayload]));
+
+    assert.equal(list.tagName, 'UL');
+    assert.equal(list.attributes['aria-label'], 'Attachments');
+    assert.ok('messageAttachments' in list.dataset);
+    assert.equal(list.children.length, 1);
+
+    const item = list.children[0];
+    assert.ok('attachmentImage' in item.dataset);
+
+    const img = find(item, byTag('IMG'));
+    assert.equal(img.src, imagePayload.url);
+    assert.equal(img.alt, 'cat.png');
+    assert.equal(img.loading, 'lazy');
+    assert.equal(img.width, 400);
+    assert.equal(img.height, 150);
+
+    const [open, download] = item.children;
+    assert.equal(open.href, imagePayload.url);
+    assert.equal(open.target, '_blank');
+    assert.equal(open.rel, 'noopener');
+    assert.equal(download.href, imagePayload.download_url);
+    assert.ok('attachmentDownload' in download.dataset);
+});
+
+test('renderAttachments leaves the size off images without dimensions', () => {
+    const list = withFakeDocument(() => renderAttachments([{ ...imagePayload, width: null, height: null }]));
+    const img = find(list, byTag('IMG'));
+
+    assert.equal(img.width, undefined);
+    assert.equal(img.height, undefined);
+});
+
+test('renderAttachments shows other files as a card linking to the download URL', () => {
+    const list = withFakeDocument(() => renderAttachments([filePayload]));
+    const item = list.children[0];
+
+    assert.ok('attachmentFile' in item.dataset);
+    assert.equal(find(item, byTag('IMG')), null);
+
+    const link = find(item, byTag('A'));
+    assert.equal(link.href, filePayload.download_url);
+    assert.equal(link.textContent, 'report.pdf');
+    assert.ok(find(item, (node) => node.textContent === '1.5 MB'));
+});
+
+test('renderAttachments keeps the order and mixes previews and cards', () => {
+    const list = withFakeDocument(() => renderAttachments([filePayload, imagePayload, filePayload]));
+
+    assert.deepEqual(
+        list.children.map((item) => ('attachmentImage' in item.dataset ? 'image' : 'file')),
+        ['file', 'image', 'file'],
+    );
+});
+
+test('renderAttachments inserts file names as text, never as HTML', () => {
+    const name = '<img src=x onerror=alert(1)>.pdf';
+    const list = withFakeDocument(() => renderAttachments([
+        { ...filePayload, name },
+        { ...imagePayload, name: '"><script>alert(1)</script>.png' },
+    ]));
+
+    assert.equal(find(list.children[0], byTag('A')).textContent, name);
+    assert.equal(find(list.children[1], byTag('IMG')).alt, '"><script>alert(1)</script>.png');
 });
 
 test('uploadErrorMessage prefers the text error, then the first file error', () => {
