@@ -153,6 +153,106 @@ class RegistrationTest extends TestCase
             ->assertDontSee('secret-password');
     }
 
+    public function test_emails_are_stored_lowercase(): void
+    {
+        $this->post('/register', $this->validPayload(['email' => 'Niels@Example.TEST']));
+
+        $this->assertDatabaseHas('users', ['email' => 'niels@example.test']);
+    }
+
+    public function test_email_uniqueness_is_case_insensitive(): void
+    {
+        User::factory()->create(['email' => 'niels@example.test']);
+
+        $this->post('/register', $this->validPayload(['email' => 'NIELS@example.test']))
+            ->assertSessionHasErrors('email');
+
+        $this->assertSame(1, User::count());
+    }
+
+    public function test_username_collision_is_detected_after_trimming(): void
+    {
+        User::factory()->create(['username' => 'niels']);
+
+        $this->post('/register', $this->validPayload(['username' => '  Niels  ']))
+            ->assertSessionHasErrors('username');
+
+        $this->assertSame(1, User::count());
+    }
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function validUsernames(): array
+    {
+        return [
+            'minimum length' => ['ab'],
+            'maximum length' => [str_repeat('a', 32)],
+            'digits only' => ['1234'],
+            'underscore' => ['niels_k'],
+            'period' => ['niels.k'],
+        ];
+    }
+
+    #[DataProvider('validUsernames')]
+    public function test_valid_usernames_are_accepted(string $username): void
+    {
+        $this->post('/register', $this->validPayload(['username' => $username]))
+            ->assertSessionHasNoErrors()
+            ->assertRedirect('/dashboard');
+
+        $this->assertDatabaseHas('users', ['username' => $username]);
+    }
+
+    public function test_name_longer_than_255_characters_is_rejected(): void
+    {
+        $this->post('/register', $this->validPayload(['name' => str_repeat('a', 256)]))
+            ->assertSessionHasErrors('name');
+
+        $this->assertSame(0, User::count());
+    }
+
+    public function test_non_string_username_is_rejected_without_crashing(): void
+    {
+        $payload = $this->validPayload();
+        $payload['username'] = ['niels'];
+
+        $this->post('/register', $payload)
+            ->assertSessionHasErrors('username');
+
+        $this->assertSame(0, User::count());
+    }
+
+    public function test_invalid_username_shows_the_custom_message(): void
+    {
+        $this->followingRedirects()
+            ->from('/register')
+            ->post('/register', $this->validPayload(['username' => 'niels!']))
+            ->assertSee('The username may only contain lowercase letters, numbers, underscores and periods.');
+    }
+
+    public function test_registration_regenerates_the_session(): void
+    {
+        $this->get('/register');
+        $before = session()->getId();
+
+        $this->post('/register', $this->validPayload());
+
+        $this->assertNotSame($before, session()->getId());
+    }
+
+    public function test_extra_fields_cannot_be_mass_assigned(): void
+    {
+        $this->post('/register', $this->validPayload([
+            'remember_token' => 'injected-token',
+            'email_verified_at' => '2020-01-01 00:00:00',
+        ]));
+
+        $user = User::where('username', 'niels')->sole();
+        $this->assertNotSame('injected-token', $user->remember_token);
+        $this->assertNull($user->email_verified_at);
+    }
+
     public function test_logged_in_users_cannot_see_the_registration_screen(): void
     {
         $this->actingAs(User::factory()->create())
