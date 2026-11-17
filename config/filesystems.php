@@ -30,6 +30,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Server Icon Disk
+    |--------------------------------------------------------------------------
+    |
+    | Disk that uploaded server icons (resized 256x256 PNGs) are stored on.
+    | Like the avatar disk it must be publicly readable.
+    |
+    */
+
+    'server_icon_disk' => env('SERVER_ICON_DISK', 'public'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Filesystem Disks
     |--------------------------------------------------------------------------
     |
