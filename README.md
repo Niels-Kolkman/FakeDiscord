@@ -62,7 +62,8 @@ The browser connects with Laravel Echo + `pusher-js` (`resources/js/echo.js`).
 - `.env.example` sets `BROADCAST_CONNECTION=reverb` and local `REVERB_*` credentials.
   `VITE_REVERB_*` passes them to the frontend. Restart `npm run dev` after you change them.
   In production, set your own random `REVERB_APP_KEY` / `REVERB_APP_SECRET`.
-- Private channel rules live in `routes/channels.php`.
+- Private channel rules live in `routes/channels.php`. Channel messages use
+  `channel.{id}` (see [Messages](#messages)).
 
 ### Smoke test
 
@@ -305,6 +306,40 @@ arrive (ISSUE-26).
 
 Changes made by other users show up after a reload. Live sidebar updates over
 Reverb are not part of this feature.
+
+## Messages
+
+An open text channel shows its newest 50 messages (`App\Support\MessageFeed`),
+oldest at the top, with a composer below. Loading older messages is ISSUE-15.
+Voice channels have no messages.
+
+- **Sending**: any server member may post (`ServerPolicy::sendMessages`) with
+  `POST /servers/{id}/channels/{channel}/messages`, field `content`. The content is
+  trimmed, required and at most 2000 characters. Sending is limited to 30
+  messages per minute. <kbd>Enter</kbd> sends and <kbd>Shift</kbd>+<kbd>Enter</kbd>
+  adds a new line. The composer (`resources/js/channel-messages.js`) posts JSON
+  and gets back `201 {"message": {...}}`. Without JavaScript, the form posts
+  normally and redirects back to the channel.
+- **Receiving**: `App\Actions\Messages\SendMessage` stores the message and
+  broadcasts `App\Events\MessageSent` (as `message.sent`) on the private channel
+  `channel.{id}`. Everyone viewing the channel gets it right away. The sender's
+  own socket is skipped (`X-Socket-ID`), because the sender already has the
+  message from the response. The event uses `ShouldBroadcastNow`, so no queue
+  worker is needed. If Reverb is down, the message is still saved and the error
+  is reported; others see the message after a reload.
+- **Authorisation**: `routes/channels.php` lets only members of the channel's
+  server subscribe to `channel.{id}`. This is checked when the browser
+  subscribes. A user who leaves the server keeps an open subscription until they
+  reload.
+
+The broadcast payload is the same as the JSON response (`Message::toPayload()`):
+
+```json
+{"id": 1, "channel_id": 1, "content": "Hello!", "created_at": "2026-11-17T12:00:00+00:00",
+ "author": {"id": 1, "name": "Test User", "username": "test", "avatar_url": "...", "profile_url": "..."}}
+```
+
+`author` is `null` for messages of deleted accounts, which show as "Deleted User".
 
 ## Invites
 
