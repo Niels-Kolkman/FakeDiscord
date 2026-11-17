@@ -131,7 +131,36 @@ The Blade views are in `resources/views/auth`.
   writes the email to `storage/logs/laravel.log`.
 
 Fortify's other features (two-factor auth, passkeys, profile and password
-updates, email verification) are off in `config/fortify.php`.
+updates) are off in `config/fortify.php`.
+
+### Email verification
+
+`App\Models\User` implements `MustVerifyEmail`, and Fortify's
+`emailVerification` feature is on.
+
+- After registering, users get an email with a signed verification link. The
+  link is valid for 60 minutes. Users can log in and see `/dashboard` before
+  they verify, and the dashboard shows a reminder until they do.
+- `/email/verify` shows the "verify your email" page with a resend button
+  (`POST /email/verification-notification`, limited to 6 per minute). The link
+  goes to `/email/verify/{id}/{hash}`. Users must be logged in as the same user
+  to open it.
+- Routes that need a verified email, such as joining a server, go in the
+  `['auth', 'verified']` group in `routes/web.php`. Unverified users who open
+  them are redirected to `/email/verify`. JSON requests get a 403 instead.
+
+To read the emails locally, use one of these:
+
+- **Log driver (default):** with `MAIL_MAILER=log`, the email, including the
+  verification link, is written to `storage/logs/laravel.log`. `composer dev`
+  also shows it in the `logs` pane.
+- **Mailpit:** start [Mailpit](https://mailpit.axllent.org/) (for example
+  `mailpit`, or `docker run -p 8025:8025 -p 1025:1025 axllent/mailpit`), then set
+  `MAIL_MAILER=smtp`, `MAIL_HOST=127.0.0.1` and `MAIL_PORT=1025` in `.env` and
+  run `php artisan config:clear`. Open http://localhost:8025 to see the inbox.
+
+To verify a user by hand, for example a demo account, run:
+`php artisan tinker --execute="App\Models\User::where('email', 'you@example.test')->first()->markEmailAsVerified();"`
 
 ## Frontend
 
