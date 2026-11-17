@@ -60,6 +60,15 @@ class ServerPolicy
     }
 
     /**
+     * Discord's "Manage Messages": delete other members' messages (ISSUE-16).
+     * The moderator permission; owner only until ISSUE-26 adds roles.
+     */
+    public function manageMessages(User $user, Server $server): bool
+    {
+        return $server->isOwnedBy($user);
+    }
+
+    /**
      * Discord's "Manage Channels": create, rename, reorder and delete
      * channels and categories.
      */
