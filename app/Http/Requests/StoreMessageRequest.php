@@ -9,6 +9,7 @@ use App\Models\Server;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\File;
 use Illuminate\Validation\Validator;
 
@@ -19,6 +20,9 @@ use Illuminate\Validation\Validator;
  * `attachments[]` (multipart), each at most MAX_KILOBYTES and one of
  * ALLOWED_EXTENSIONS, by name and by contents. With files the text is
  * optional, like on Discord.
+ *
+ * Replies (ISSUE-20): `reply_to_id` is the message being answered. It must
+ * be a message of this channel that has not been deleted.
  */
 class StoreMessageRequest extends FormRequest
 {
@@ -43,6 +47,13 @@ class StoreMessageRequest extends FormRequest
     {
         return [
             'content' => ['nullable', 'required_without:attachments', 'string', 'max:'.Message::MAX_CONTENT_LENGTH],
+            'reply_to_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('messages', 'id')
+                    ->where('channel_id', $this->channel()->id)
+                    ->whereNull('deleted_at'),
+            ],
             'attachments' => ['sometimes', 'array', 'max:'.MessageAttachment::MAX_FILES],
             'attachments.*' => [
                 'required',
@@ -63,6 +74,8 @@ class StoreMessageRequest extends FormRequest
         return [
             'content.required_without' => 'Type a message first.',
             'content.max' => 'Messages can be at most :max characters long.',
+            'reply_to_id.integer' => 'The message you are replying to does not exist.',
+            'reply_to_id.exists' => 'The message you are replying to was deleted.',
             'attachments.array' => 'Attach files to upload them.',
             'attachments.max' => 'You can attach at most :max files to a message.',
             'attachments.*.required' => 'One of the files could not be uploaded.',
@@ -132,6 +145,17 @@ class StoreMessageRequest extends FormRequest
     public function content(): string
     {
         return $this->string('content')->value();
+    }
+
+    /**
+     * The message being replied to, or NULL. Validated to be a message of
+     * this channel.
+     */
+    public function replyTo(): ?Message
+    {
+        $id = $this->integer('reply_to_id');
+
+        return $id > 0 ? $this->channel()->messages()->find($id) : null;
     }
 
     /**

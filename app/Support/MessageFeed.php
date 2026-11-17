@@ -57,7 +57,7 @@ final readonly class MessageFeed
         // ?before= from the current request unvalidated. No message id is
         // ever PHP_INT_MAX, so this cursor means "start at the newest".
         $page = $channel->messages()
-            ->with(['author', 'attachments', ...Reactions::relations()])
+            ->with(['author', 'attachments', ...Reactions::relations(), ...Message::replyRelations()])
             ->orderByDesc('id')
             ->cursorPaginate($limit, ['*'], self::CURSOR, $before ?? new Cursor(['id' => PHP_INT_MAX]));
 

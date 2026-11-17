@@ -18,7 +18,12 @@ use Illuminate\Support\Carbon;
  * Deleting a message soft deletes it (ISSUE-16): every query hides it, but
  * the row stays so replies keep pointing at it.
  *
+ * Replies (ISSUE-20) point at the original with reply_to_id; the payload
+ * carries a short preview of it (replyPreview()). Pinned messages have a
+ * pinned_at (and pinned_by_id, who pinned them).
+ *
  * @property Carbon|null $edited_at NULL = never edited
+ * @property Carbon|null $pinned_at NULL = not pinned
  */
 class Message extends Model
 {
@@ -27,6 +32,12 @@ class Message extends Model
 
     /** Discord's limit for a message without Nitro. */
     public const MAX_CONTENT_LENGTH = 2000;
+
+    /** Discord's limit of pinned messages per channel. */
+    public const MAX_PINS_PER_CHANNEL = 50;
+
+    /** Length of the quoted original above a reply. */
+    public const REPLY_PREVIEW_LENGTH = 100;
 
     /**
      * @var list<string>
@@ -47,6 +58,7 @@ class Message extends Model
     {
         return [
             'edited_at' => 'datetime',
+            'pinned_at' => 'datetime',
         ];
     }
 
@@ -92,6 +104,107 @@ class Message extends Model
         return $this->edited_at !== null;
     }
 
+    public function isPinned(): bool
+    {
+        return $this->pinned_at !== null;
+    }
+
+    /**
+     * Who pinned the message; NULL when not pinned or the account is gone.
+     *
+     * @return BelongsTo<User, $this>
+     */
+    public function pinnedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'pinned_by_id');
+    }
+
+    /**
+     * Relations the reply preview reads, for eager loading. The original's
+     * attachments are only counted: a reply to a file-only message says so.
+     *
+     * @return array<int|string, \Closure|string>
+     */
+    public static function replyRelations(): array
+    {
+        return [
+            'replyTo' => fn (BelongsTo $query) => $query->withCount('attachments'),
+            'replyTo.author',
+        ];
+    }
+
+    /**
+     * The quoted original above a reply: NULL when this is not a reply,
+     * ['deleted' => true] when the original is gone (soft deleted, or its
+     * row removed). The content is cut to REPLY_PREVIEW_LENGTH characters.
+     *
+     * @return array{id: int|null, deleted: bool, author: array{id: int, name: string}|null, content: string, has_attachments: bool}|null
+     */
+    public function replyPreview(): ?array
+    {
+        if ($this->reply_to_id === null) {
+            return null;
+        }
+
+        if (! $this->relationLoaded('replyTo')) {
+            $this->load(self::replyRelations());
+        }
+
+        $original = $this->replyTo;
+
+        if ($original === null) {
+            return [
+                'id' => (int) $this->reply_to_id,
+                'deleted' => true,
+                'author' => null,
+                'content' => '',
+                'has_attachments' => false,
+            ];
+        }
+
+        $hasAttachments = isset($original->attachments_count)
+            ? (int) $original->attachments_count > 0
+            : $original->hasAttachments();
+
+        return [
+            'id' => (int) $original->id,
+            'deleted' => false,
+            'author' => $original->author === null ? null : [
+                'id' => (int) $original->author->id,
+                'name' => $original->author->name,
+            ],
+            'content' => self::excerpt((string) $original->content),
+            'has_attachments' => $hasAttachments,
+        ];
+    }
+
+    /**
+     * The text quoted above a reply: the excerpt, or a hint for a message
+     * that only has files. Like previewText() in channel-messages.js.
+     *
+     * @param  array{content: string, has_attachments: bool}  $preview  replyPreview()
+     */
+    public static function previewText(array $preview): string
+    {
+        if ($preview['content'] !== '') {
+            return $preview['content'];
+        }
+
+        return $preview['has_attachments'] ? __('Click to see attachment') : '';
+    }
+
+    /**
+     * One line of at most REPLY_PREVIEW_LENGTH characters.
+     */
+    public static function excerpt(string $content): string
+    {
+        $line = trim((string) preg_replace('/\s+/u', ' ', $content));
+
+        return mb_strlen($line) > self::REPLY_PREVIEW_LENGTH
+            ? rtrim(mb_substr($line, 0, self::REPLY_PREVIEW_LENGTH - 1)).'…'
+            : $line;
+    }
+
     /**
      * The JSON a browser gets for a message: in the MessageSent and
      * MessageUpdated broadcasts and in the responses to the author.
@@ -101,8 +214,9 @@ class Message extends Model
      * `reactions` are the grouped reactions (App\Support\Reactions::groups());
      * with a $viewer each group also says whether they reacted (`me`).
      * `attachments` (ISSUE-19) carry signed URLs (MessageAttachment::toPayload()).
+     * `reply_to` (ISSUE-20) is replyPreview(); `pinned_at` is NULL unless pinned.
      *
-     * @return array{id: int, channel_id: int|null, content: string, created_at: string|null, edited_at: string|null, author: array{id: int, name: string, username: string, avatar_url: string, profile_url: string}|null, reactions: list<array<string, mixed>>, attachments: list<array<string, mixed>>}
+     * @return array{id: int, channel_id: int|null, content: string, created_at: string|null, edited_at: string|null, pinned_at: string|null, author: array{id: int, name: string, username: string, avatar_url: string, profile_url: string}|null, reply_to: array<string, mixed>|null, reactions: list<array<string, mixed>>, attachments: list<array<string, mixed>>}
      */
     public function toPayload(?User $viewer = null): array
     {
@@ -122,6 +236,7 @@ class Message extends Model
             'content' => (string) $this->content,
             'created_at' => $this->created_at?->toIso8601String(),
             'edited_at' => $this->edited_at?->toIso8601String(),
+            'pinned_at' => $this->pinned_at?->toIso8601String(),
             'author' => $author === null ? null : [
                 'id' => (int) $author->id,
                 'name' => $author->name,
@@ -129,6 +244,7 @@ class Message extends Model
                 'avatar_url' => $author->avatarUrl(),
                 'profile_url' => route('users.profile', $author),
             ],
+            'reply_to' => $this->replyPreview(),
             'reactions' => Reactions::groups($this, $viewer === null ? null : (int) $viewer->id),
             'attachments' => $this->attachments
                 ->map(fn (MessageAttachment $attachment): array => $attachment->toPayload())

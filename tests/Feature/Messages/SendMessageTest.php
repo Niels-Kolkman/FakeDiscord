@@ -124,6 +124,7 @@ class SendMessageTest extends TestCase
             'content' => 'Hello, world!',
             'created_at' => '2026-03-04T05:06:07+00:00',
             'edited_at' => null,
+            'pinned_at' => null,
             'author' => [
                 'id' => $this->member->id,
                 'name' => 'Member',
@@ -131,6 +132,7 @@ class SendMessageTest extends TestCase
                 'avatar_url' => $this->member->avatarUrl(),
                 'profile_url' => route('users.profile', $this->member),
             ],
+            'reply_to' => null,
             'reactions' => [],
             'attachments' => [],
         ]]);

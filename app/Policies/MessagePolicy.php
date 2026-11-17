@@ -46,6 +46,19 @@ class MessagePolicy
         return $this->isMember($user, $message);
     }
 
+    /**
+     * Pinning and unpinning (ISSUE-20) needs Discord's "Manage Messages"
+     * (ServerPolicy::manageMessages), on anyone's message.
+     */
+    public function pin(User $user, Message $message): bool
+    {
+        $server = $message->channel?->server;
+
+        return $server !== null
+            && $this->isMember($user, $message)
+            && $user->can('manageMessages', $server);
+    }
+
     private function isAuthor(User $user, Message $message): bool
     {
         return $message->user_id !== null && (int) $message->user_id === (int) $user->id;

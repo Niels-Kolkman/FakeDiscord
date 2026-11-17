@@ -24,13 +24,15 @@ use Throwable;
  * kept in the database. Files go first and the rows in one transaction
  * with the message, so a failure leaves neither a half message nor
  * stray files behind.
+ *
+ * A reply (ISSUE-20) stores reply_to_id; the payload quotes the original.
  */
 class SendMessage
 {
     /**
      * @param  list<UploadedFile>  $files  already validated (StoreMessageRequest)
      */
-    public function send(User $author, Channel $channel, string $content, array $files = []): Message
+    public function send(User $author, Channel $channel, string $content, array $files = [], ?Message $replyTo = null): Message
     {
         $disk = MessageAttachment::disk();
         $stored = [];
@@ -40,9 +42,10 @@ class SendMessage
                 $stored[] = $this->store($file, $disk, $channel);
             }
 
-            $message = DB::transaction(function () use ($author, $channel, $content, $stored): Message {
+            $message = DB::transaction(function () use ($author, $channel, $content, $stored, $replyTo): Message {
                 $message = $channel->messages()->create([
                     'user_id' => $author->id,
+                    'reply_to_id' => $replyTo?->id,
                     'content' => $content,
                 ]);
 
@@ -59,6 +62,9 @@ class SendMessage
         }
 
         $message->setRelation('author', $author);
+        if ($replyTo !== null) {
+            $message->load(Message::replyRelations());
+        }
         // A new message has no reactions; saves toPayload() a query.
         $message->setRelation('reactions', $message->reactions()->getRelated()->newCollection());
 
