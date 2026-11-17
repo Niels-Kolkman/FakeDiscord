@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AccountSettingsController;
+use App\Http\Controllers\AttachmentController;
 use App\Http\Controllers\ChannelCategoryController;
 use App\Http\Controllers\ChannelController;
 use App\Http\Controllers\ChannelLayoutController;
@@ -23,6 +24,18 @@ Route::get('/', function () {
 // Auth routes (register, login, logout, password reset, email verification)
 // are registered by Fortify.
 Route::view('/dashboard', 'dashboard')->middleware('auth')->name('dashboard');
+
+// Message attachments (ISSUE-19). Only reachable through the temporary
+// signed links in Message::toPayload() and messages/item.blade.php; the
+// signature is the access check, so no session is needed (like a CDN
+// link). {filename} is only there so saved files get a sensible name.
+// {id} is not model bound: binding runs before `signed`, and a 404 for
+// unknown ids would tell anyone which attachments exist.
+Route::get('/attachments/{id}/{filename}', [AttachmentController::class, 'show'])
+    // One page can show 50 messages with 5 images each.
+    ->middleware(['signed', 'throttle:600,1'])
+    ->where(['id' => '[0-9]+', 'filename' => '[^/]+'])
+    ->name('attachments.show');
 
 // Account settings (ISSUE-9). Only `auth`, not `verified`: a user with a
 // mistyped address must be able to fix it. Every change re-asks for the

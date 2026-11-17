@@ -6,6 +6,7 @@ use App\Actions\Servers\CreateServer;
 use App\Actions\Servers\UpdateServerIcon;
 use App\Http\Requests\StoreServerRequest;
 use App\Http\Requests\UpdateServerRequest;
+use App\Models\MessageAttachment;
 use App\Models\Server;
 use App\Models\ServerMember;
 use App\Models\User;
@@ -113,6 +114,9 @@ class ServerController extends Controller
         }
 
         $iconPath = $server->icon_path;
+        /** @var list<int> $channelIds */
+        $channelIds = $server->channels()->pluck('id')->map(fn (mixed $id): int => (int) $id)->all();
+        $attachmentFiles = MessageAttachment::filesInChannels($channelIds);
 
         // Child rows go through ON DELETE CASCADE.
         DB::transaction(fn () => $server->delete());
@@ -120,6 +124,7 @@ class ServerController extends Controller
         if ($iconPath !== null) {
             Storage::disk(UpdateServerIcon::disk())->delete($iconPath);
         }
+        MessageAttachment::deleteFiles($attachmentFiles);
 
         return redirect()->route('dashboard')->with('status', "\"{$server->name}\" has been deleted.");
     }

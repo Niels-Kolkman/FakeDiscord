@@ -42,6 +42,23 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Message Attachments
+    |--------------------------------------------------------------------------
+    |
+    | Disk that files attached to messages are stored on (ISSUE-19). It does
+    | not need to be public: files are only served through signed URLs
+    | (App\Http\Controllers\AttachmentController), which expire after
+    | attachment_url_ttl minutes. Each file keeps the name of its disk, so
+    | changing the disk later keeps older files readable.
+    |
+    */
+
+    'attachment_disk' => env('ATTACHMENT_DISK', 'local'),
+
+    'attachment_url_ttl' => (int) env('ATTACHMENT_URL_TTL', 60 * 24),
+
+    /*
+    |--------------------------------------------------------------------------
     | Filesystem Disks
     |--------------------------------------------------------------------------
     |

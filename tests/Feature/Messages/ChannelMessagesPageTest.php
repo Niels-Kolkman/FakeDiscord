@@ -5,6 +5,7 @@ namespace Tests\Feature\Messages;
 use App\Actions\Servers\CreateServer;
 use App\Models\Channel;
 use App\Models\Message;
+use App\Models\MessageAttachment;
 use App\Models\Reaction;
 use App\Models\Server;
 use App\Models\ServerMember;
@@ -184,6 +185,7 @@ class ChannelMessagesPageTest extends TestCase
             $messages = Message::factory()->count(5)->inChannel($this->channel)->create(['user_id' => $author->id]);
             foreach ($messages as $message) {
                 Reaction::factory()->create(['message_id' => $message->id, 'user_id' => $author->id, 'emoji' => '👍']);
+                MessageAttachment::factory()->create(['message_id' => $message->id]);
             }
         }
 
@@ -197,8 +199,8 @@ class ChannelMessagesPageTest extends TestCase
         $this->get($this->channelUrl())->assertOk();
         $without = count(DB::getQueryLog());
 
-        // Extra queries for the authors, the reactions and the reactors,
-        // not one per message.
-        $this->assertLessThanOrEqual($without + 3, $withMessages);
+        // Extra queries for the authors, the attachments (ISSUE-19), the
+        // reactions and the reactors, not one per message.
+        $this->assertLessThanOrEqual($without + 4, $withMessages);
     }
 }

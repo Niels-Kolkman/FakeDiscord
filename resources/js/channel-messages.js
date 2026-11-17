@@ -34,12 +34,19 @@
  *   names the first reactors (reactionTooltip()). Broadcasts have no `me`,
  *   so the viewer's own state is kept from the page. The buttons are plain
  *   forms, so they also work without this script.
- * 
+ * - Attachments (ISSUE-19): ＋ in the composer, pasting or dropping files
+ *   queues up to data-max-files files (data-max-file-bytes each), listed in
+ *   [data-attachment-list] with a remove button. With files the composer
+ *   posts multipart (attachments[]) and the text is optional. Messages
+ *   show image previews (sized by previewSize(), like
+ *   MessageAttachment::previewSize()) and file cards; every link is a
+ *   temporary signed URL from the payload.
+ *
  * All user-provided text is inserted with textContent, never parsed as HTML.
  * renderMessage() must match resources/views/messages/item.blade.php.
  */
 
-import { initTypingIndicator } from './typing-indicator';
+import { initTypingIndicator } from './typing-indicator.js';
 
 const NEAR_BOTTOM_PX = 120;
 const LOAD_OLDER_PX = 400;
@@ -182,6 +189,93 @@ function fillReactions(row, groups, url, csrfToken) {
     row.hidden = row.childElementCount === 0;
 }
 
+const PREVIEW_WIDTH = 400;
+const PREVIEW_HEIGHT = 300;
+
+/**
+ * [width, height] of an image preview: scaled down (never up) to fit
+ * 400x300, like MessageAttachment::previewSize(). null when unknown.
+ */
+export function previewSize(width, height) {
+    if (!Number.isInteger(width) || !Number.isInteger(height) || width < 1 || height < 1) return null;
+    const scale = Math.min(1, PREVIEW_WIDTH / width, PREVIEW_HEIGHT / height);
+    return [Math.max(1, Math.round(width * scale)), Math.max(1, Math.round(height * scale))];
+}
+
+/**
+ * "1.5 MB", like MessageAttachment::formatSize().
+ */
+export function formatSize(bytes) {
+    if (!Number.isFinite(bytes) || bytes < 1024) return `${Math.max(0, bytes || 0)} B`;
+    const units = ['KB', 'MB', 'GB'];
+    let size = bytes / 1024;
+    let unit = 0;
+    while (size >= 1024 && unit < units.length - 1) {
+        size /= 1024;
+        unit += 1;
+    }
+    return `${size.toFixed(1).replace(/\.0$/, '')} ${units[unit]}`;
+}
+
+/**
+ * Image previews and file cards, like the attachments in
+ * messages/item.blade.php. Returns null when there are none.
+ */
+export function renderAttachments(attachments) {
+    if (!Array.isArray(attachments) || attachments.length === 0) return null;
+
+    const list = el('ul', 'mt-1 flex flex-col items-start gap-1');
+    list.setAttribute('aria-label', 'Attachments');
+    list.dataset.messageAttachments = '';
+
+    attachments.forEach((attachment) => {
+        if (attachment.is_image) {
+            const item = el('li', 'relative max-w-full');
+            item.dataset.attachment = '';
+            item.dataset.attachmentImage = '';
+
+            const link = el('a', 'block rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]');
+            link.href = attachment.url;
+            link.target = '_blank';
+            link.rel = 'noopener';
+            const img = el('img', 'h-auto max-h-[300px] max-w-full rounded bg-[#2b2d31] object-contain');
+            img.src = attachment.url;
+            img.alt = attachment.name ?? '';
+            img.loading = 'lazy';
+            const size = previewSize(attachment.width, attachment.height);
+            if (size) {
+                img.width = size[0];
+                img.height = size[1];
+            }
+            link.appendChild(img);
+
+            const download = el('a', 'absolute right-1 top-1 rounded bg-black/60 px-2 py-0.5 text-xs text-white opacity-0 hover:bg-black/80 focus:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2] [li:hover>&]:opacity-100', 'Download');
+            download.href = attachment.download_url;
+            download.dataset.attachmentDownload = '';
+            download.appendChild(el('span', 'sr-only', ` ${attachment.name ?? ''}`));
+
+            item.append(link, download);
+            list.appendChild(item);
+            return;
+        }
+
+        const item = el('li', 'flex w-full max-w-md items-center gap-3 rounded-lg border border-[#1f2023] bg-[#2b2d31] p-3');
+        item.dataset.attachment = '';
+        item.dataset.attachmentFile = '';
+        const icon = el('span', 'text-3xl', '📄');
+        icon.setAttribute('aria-hidden', 'true');
+        const details = el('span', 'min-w-0 flex-1');
+        const download = el('a', 'block truncate text-[#00a8fc] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]', attachment.name);
+        download.href = attachment.download_url;
+        download.dataset.attachmentDownload = '';
+        details.append(download, el('span', 'block text-xs text-[#949ba4]', formatSize(attachment.size)));
+        item.append(icon, details);
+        list.appendChild(item);
+    });
+
+    return list;
+}
+
 function renderReactionPicker(url, context) {
     const picker = el('details', 'relative');
     picker.dataset.reactionPicker = '';
@@ -285,6 +379,8 @@ export function renderMessage(message, context = {}) {
     applyEdited(edited, message.edited_at);
     text.appendChild(edited);
     body.appendChild(text);
+    const attachments = renderAttachments(message.attachments);
+    if (attachments) body.appendChild(attachments);
     body.appendChild(renderReactions(message.reactions, item.dataset.reactionsUrl, context.csrfToken));
 
     item.appendChild(body);
@@ -295,12 +391,23 @@ export function renderMessage(message, context = {}) {
     return item;
 }
 
-function errorMessage(error) {
-    const response = error.response;
+/**
+ * The message to show when sending fails: the first validation error,
+ * text first, then the files (attachments, attachments.0, ...).
+ */
+export function uploadErrorMessage(error) {
+    const response = error?.response;
     if (response?.status === 429) return 'You are sending messages too quickly. Wait a moment and try again.';
     if (response?.status === 403) return 'You cannot send messages in this channel.';
-    return response?.data?.errors?.content?.[0] ?? 'Your message could not be sent. Try again.';
+    if (response?.status === 413) return 'Your files are too large to upload together. Send fewer at a time.';
+    const errors = response?.data?.errors ?? {};
+    if (errors.content?.[0]) return errors.content[0];
+    const fileErrors = Object.keys(errors).filter((key) => key === 'attachments' || key.startsWith('attachments.')).sort();
+    if (fileErrors.length > 0) return errors[fileErrors[0]][0];
+    return 'Your message could not be sent. Try again.';
 }
+
+const errorMessage = uploadErrorMessage;
 
 function editErrorMessage(error) {
     const response = error.response;
@@ -576,7 +683,8 @@ function initChannel(root) {
         const save = () => {
             if (saving) return;
             const content = input.value.trim();
-            if (!content) {
+            // A message with files may lose its text (UpdateMessageRequest).
+            if (!content && !item.querySelector('[data-message-attachments]')) {
                 showEditError('A message cannot be empty. Delete it instead.');
                 return;
             }
@@ -781,19 +889,93 @@ function initChannel(root) {
         }
     });
 
+    // --- Attachments (ISSUE-19) -----------------------------------------
+    const fileInput = form.querySelector('[data-attachment-input]');
+    const fileList = form.querySelector('[data-attachment-list]');
+    const limits = {
+        maxFiles: Number(form.dataset.maxFiles) || 5,
+        maxBytes: Number(form.dataset.maxFileBytes) || 10 * 1024 * 1024,
+    };
+    let files = [];
+
+    const renderQueue = () => {
+        if (!fileList) return;
+        fileList.replaceChildren(...files.map((file, index) => {
+            const chip = el('li', 'flex max-w-60 items-center gap-2 rounded bg-[#2b2d31] px-2 py-1 text-sm text-[#dbdee1]');
+            chip.dataset.attachmentQueued = '';
+            chip.append(
+                el('span', 'truncate', file.name),
+                el('span', 'shrink-0 text-xs text-[#949ba4]', formatSize(file.size)),
+            );
+            const remove = el('button', 'shrink-0 rounded px-1 text-[#b5bac1] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]', '✕');
+            remove.type = 'button';
+            remove.setAttribute('aria-label', `Remove ${file.name}`);
+            remove.addEventListener('click', () => {
+                files = files.filter((_, i) => i !== index);
+                renderQueue();
+                showError(null);
+                input.focus();
+            });
+            chip.appendChild(remove);
+            return chip;
+        }));
+        fileList.hidden = files.length === 0;
+    };
+
+    const addFiles = (incoming) => {
+        const result = queueFiles(files, incoming, limits);
+        files = result.files;
+        renderQueue();
+        showError(result.error);
+    };
+
+    // The input only picks files; the queue is sent with FormData, so the
+    // input is emptied (and the same file can be picked again).
+    fileInput?.addEventListener('change', () => {
+        addFiles(fileInput.files);
+        fileInput.value = '';
+        input.focus();
+    });
+
+    input.addEventListener('paste', (event) => {
+        const pasted = event.clipboardData?.files;
+        if (!pasted || pasted.length === 0) return;
+        event.preventDefault();
+        addFiles(pasted);
+    });
+
+    form.addEventListener('dragover', (event) => {
+        if ([...(event.dataTransfer?.types ?? [])].includes('Files')) event.preventDefault();
+    });
+    form.addEventListener('drop', (event) => {
+        const dropped = event.dataTransfer?.files;
+        if (!dropped || dropped.length === 0) return;
+        event.preventDefault();
+        addFiles(dropped);
+    });
+
     form.addEventListener('submit', (event) => {
         event.preventDefault();
         const content = input.value.trim();
-        if (!content || sending) return;
+        if ((!content && files.length === 0) || sending) return;
 
         sending = true;
         typing?.sent();
 
+        let data = { content };
+        if (files.length > 0) {
+            data = new FormData();
+            data.append('content', content);
+            files.forEach((file) => data.append('attachments[]', file, file.name));
+        }
+
         window.axios
-            .post(form.action, { content }, { headers: socketHeaders() })
+            .post(form.action, data, { headers: socketHeaders() })
             .then((response) => {
                 append(response.data.message, true);
                 input.value = '';
+                files = [];
+                renderQueue();
                 resize();
                 showError(null);
             })
@@ -805,4 +987,33 @@ function initChannel(root) {
     });
 }
 
-document.querySelectorAll('[data-channel-messages]').forEach(initChannel);
+/**
+ * Add picked / pasted / dropped files to the composer's queue. Files over
+ * maxBytes and files past maxFiles are left out, with a message saying so
+ * (the server checks again: StoreMessageRequest).
+ *
+ * @returns {{files: File[], error: string|null}}
+ */
+export function queueFiles(current, incoming, { maxFiles, maxBytes }) {
+    const files = [...current];
+    const errors = [];
+    const megabytes = Math.round(maxBytes / (1024 * 1024));
+
+    for (const file of incoming ?? []) {
+        if (file.size > maxBytes) {
+            errors.push(`${file.name} is larger than ${megabytes} MB.`);
+        } else if (files.length >= maxFiles) {
+            errors.push(`You can attach at most ${maxFiles} files to a message.`);
+            break;
+        } else {
+            files.push(file);
+        }
+    }
+
+    return { files, error: errors.length > 0 ? errors.join(' ') : null };
+}
+
+// Guarded so tests/js can import the helpers under plain Node.
+if (typeof document !== 'undefined') {
+    document.querySelectorAll('[data-channel-messages]').forEach(initChannel);
+}

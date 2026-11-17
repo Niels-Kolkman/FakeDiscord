@@ -217,6 +217,13 @@ column of a composite one.
 
 ## Delete behaviour
 
+Attachment rows (`message_attachments`) go with their message through the
+cascade, but the files on disk do not: `ChannelController::destroy` and
+`ServerController::destroy` read the paths first and delete the files after
+the commit (`MessageAttachment::filesInChannels()` / `deleteFiles()`). Soft
+deleting a message keeps its files (the row stays), but they can no longer be
+downloaded.
+
 - **Deleting a server** also deletes its channels, channel categories, roles,
   members, invites, bans and, through channels, its messages with their
   attachments and reactions.

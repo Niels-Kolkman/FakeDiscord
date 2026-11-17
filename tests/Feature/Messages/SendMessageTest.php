@@ -132,6 +132,7 @@ class SendMessageTest extends TestCase
                 'profile_url' => route('users.profile', $this->member),
             ],
             'reactions' => [],
+            'attachments' => [],
         ]]);
     }
 

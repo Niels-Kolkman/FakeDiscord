@@ -16,6 +16,12 @@
     names the first reactors (App\Support\Reactions::tooltip()). The
     reactions are eager loaded by App\Support\MessageFeed.
 
+    Attachments (ISSUE-19): PNG / JPEG / GIF / WebP show as an inline
+    preview sized by MessageAttachment::previewSize() (so the scroll
+    position does not jump while it loads); other files as a card with a
+    download link. All links are temporary signed URLs. Eager loaded by
+    App\Support\MessageFeed too.
+
     @var \App\Models\Message $message
     @var \App\Models\Server $server
     @var \App\Models\Channel $channel
@@ -55,6 +61,40 @@
             data-message-edited
             @if ($message->isEdited()) title="Edited {{ $message->edited_at?->toIso8601String() }}" @else hidden @endif
         >(edited)</span></p>
+
+        @if ($message->attachments->isNotEmpty())
+            <ul class="mt-1 flex flex-col items-start gap-1" aria-label="Attachments" data-message-attachments>
+                @foreach ($message->attachments as $attachment)
+                    @if ($attachment->isImage())
+                        @php($preview = $attachment->previewSize())
+                        <li class="relative max-w-full" data-attachment data-attachment-image>
+                            <a href="{{ $attachment->url() }}" target="_blank" rel="noopener" class="block rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]">
+                                <img
+                                    src="{{ $attachment->url() }}"
+                                    alt="{{ $attachment->original_name }}"
+                                    loading="lazy"
+                                    @if ($preview) width="{{ $preview[0] }}" height="{{ $preview[1] }}" @endif
+                                    class="h-auto max-h-[300px] max-w-full rounded bg-[#2b2d31] object-contain"
+                                >
+                            </a>
+                            <a
+                                href="{{ $attachment->downloadUrl() }}"
+                                class="absolute right-1 top-1 rounded bg-black/60 px-2 py-0.5 text-xs text-white opacity-0 hover:bg-black/80 focus:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2] [li:hover>&]:opacity-100"
+                                data-attachment-download
+                            >Download<span class="sr-only"> {{ $attachment->original_name }}</span></a>
+                        </li>
+                    @else
+                        <li class="flex w-full max-w-md items-center gap-3 rounded-lg border border-[#1f2023] bg-[#2b2d31] p-3" data-attachment data-attachment-file>
+                            <span aria-hidden="true" class="text-3xl">📄</span>
+                            <span class="min-w-0 flex-1">
+                                <a href="{{ $attachment->downloadUrl() }}" class="block truncate text-[#00a8fc] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]" data-attachment-download>{{ $attachment->original_name }}</a>
+                                <span class="block text-xs text-[#949ba4]">{{ $attachment->humanSize() }}</span>
+                            </span>
+                        </li>
+                    @endif
+                @endforeach
+            </ul>
+        @endif
 
         <div class="mt-1 flex flex-wrap gap-1" role="group" aria-label="Reactions" data-message-reactions @if ($reactionGroups === []) hidden @endif>
             @foreach ($reactionGroups as $group)
