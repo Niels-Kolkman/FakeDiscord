@@ -5,6 +5,10 @@ includes:
 parameters:
     level: 6
 
+    # Laravel's Seeder::$command is documented as a non-null Command but is
+    # unset when a seeder runs outside artisan; don't trust PHPDoc-only types.
+    treatPhpDocTypesAsCertain: false
+
     paths:
         - app
         - bootstrap/app.php
