@@ -3,6 +3,7 @@
 namespace App\Actions\Account;
 
 use App\Models\User;
+use Illuminate\Auth\Passwords\PasswordBroker;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Validator;
@@ -48,7 +49,12 @@ class DeleteUser
             // Sign the account out everywhere (database session driver).
             DB::table('sessions')->where('user_id', $user->id)->delete();
 
-            Password::broker(config('fortify.passwords'))->deleteToken($user);
+            // Drop any pending password reset token. The facade is typed as the
+            // PasswordBroker contract; deleteToken() lives on the concrete broker.
+            $broker = Password::broker(config('fortify.passwords'));
+            if ($broker instanceof PasswordBroker) {
+                $broker->deleteToken($user);
+            }
 
             $user->delete();
         });
