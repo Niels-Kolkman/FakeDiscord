@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Actions\Servers\UpdateServerIcon;
 use App\Support\ChannelLayout;
+use App\Support\MemberList;
 use Database\Factories\ServerFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -114,6 +115,14 @@ class Server extends Model
             ->values();
 
         return new ChannelLayout($uncategorized, $categories);
+    }
+
+    /**
+     * The member sidebar, grouped by highest role and online status.
+     */
+    public function memberList(): MemberList
+    {
+        return MemberList::for($this);
     }
 
     /**

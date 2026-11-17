@@ -58,6 +58,17 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Statuses that count as online in member lists. Anything else
+     * ("offline" or an unknown value) is listed as offline.
+     */
+    public const ONLINE_STATUSES = ['online', 'idle', 'dnd'];
+
+    public function isOnline(): bool
+    {
+        return in_array($this->status, self::ONLINE_STATUSES, true);
+    }
+
+    /**
      * URL of the uploaded avatar, or a generated initials avatar (data URI)
      * when the user has not uploaded one.
      */

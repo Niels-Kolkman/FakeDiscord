@@ -7,6 +7,7 @@ use App\Actions\Servers\UpdateServerIcon;
 use App\Http\Requests\StoreServerRequest;
 use App\Http\Requests\UpdateServerRequest;
 use App\Models\Server;
+use App\Models\ServerMember;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -57,6 +58,7 @@ class ServerController extends Controller
             'server' => $server,
             'layout' => $layout,
             'channel' => $layout->defaultChannel(),
+            'members' => $server->memberList(),
         ]);
     }
 
@@ -64,7 +66,15 @@ class ServerController extends Controller
     {
         Gate::authorize('update', $server);
 
-        return view('servers.edit', ['server' => $server]);
+        // Who ownership can be transferred to: every member but the owner.
+        $candidates = $server->memberships()
+            ->where('user_id', '!=', $server->owner_id)
+            ->with('user')
+            ->get()
+            ->sortBy(fn (ServerMember $member): string => mb_strtolower($member->displayName()))
+            ->values();
+
+        return view('servers.edit', ['server' => $server, 'transferCandidates' => $candidates]);
     }
 
     public function update(UpdateServerRequest $request, Server $server, UpdateServerIcon $icons): RedirectResponse

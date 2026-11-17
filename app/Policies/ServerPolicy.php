@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\Server;
 use App\Models\User;
+use Illuminate\Auth\Access\Response;
 
 /**
  * Discovered automatically for App\Models\Server.
@@ -54,6 +55,28 @@ class ServerPolicy
      * channels and categories.
      */
     public function manageChannels(User $user, Server $server): bool
+    {
+        return $server->isOwnedBy($user);
+    }
+
+    /**
+     * Members can leave, except the owner: they must transfer ownership
+     * first, so a server is never left without an owner.
+     */
+    public function leave(User $user, Server $server): Response
+    {
+        if ($server->isOwnedBy($user)) {
+            return Response::deny('Transfer ownership to another member before leaving this server.');
+        }
+
+        return $server->hasMember($user) ? Response::allow() : Response::deny();
+    }
+
+    /**
+     * Hand the server to another member. Owner only, also once ISSUE-26
+     * adds role permissions (Discord does the same).
+     */
+    public function transferOwnership(User $user, Server $server): bool
     {
         return $server->isOwnedBy($user);
     }

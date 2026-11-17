@@ -23,6 +23,32 @@ class ServerMember extends Model
     ];
 
     /**
+     * Set by App\Support\MemberList; not stored.
+     */
+    private ?Role $highestRole = null;
+
+    /**
+     * The server nickname if set, else the user's name. Needs `user` loaded.
+     */
+    public function displayName(): string
+    {
+        return $this->nickname ?? $this->user->name;
+    }
+
+    /**
+     * The member's highest role other than @everyone, as set by MemberList.
+     */
+    public function highestRole(): ?Role
+    {
+        return $this->highestRole;
+    }
+
+    public function setHighestRole(?Role $role): void
+    {
+        $this->highestRole = $role;
+    }
+
+    /**
      * @return array<string, string>
      */
     protected function casts(): array

@@ -7,6 +7,8 @@ use App\Http\Controllers\ChannelLayoutController;
 use App\Http\Controllers\InviteController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ServerController;
+use App\Http\Controllers\ServerMembershipController;
+use App\Http\Controllers\ServerOwnershipController;
 use App\Http\Controllers\UserProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -50,6 +52,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/servers/{server}/settings', [ServerController::class, 'edit'])->name('servers.edit');
     Route::patch('/servers/{server}', [ServerController::class, 'update'])->name('servers.update');
     Route::delete('/servers/{server}', [ServerController::class, 'destroy'])->name('servers.destroy');
+
+    // Leaving and ownership (ISSUE-13). The owner cannot leave until they
+    // have transferred ownership to another member (ServerPolicy::leave).
+    Route::get('/servers/{server}/leave', [ServerMembershipController::class, 'create'])->name('servers.leave.confirm');
+    Route::delete('/servers/{server}/leave', [ServerMembershipController::class, 'destroy'])->name('servers.leave');
+    Route::patch('/servers/{server}/owner', [ServerOwnershipController::class, 'update'])
+        ->middleware('throttle:6,1')
+        ->name('servers.owner.update');
 
     // Channels and categories (ISSUE-12). Members can open channels; the
     // rest needs ServerPolicy::manageChannels. Scoped bindings make a
