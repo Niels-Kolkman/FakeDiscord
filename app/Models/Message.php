@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
+use Laravel\Scout\Searchable;
 
 /**
  * Posted in a server channel OR a conversation: exactly one of channel_id /
@@ -18,12 +19,16 @@ use Illuminate\Support\Carbon;
  * Deleting a message soft deletes it (ISSUE-16): every query hides it, but
  * the row stays so replies keep pointing at it.
  *
+ * Searchable with Laravel Scout's database engine (ISSUE-21): a search is a
+ * LIKE query on the columns of toSearchableArray(), so there is no index to
+ * keep in sync. App\Support\MessageSearch adds the server and filters.
+ *
  * @property Carbon|null $edited_at NULL = never edited
  */
 class Message extends Model
 {
     /** @use HasFactory<MessageFactory> */
-    use HasFactory, SoftDeletes;
+    use HasFactory, Searchable, SoftDeletes;
 
     /** Discord's limit for a message without Nitro. */
     public const MAX_CONTENT_LENGTH = 2000;
@@ -82,6 +87,19 @@ class Message extends Model
     public function authorName(): string
     {
         return $this->author === null ? __('Deleted User') : $this->author->name;
+    }
+
+    /**
+     * The columns Scout's database engine searches. Only the keys matter
+     * to that engine, the values are never read.
+     *
+     * @return array{content: string}
+     */
+    public function toSearchableArray(): array
+    {
+        return [
+            'content' => (string) $this->content,
+        ];
     }
 
     /**
