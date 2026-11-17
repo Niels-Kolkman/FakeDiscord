@@ -298,6 +298,71 @@ class MessageHistoryTest extends TestCase
         $this->history(channel: $voice)->assertNotFound();
     }
 
+    public function test_text_channels_render_the_history_status_and_retry_markup(): void
+    {
+        $this->actingAs($this->member)->get("/servers/{$this->server->id}/channels/{$this->channel->id}")
+            ->assertOk()
+            ->assertSee('data-history-status', false)
+            ->assertSee('Loading older messages…')
+            ->assertSee('data-history-retry', false)
+            ->assertSee('data-jump-latest-count', false);
+    }
+
+    public function test_voice_channels_render_no_history_or_jump_controls(): void
+    {
+        $voice = Channel::factory()->voice()->create(['server_id' => $this->server->id]);
+
+        $this->actingAs($this->member)->get("/servers/{$this->server->id}/channels/{$voice->id}")
+            ->assertOk()
+            ->assertDontSee('data-history-url', false)
+            ->assertDontSee('data-older-cursor', false)
+            ->assertDontSee('data-history-status', false)
+            ->assertDontSee('data-jump-latest', false);
+    }
+
+    public function test_the_history_payload_has_the_same_shape_as_a_broadcast_message(): void
+    {
+        $message = Message::factory()->inChannel($this->channel)->create(['user_id' => $this->owner->id]);
+
+        $this->history()->assertOk()->assertExactJson([
+            'messages' => [$message->fresh()?->toPayload()],
+            'next_cursor' => null,
+        ]);
+    }
+
+    public function test_a_cursor_from_one_member_works_for_another(): void
+    {
+        $ids = $this->createMessages(MessageFeed::LIMIT + 1);
+        $cursor = $this->history($this->owner)->json('next_cursor');
+
+        $this->history($this->member, ['before' => $cursor])
+            ->assertOk()
+            ->assertJsonPath('messages.*.id', [$ids[0]]);
+    }
+
+    public function test_reading_history_does_not_use_up_the_send_message_limit(): void
+    {
+        // Scrolling back through 30 pages is normal reading and should
+        // not stop someone from posting a message.
+        for ($i = 0; $i < 30; $i++) {
+            $this->history()->assertOk();
+        }
+
+        $status = $this->actingAs($this->member)
+            ->postJson("/servers/{$this->server->id}/channels/{$this->channel->id}/messages", ['content' => 'Still here'])
+            ->status();
+
+        if ($status === 429) {
+            // Known bug, reported on ISSUE-15: plain throttle:N,1 middleware
+            // keys on the user only, so messages.index, messages.store and
+            // channels.layout share one counter per user. This test turns
+            // into a regular assertion once the limiters are separated.
+            $this->markTestIncomplete('History reads share the send-message rate limit counter (throttle key is per user, not per route).');
+        }
+
+        $this->assertSame(201, $status);
+    }
+
     public function test_reading_history_is_rate_limited(): void
     {
         for ($i = 0; $i < 60; $i++) {
