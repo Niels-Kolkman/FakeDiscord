@@ -30,6 +30,12 @@
             @endif
         </header>
 
+        @php
+            // Worked out once for every message (messages/item.blade.php)
+            // and for the script, which shows Edit / Delete the same way.
+            $viewerId = (int) auth()->id();
+            $canManageMessages = (bool) auth()->user()?->can('manageMessages', $server);
+        @endphp
         <section
             class="relative flex min-h-0 flex-1 flex-col"
             @unless ($channel->isVoice())
@@ -37,6 +43,8 @@
                 data-channel-id="{{ $channel->id }}"
                 data-history-url="{{ route('messages.index', [$server, $channel]) }}"
                 data-older-cursor="{{ $feed->olderCursor }}"
+                data-viewer-id="{{ $viewerId }}"
+                @if ($canManageMessages) data-can-manage-messages @endif
             @endunless
         >
             {{-- overflow-anchor: none, the script keeps the scroll position itself when it prepends a page. --}}

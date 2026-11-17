@@ -349,15 +349,42 @@ Voice channels have no messages.
   server subscribe to `channel.{id}`. This is checked when the browser
   subscribes. A user who leaves the server keeps an open subscription until they
   reload.
+- **Editing**: hover a message you wrote and choose **Edit**. <kbd>Enter</kbd>
+  saves, <kbd>Escape</kbd> cancels. The browser sends
+  `PATCH /servers/{id}/channels/{channel}/messages/{message}` with `content` (same
+  rules as sending) and gets back `200 {"message": {...}}`.
+  `App\Actions\Messages\EditMessage` sets `edited_at`, and the message then shows
+  "(edited)". Saving unchanged text does nothing. Only the author can edit, and
+  only while they are still a member (`App\Policies\MessagePolicy::update`).
+  Moderators cannot edit other people's messages.
+- **Deleting**: **Delete** asks for confirmation, then sends
+  `DELETE /servers/{id}/channels/{channel}/messages/{message}`, which returns
+  `204`. The author can delete their own messages. Moderators can delete anyone's,
+  including messages of deleted accounts (`MessagePolicy::delete`,
+  `ServerPolicy::manageMessages`, owner only until role permissions arrive in
+  ISSUE-26). Messages are **soft deleted** (`messages.deleted_at`): they vanish
+  from the channel and the history API, but the row stays so replies keep their
+  `reply_to_id`. A deleted message is a `404` for further edits and deletes.
+  Without JavaScript, Delete is a normal form that redirects back to the
+  channel. Edit needs JavaScript.
+- **Live updates**: `App\Events\MessageUpdated` (`message.updated`, same payload
+  as below) and `App\Events\MessageDeleted` (`message.deleted`,
+  `{"id": 1, "channel_id": 1}`, no content) go out on `channel.{id}` right away
+  (`ShouldBroadcastNow`). They skip the socket of the person who made the
+  change. Others see the new text, or see the message disappear. If Reverb is
+  down, the change is still saved.
+  Both routes are limited to 30 requests per minute.
 
 The broadcast payload is the same as the JSON response (`Message::toPayload()`):
 
 ```json
 {"id": 1, "channel_id": 1, "content": "Hello!", "created_at": "2026-11-17T12:00:00+00:00",
+ "edited_at": null,
  "author": {"id": 1, "name": "Test User", "username": "test", "avatar_url": "...", "profile_url": "..."}}
 ```
 
 `author` is `null` for messages of deleted accounts, which show as "Deleted User".
+`edited_at` is `null` until the message is edited.
 
 ## Invites
 

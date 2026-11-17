@@ -7,15 +7,22 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 
 /**
  * Posted in a server channel OR a conversation: exactly one of channel_id /
  * conversation_id is set (enforced in the app layer, see the migration).
+ *
+ * Deleting a message soft deletes it (ISSUE-16): every query hides it, but
+ * the row stays so replies keep pointing at it.
+ *
+ * @property Carbon|null $edited_at NULL = never edited
  */
 class Message extends Model
 {
     /** @use HasFactory<MessageFactory> */
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     /** Discord's limit for a message without Nitro. */
     public const MAX_CONTENT_LENGTH = 2000;
@@ -77,11 +84,20 @@ class Message extends Model
     }
 
     /**
-     * The JSON a browser gets for a message: in the MessageSent broadcast and
-     * in the response to the sender. resources/js/channel-messages.js renders
-     * it the same way as resources/views/messages/item.blade.php.
+     * Shown as "(edited)" next to the message.
+     */
+    public function isEdited(): bool
+    {
+        return $this->edited_at !== null;
+    }
+
+    /**
+     * The JSON a browser gets for a message: in the MessageSent and
+     * MessageUpdated broadcasts and in the responses to the author.
+     * resources/js/channel-messages.js renders it the same way as
+     * resources/views/messages/item.blade.php.
      *
-     * @return array{id: int, channel_id: int|null, content: string, created_at: string|null, author: array{id: int, name: string, username: string, avatar_url: string, profile_url: string}|null}
+     * @return array{id: int, channel_id: int|null, content: string, created_at: string|null, edited_at: string|null, author: array{id: int, name: string, username: string, avatar_url: string, profile_url: string}|null}
      */
     public function toPayload(): array
     {
@@ -92,6 +108,7 @@ class Message extends Model
             'channel_id' => $this->channel_id === null ? null : (int) $this->channel_id,
             'content' => (string) $this->content,
             'created_at' => $this->created_at?->toIso8601String(),
+            'edited_at' => $this->edited_at?->toIso8601String(),
             'author' => $author === null ? null : [
                 'id' => (int) $author->id,
                 'name' => $author->name,

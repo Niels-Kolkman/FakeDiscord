@@ -43,8 +43,9 @@ class DeleteUser
 
         DB::transaction(function () use ($user) {
             // The FK also nulls this on delete; doing it explicitly keeps the
-            // guarantee even where foreign keys are not enforced.
-            $user->messages()->update(['user_id' => null]);
+            // guarantee even where foreign keys are not enforced. Soft-deleted
+            // messages (ISSUE-16) are anonymised too.
+            $user->messages()->withTrashed()->update(['user_id' => null]);
 
             // Sign the account out everywhere (database session driver).
             DB::table('sessions')->where('user_id', $user->id)->delete();

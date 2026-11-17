@@ -106,6 +106,7 @@ erDiagram
         bigint reply_to_id FK "nullable, messages, set null"
         text content
         timestamp edited_at "nullable"
+        timestamp deleted_at "nullable, soft delete"
         timestamps timestamps
     }
 

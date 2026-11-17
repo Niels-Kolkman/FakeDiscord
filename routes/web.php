@@ -83,6 +83,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->middleware('throttle:30,1')
             ->name('messages.store');
 
+        // Editing and deleting (ISSUE-16): MessagePolicy decides; the
+        // MessageUpdated / MessageDeleted events go out on "channel.{id}".
+        Route::patch('/servers/{server}/channels/{channel}/messages/{message}', [MessageController::class, 'update'])
+            ->middleware('throttle:30,1')
+            ->name('messages.update');
+        Route::delete('/servers/{server}/channels/{channel}/messages/{message}', [MessageController::class, 'destroy'])
+            ->middleware('throttle:30,1')
+            ->name('messages.destroy');
+
         // Drag and drop saves the whole sidebar order as JSON.
         Route::put('/servers/{server}/layout', [ChannelLayoutController::class, 'update'])
             ->middleware('throttle:60,1')
