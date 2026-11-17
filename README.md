@@ -20,8 +20,8 @@ composer setup
 ```
 
 This installs the PHP and npm dependencies, copies `.env.example` to `.env`,
-generates `APP_KEY`, creates `database/database.sqlite`, runs the migrations
-and builds the frontend assets.
+generates `APP_KEY`, creates `database/database.sqlite`, runs the migrations,
+links `public/storage` (for uploaded avatars) and builds the frontend assets.
 
 ### Manual setup
 
@@ -31,6 +31,7 @@ cp .env.example .env            # Windows (PowerShell): Copy-Item .env.example .
 php artisan key:generate
 php -r "file_exists('database/database.sqlite') || touch('database/database.sqlite');"
 php artisan migrate
+php artisan storage:link        # serves uploaded avatars from public/storage
 npm install
 ```
 
@@ -132,6 +133,27 @@ The Blade views are in `resources/views/auth`.
 
 Fortify's other features (two-factor auth, passkeys, profile and password
 updates, email verification) are off in `config/fortify.php`.
+
+## Profiles and avatars
+
+Signed-in users edit their profile at `/settings/profile` (`ProfileController`).
+
+- **Display name** (required, up to 255 characters) and **bio** ("About me", up
+  to 190 characters). The username and email cannot be changed here.
+- **Avatar**: PNG, JPG, GIF or WebP, up to 4 MB and 4096×4096 px (SVG is
+  rejected). `App\Actions\Profile\UpdateUserAvatar` uses GD (the `gd` PHP
+  extension is required) to centre-crop the image to a square, resize it to
+  256×256 and store it as PNG under `avatars/{user_id}/` on the disk set by
+  `AVATAR_DISK` (default `public`, so run `php artisan storage:link`). The old
+  file is deleted when the avatar is replaced or removed.
+- **Default avatar**: users without an upload get a generated SVG with their
+  initials on a colour picked from their username (`App\Support\DefaultAvatar`).
+  `$user->avatarUrl()` returns either URL.
+- **Profile popover**: `<x-user-avatar :user="$user" />` renders a clickable
+  avatar. Clicking it fetches `GET /users/{username}/profile` (JSON: name,
+  username, bio, status, avatar URL, member since; never the email) and shows a
+  profile card (`resources/js/profile-popover.js`). Escape or an outside click
+  closes it.
 
 ## Frontend
 
