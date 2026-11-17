@@ -66,6 +66,14 @@ class Message extends Model
     }
 
     /**
+     * Display name of the author, or "Deleted User" for anonymised messages.
+     */
+    public function authorName(): string
+    {
+        return $this->author === null ? __('Deleted User') : $this->author->name;
+    }
+
+    /**
      * @return BelongsTo<Message, $this>
      */
     public function replyTo(): BelongsTo
