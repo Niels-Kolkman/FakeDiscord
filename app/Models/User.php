@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Actions\Profile\UpdateUserAvatar;
+use App\Support\DefaultAvatar;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -9,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -25,6 +29,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'username',
         'email',
         'avatar_path',
+        'bio',
         'status',
         'password',
     ];
@@ -50,6 +55,17 @@ class User extends Authenticatable implements MustVerifyEmail
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * URL of the uploaded avatar, or a generated initials avatar (data URI)
+     * when the user has not uploaded one.
+     */
+    public function avatarUrl(): string
+    {
+        return $this->avatar_path !== null
+            ? Storage::disk(UpdateUserAvatar::disk())->url($this->avatar_path)
+            : DefaultAvatar::dataUri($this);
     }
 
     /**

@@ -17,6 +17,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Avatar Disk
+    |--------------------------------------------------------------------------
+    |
+    | Disk that uploaded user avatars (resized 256x256 PNGs) are stored on.
+    | It must be publicly readable; run `php artisan storage:link` for the
+    | default "public" disk.
+    |
+    */
+
+    'avatar_disk' => env('AVATAR_DISK', 'public'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Filesystem Disks
     |--------------------------------------------------------------------------
     |
