@@ -162,9 +162,13 @@ return [
     'features' => [
         Features::registration(),
         Features::resetPasswords(),
-        // Email verification (ISSUE-7) and profile/password/account settings
-        // (ISSUE-8, ISSUE-9) are separate stories. Two-factor auth and
-        // passkeys are not planned yet; enabling them needs their migrations.
+        // Sends the verification email on registration and registers the
+        // /email/verify routes. Routes that need a verified address (joining
+        // servers) use the `verified` middleware, see routes/web.php.
+        Features::emailVerification(),
+        // Profile/password/account settings (ISSUE-8, ISSUE-9) are separate
+        // stories. Two-factor auth and passkeys are not planned yet; enabling
+        // them needs their migrations.
     ],
 
 ];

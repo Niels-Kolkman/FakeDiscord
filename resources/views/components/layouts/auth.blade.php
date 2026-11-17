@@ -21,7 +21,8 @@
 
             @if (session('status'))
                 <div role="status" class="mb-4 rounded bg-green-900/40 px-3 py-2 text-sm text-green-300">
-                    {{ session('status') }}
+                    {{-- Fortify flashes a status key (not a sentence) after resending the verification email. --}}
+                    {{ session('status') === 'verification-link-sent' ? 'A new verification link has been sent to your email address.' : session('status') }}
                 </div>
             @endif
 
