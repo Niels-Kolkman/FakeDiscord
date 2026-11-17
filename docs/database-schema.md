@@ -4,7 +4,7 @@ FakeDiscord runs on **SQLite**. Migrations live in `database/migrations`. To reb
 the database from scratch, run:
 
 ```bash
-php artisan migrate:fresh        # add --seed for the test user
+php artisan migrate:fresh        # add --seed for the demo data (DemoSeeder)
 ```
 
 ## ERD
