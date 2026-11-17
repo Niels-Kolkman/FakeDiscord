@@ -145,6 +145,15 @@ class TypingChannelAuthTest extends TestCase
         }
     }
 
+    public function test_members_can_join_the_typing_channel_of_any_channel_of_their_server(): void
+    {
+        $random = Channel::factory()->create(['server_id' => $this->server->id, 'name' => 'random']);
+
+        $response = $this->actingAs($this->member)->authorize("presence-typing.{$random->id}")->assertOk();
+
+        $this->assertSame('Member Name', json_decode((string) $response->json('channel_data'), true)['user_info']['name']);
+    }
+
     public function test_reverb_accepts_whispers_from_members_by_default(): void
     {
         // The indicator relies on Reverb adding the sender's user_id, which

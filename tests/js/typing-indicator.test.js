@@ -9,6 +9,7 @@ import {
     createTypingThrottle,
     formatTyping,
     initTypingIndicator,
+    typingParts,
 } from '../../resources/js/typing-indicator.js';
 
 // --- Fakes -------------------------------------------------------------
@@ -285,4 +286,175 @@ test('a whisper that throws (not subscribed yet) does not break typing', () => {
     handlers.here([]);
 
     assert.doesNotThrow(() => input.type('hi'));
+});
+
+// --- Edge cases ----------------------------------------------------------
+
+test('typingParts marks only names as bold segments', () => {
+    assert.deepEqual(typingParts(['Ann', 'Bob']), [
+        { text: 'Ann', name: true },
+        { text: ' and ', name: false },
+        { text: 'Bob', name: true },
+        { text: ' are typing…', name: false },
+    ]);
+    assert.deepEqual(typingParts([]), []);
+    assert.deepEqual(typingParts(['A', 'B', 'C', 'D']), [{ text: 'Several people are typing…', name: false }]);
+});
+
+test('throttle typed() reports whether it sent, and sends again exactly one interval later', () => {
+    const clock = fakeTimers();
+    const throttle = createTypingThrottle(() => {}, { interval: 1000, now: clock.now });
+
+    assert.equal(throttle.typed(), true);
+    clock.advance(999);
+    assert.equal(throttle.typed(), false);
+    clock.advance(1);
+    assert.equal(throttle.typed(), true);
+});
+
+test('tracker re-renders when a typist\'s name changes', () => {
+    const clock = fakeTimers();
+    const changes = [];
+    const tracker = new TypingTracker({ ...clock, onChange: (names) => changes.push(names) });
+
+    tracker.typing(1, 'Ann');
+    tracker.typing(1, 'Annie');
+    assert.deepEqual(changes, [['Ann'], ['Annie']]);
+    assert.equal(clock.pending(), 1);
+});
+
+test('tracker stopped() for an unknown id and clear() when empty do not re-render', () => {
+    const clock = fakeTimers();
+    let renders = 0;
+    const tracker = new TypingTracker({ ...clock, onChange: () => renders++ });
+
+    tracker.stopped(1);
+    tracker.clear();
+    assert.equal(renders, 0);
+});
+
+test('tracker treats numeric and string ids as the same typist', () => {
+    const clock = fakeTimers();
+    const tracker = new TypingTracker(clock);
+
+    tracker.typing(5, 'Ann');
+    tracker.typing('5', 'Ann');
+    assert.deepEqual(tracker.names(), ['Ann']);
+    tracker.stopped(5);
+    assert.deepEqual(tracker.names(), []);
+});
+
+test('does nothing without an output element', () => {
+    const { echo } = fakeEcho();
+    assert.equal(initTypingIndicator({ echo, channelId: '7', viewerId: 1, input: null, output: null }), null);
+    assert.equal(echo.joined, null, 'does not join the presence channel');
+});
+
+test('viewers without a composer still see who is typing', () => {
+    const { echo, handlers, whispers } = fakeEcho();
+    const output = fakeOutput();
+    const typing = initTypingIndicator({ echo, channelId: '7', viewerId: 1, input: null, output });
+    handlers.here([{ id: 2, name: 'Ann' }]);
+
+    handlers['whisper:typing']({ typing: true }, { user_id: 2 });
+    assert.equal(output.text, 'Ann is typing…');
+
+    typing.sent();
+    assert.equal(whispers.length, 0, 'nothing was announced, so nothing to stop');
+});
+
+test('names are inserted as text, never as markup', () => {
+    const { handlers, output, whisperFrom } = setup();
+    handlers.joining({ id: 9, name: '<img src=x onerror=alert(1)>' });
+
+    whisperFrom(9);
+    const strong = output.nodes.find((node) => node.tag === 'strong');
+    assert.equal(strong.textContent, '<img src=x onerror=alert(1)>');
+    assert.equal(strong.innerHTML, undefined, 'innerHTML is never set');
+});
+
+test('a whisper without a payload, or without typing:false, counts as typing', () => {
+    const { handlers, output } = setup();
+
+    handlers['whisper:typing'](undefined, { user_id: 2 });
+    assert.equal(output.text, 'Ann is typing…');
+
+    handlers['whisper:typing']({ typing: 'no' }, { user_id: 3 });
+    assert.equal(output.text, 'Ann and Bob are typing…');
+});
+
+test('a whisper with no metadata at all is ignored', () => {
+    const { handlers, output } = setup();
+
+    assert.doesNotThrow(() => handlers['whisper:typing']({ typing: true }, undefined));
+    assert.equal(output.text, '');
+});
+
+test('a numeric or string user_id both match the presence member', () => {
+    const { output, whisperFrom } = setup();
+
+    whisperFrom('2');
+    whisperFrom(2);
+    assert.equal(output.text, 'Ann is typing…');
+    whisperFrom('2', { typing: false });
+    assert.equal(output.text, '');
+});
+
+test('a presence member without a name shows an empty name rather than "undefined"', () => {
+    const { handlers, output, whisperFrom } = setup();
+    handlers.joining({ id: 8 });
+
+    whisperFrom(8);
+    assert.equal(output.text, ' is typing…');
+});
+
+test('a new here() list replaces the old members (reconnect)', () => {
+    const { handlers, output, whisperFrom } = setup();
+
+    handlers.here([{ id: 1, name: 'Me' }, { id: 3, name: 'Bob' }]);
+    whisperFrom(2);
+    assert.equal(output.text, '', 'Ann is no longer in the channel');
+    whisperFrom(3);
+    assert.equal(output.text, 'Bob is typing…');
+});
+
+test('messageArrived without an author, or from someone not typing, changes nothing', () => {
+    const { output, typing, whisperFrom } = setup();
+
+    whisperFrom(2);
+    typing.messageArrived(null);
+    typing.messageArrived(undefined);
+    typing.messageArrived(3);
+    assert.equal(output.text, 'Ann is typing…');
+    typing.messageArrived('2');
+    assert.equal(output.text, '');
+});
+
+test('only the viewer\'s own id is ignored', () => {
+    const { output, whisperFrom } = setup({ viewerId: 3 });
+
+    whisperFrom(1);
+    assert.equal(output.text, 'Me is typing…', 'user 1 is someone else for viewer 3');
+    whisperFrom(3);
+    assert.equal(output.text, 'Me is typing…', 'own whispers are still ignored');
+});
+
+test('wired up with real timers: typists expire and long typing re-announces', (t) => {
+    t.mock.timers.enable({ apis: ['setTimeout', 'Date'] });
+    const { input, output, whispers, whisperFrom } = setup();
+
+    whisperFrom(2);
+    t.mock.timers.tick(TYPING_EXPIRE_MS - 1);
+    assert.equal(output.text, 'Ann is typing…');
+    t.mock.timers.tick(1);
+    assert.equal(output.text, '', 'expired without a new whisper');
+
+    input.type('a');
+    t.mock.timers.tick(TYPING_THROTTLE_MS - 1);
+    input.type('ab');
+    assert.equal(whispers.length, 1);
+    t.mock.timers.tick(1);
+    input.type('abc');
+    assert.equal(whispers.length, 2, 'still typing after the interval whispers again');
+    assert.deepEqual(whispers.at(-1), ['typing', { typing: true }]);
 });
