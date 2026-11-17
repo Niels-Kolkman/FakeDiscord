@@ -7,6 +7,7 @@ use App\Http\Controllers\ChannelLayoutController;
 use App\Http\Controllers\InviteController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReactionController;
 use App\Http\Controllers\ServerController;
 use App\Http\Controllers\ServerMembershipController;
 use App\Http\Controllers\ServerOwnershipController;
@@ -91,6 +92,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/servers/{server}/channels/{channel}/messages/{message}', [MessageController::class, 'destroy'])
             ->middleware('throttle:30,1')
             ->name('messages.destroy');
+
+        // Reactions (ISSUE-18): field `emoji`; any member may react
+        // (MessagePolicy::react). ReactionsUpdated goes out on "channel.{id}".
+        Route::post('/servers/{server}/channels/{channel}/messages/{message}/reactions', [ReactionController::class, 'store'])
+            ->middleware('throttle:60,1')
+            ->name('reactions.store');
+        Route::delete('/servers/{server}/channels/{channel}/messages/{message}/reactions', [ReactionController::class, 'destroy'])
+            ->middleware('throttle:60,1')
+            ->name('reactions.destroy');
 
         // Drag and drop saves the whole sidebar order as JSON.
         Route::put('/servers/{server}/layout', [ChannelLayoutController::class, 'update'])

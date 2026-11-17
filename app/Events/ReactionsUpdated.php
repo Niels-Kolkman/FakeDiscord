@@ -1,0 +1,58 @@
+<?php
+
+namespace App\Events;
+
+use App\Models\Message;
+use App\Support\Reactions;
+use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Broadcasting\PrivateChannel;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
+use Illuminate\Foundation\Events\Dispatchable;
+
+/**
+ * Someone added or removed a reaction on a channel message (ISSUE-18).
+ *
+ * Carries the change (who, which emoji, added or removed) and the
+ * message's grouped reactions after it, without `me`: the browser keeps
+ * its own "did I react" state and only changes it when user_id is the
+ * viewer (their other tabs). It listens for ".reactions.updated"
+ * (resources/js/channel-messages.js).
+ */
+class ReactionsUpdated implements ShouldBroadcastNow
+{
+    use Dispatchable, InteractsWithSockets;
+
+    public const NAME = 'reactions.updated';
+
+    public function __construct(
+        public Message $message,
+        public int $userId,
+        public string $emoji,
+        public bool $added,
+    ) {}
+
+    public function broadcastOn(): PrivateChannel
+    {
+        return new PrivateChannel(MessageSent::channelName((int) $this->message->channel_id));
+    }
+
+    public function broadcastAs(): string
+    {
+        return self::NAME;
+    }
+
+    /**
+     * @return array{message_id: int, channel_id: int, user_id: int, emoji: string, added: bool, reactions: list<array<string, mixed>>}
+     */
+    public function broadcastWith(): array
+    {
+        return [
+            'message_id' => (int) $this->message->id,
+            'channel_id' => (int) $this->message->channel_id,
+            'user_id' => $this->userId,
+            'emoji' => $this->emoji,
+            'added' => $this->added,
+            'reactions' => Reactions::groups($this->message),
+        ];
+    }
+}

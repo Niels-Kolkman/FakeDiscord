@@ -54,7 +54,10 @@ class MessageController extends Controller
             }
         }
 
-        return response()->json(MessageFeed::for($channel, before: $before)->toPayload());
+        /** @var User $user */
+        $user = $request->user();
+
+        return response()->json(MessageFeed::for($channel, before: $before)->toPayload($user));
     }
 
     public function store(StoreMessageRequest $request, Server $server, Channel $channel, SendMessage $messages): JsonResponse|RedirectResponse
@@ -76,7 +79,10 @@ class MessageController extends Controller
         $message = $messages->edit($message, $request->content());
 
         if ($request->expectsJson()) {
-            return response()->json(['message' => $message->toPayload()]);
+            /** @var User $user */
+            $user = $request->user();
+
+            return response()->json(['message' => $message->toPayload($user)]);
         }
 
         return redirect()->route('channels.show', [$server, $channel]);

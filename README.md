@@ -374,17 +374,40 @@ Voice channels have no messages.
   change. Others see the new text, or see the message disappear. If Reverb is
   down, the change is still saved.
   Both routes are limited to 30 requests per minute.
+- **Reactions** (ISSUE-18): any member can react to any message. Hover a
+  message and choose 🙂 to pick an emoji, or click an existing reaction to add
+  yours or take it back. Reactions are grouped per emoji with a count. The
+  tooltip names the first three people ("Alice, Bob, Carol and 2 others reacted
+  with 👍"). Your own reactions are highlighted (`aria-pressed`).
+  `POST /servers/{id}/channels/{channel}/messages/{message}/reactions` adds one and
+  `DELETE` on the same URL removes yours. Both take the field `emoji` and return
+  `200 {"reactions": [...]}`. The `reactions` table has a unique
+  `(message_id, emoji, user_id)` index, so reacting twice changes nothing
+  (`App\Actions\Messages\AddReaction` uses `createOrFirst()`). Only a single
+  unicode emoji can be added (`App\Support\Reactions::isValidEmoji()`); custom
+  `:name:` emoji are not supported yet, but stored ones can still be removed. A
+  message can have at most 20 different emoji (`422`). Allowed for members only
+  (`MessagePolicy::react`); limited to 60 requests per minute.
+  `App\Events\ReactionsUpdated` (`reactions.updated`) goes out on `channel.{id}`
+  right away, skipping the reactor's socket:
+  `{"message_id": 1, "channel_id": 1, "user_id": 2, "emoji": "👍", "added": true, "reactions": [...]}`.
+  Its groups have no `me`, so each browser keeps track of its own reactions.
+  Without JavaScript the picker (a `<details>`) and the reaction buttons are
+  plain forms that redirect back to the channel.
 
 The broadcast payload is the same as the JSON response (`Message::toPayload()`):
 
 ```json
 {"id": 1, "channel_id": 1, "content": "Hello!", "created_at": "2026-11-17T12:00:00+00:00",
  "edited_at": null,
- "author": {"id": 1, "name": "Test User", "username": "test", "avatar_url": "...", "profile_url": "..."}}
+ "author": {"id": 1, "name": "Test User", "username": "test", "avatar_url": "...", "profile_url": "..."},
+ "reactions": [{"emoji": "👍", "count": 2, "users": [{"id": 1, "name": "Test User"}, {"id": 2, "name": "Alice"}], "me": true}]}
 ```
 
 `author` is `null` for messages of deleted accounts, which show as "Deleted User".
-`edited_at` is `null` until the message is edited.
+`edited_at` is `null` until the message is edited. `reactions` lists at most the
+first three `users` per emoji; `me` is only there in responses to the viewer
+(the history API and the reaction routes), not in broadcasts.
 
 ### Typing indicators
 

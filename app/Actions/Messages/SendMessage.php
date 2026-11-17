@@ -22,6 +22,8 @@ class SendMessage
         ]);
 
         $message->setRelation('author', $author);
+        // A new message has no reactions; saves toPayload() a query.
+        $message->setRelation('reactions', $message->reactions()->getRelated()->newCollection());
 
         // The message is saved either way. If Reverb is down, report it and
         // let the sender carry on; the others see it after a reload.
