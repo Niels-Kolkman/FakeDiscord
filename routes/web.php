@@ -14,9 +14,11 @@ use App\Http\Controllers\ServerOwnershipController;
 use App\Http\Controllers\UserProfileController;
 use Illuminate\Support\Facades\Route;
 
+// There is no landing page (ISSUE-44): guests go to the login page,
+// signed-in users straight to the dashboard.
 Route::get('/', function () {
-    return view('welcome');
-});
+    return redirect()->route(auth()->check() ? 'dashboard' : 'login');
+})->name('home');
 
 // Auth routes (register, login, logout, password reset, email verification)
 // are registered by Fortify.

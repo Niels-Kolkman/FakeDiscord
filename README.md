@@ -44,7 +44,8 @@ php artisan serve   # http://127.0.0.1:8000
 npm run dev         # Vite dev server with hot reload
 ```
 
-Then open <http://127.0.0.1:8000> to see the welcome page.
+Then open <http://127.0.0.1:8000>. It sends you to the login page (or to the
+dashboard if you are already signed in).
 
 You can also start the server, queue worker, log tail (`pail`), Vite and the
 Reverb websocket server together:

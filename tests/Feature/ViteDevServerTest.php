@@ -6,10 +6,11 @@ use Illuminate\Support\Facades\Vite;
 use Tests\TestCase;
 
 /**
- * ISSUE-1: with `npm run dev` running, the welcome page loads its CSS/JS
- * from the Vite dev server.
+ * ISSUE-1: with `npm run dev` running, pages load their CSS/JS from the
+ * Vite dev server. Checked on the login page, which is where `/` sends
+ * guests since the welcome page was removed (ISSUE-44).
  */
-class WelcomePageViteTest extends TestCase
+class ViteDevServerTest extends TestCase
 {
     private string $hotFile;
 
@@ -31,19 +32,19 @@ class WelcomePageViteTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_welcome_page_loads_assets_from_the_vite_dev_server(): void
+    public function test_pages_load_assets_from_the_vite_dev_server(): void
     {
-        $this->get('/')
+        $this->get('/login')
             ->assertOk()
             ->assertSee('http://localhost:5173/@vite/client', false)
             ->assertSee('http://localhost:5173/resources/css/app.css', false)
             ->assertSee('http://localhost:5173/resources/js/app.js', false);
     }
 
-    public function test_welcome_page_uses_the_fakediscord_app_name_as_title(): void
+    public function test_pages_use_the_fakediscord_app_name_in_the_title(): void
     {
         config()->set('app.name', 'FakeDiscord');
 
-        $this->get('/')->assertSee('<title>FakeDiscord</title>', false);
+        $this->get('/login')->assertSee('· FakeDiscord</title>', false);
     }
 }
