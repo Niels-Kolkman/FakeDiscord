@@ -112,6 +112,27 @@ To use MySQL or another database instead, set the `DB_*` variables in `.env`.
 `ON DELETE` rules. [docs/database-schema.md](docs/database-schema.md) has the
 schema, the ERD, the indexes and the delete rules.
 
+## Authentication
+
+[Laravel Fortify](https://laravel.com/docs/fortify) provides the backend for
+registration, login, logout and password reset. The routes are `/register`,
+`/login`, `POST /logout`, `/forgot-password` and `/reset-password/{token}`.
+The Blade views are in `resources/views/auth`.
+
+- To register, a user gives a display name, a username, an email address and a
+  password. Usernames are stored in lowercase and must be unique. They can be
+  2–32 characters long and may contain only `a-z`, `0-9`, `_` and `.`. The rules
+  are in `app/Actions/Fortify/CreateNewUser.php`.
+- Users log in with their email address and password. The login form is limited
+  to 5 attempts per minute for each email and IP address.
+- After login, users land on `/dashboard`, a placeholder until the app shell is
+  built.
+- Password reset links are sent by email. In local development, `MAIL_MAILER=log`
+  writes the email to `storage/logs/laravel.log`.
+
+Fortify's other features (two-factor auth, passkeys, profile and password
+updates, email verification) are off in `config/fortify.php`.
+
 ## Frontend
 
 - Entry points: `resources/css/app.css` and `resources/js/app.js`, set in `vite.config.js`.
