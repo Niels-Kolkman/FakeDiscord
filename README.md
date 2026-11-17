@@ -105,6 +105,18 @@ schema, the ERD, the indexes and the delete rules.
 
 ```bash
 composer test        # run the PHPUnit test suite
-./vendor/bin/pint    # format PHP code (Laravel Pint)
+composer format      # format PHP code (Laravel Pint)
+composer lint        # check code style without changing files
+composer analyse     # static analysis (Larastan / PHPStan, config in phpstan.neon)
 npm run build        # production frontend build
 ```
+
+## Code quality and CI
+
+- **Pint** formats code with the `laravel` preset (`pint.json`).
+- **Larastan** checks `app`, `config`, `database`, `routes` and `tests` at level 6 (`phpstan.neon`).
+  Fix new errors in the code instead of adding a baseline or `@phpstan-ignore`.
+- **GitHub Actions** (`.github/workflows/ci.yml`) runs `composer lint`, `composer analyse`
+  and `composer test` (on PHP 8.2, 8.3 and 8.4) on every push and pull request.
+
+Run `composer lint && composer analyse && composer test` before you push.
