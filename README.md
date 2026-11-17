@@ -446,6 +446,27 @@ The broadcast payload is the same as the JSON response (`Message::toPayload()`):
 first three `users` per emoji; `me` is only there in responses to the viewer
 (the history API and the reaction routes), not in broadcasts.
 
+### Search
+
+The search box in the channel header opens `GET /servers/{id}/search?q=...`, a
+page that searches every text channel of the server (`App\Support\MessageSearch`).
+Members only; limited to 60 requests per minute.
+
+- **Filters**: `channel` (a text channel id of this server), `author` (a user id;
+  the form lists current members, but people who left can still be searched by
+  id), and `from` / `to` (`Y-m-d`, whole days in the app timezone, both
+  included). They also work without `q`, for example "everything Ann wrote in
+  #general".
+- **Results**: newest first, 25 per page, with the matches highlighted and a link
+  to the message's channel. Messages in DMs, in other servers and deleted
+  messages are never found. Invalid input shows the errors on the page.
+- **Engine**: [Laravel Scout](https://laravel.com/docs/scout) with the
+  `database` driver (`SCOUT_DRIVER=database`, the default in `config/scout.php`).
+  A search is a `LIKE '%text%'` on `messages.content`, so there is no index to
+  build or sync and no external service. `%` and `_` in the text match
+  literally. On SQLite the match ignores case for ASCII letters only. If LIKE
+  gets too slow on large servers, the next step is an SQLite FTS5 table.
+
 ### Typing indicators
 
 While you type in a text channel, everyone else viewing it sees "**Ann** is
