@@ -434,8 +434,9 @@ The broadcast payload is the same as the JSON response (`Message::toPayload()`):
 
 ```json
 {"id": 1, "channel_id": 1, "content": "Hello!", "created_at": "2026-11-17T12:00:00+00:00",
- "edited_at": null,
+ "edited_at": null, "pinned_at": null,
  "author": {"id": 1, "name": "Test User", "username": "test", "avatar_url": "...", "profile_url": "..."},
+ "reply_to": null,
  "reactions": [{"emoji": "👍", "count": 2, "users": [{"id": 1, "name": "Test User"}, {"id": 2, "name": "Alice"}], "me": true}],
  "attachments": [{"id": 1, "name": "cat.png", "size": 48213, "mime_type": "image/png", "is_image": true,
                   "width": 800, "height": 600, "url": "...", "download_url": "..."}]}
@@ -445,6 +446,35 @@ The broadcast payload is the same as the JSON response (`Message::toPayload()`):
 `edited_at` is `null` until the message is edited. `reactions` lists at most the
 first three `users` per emoji; `me` is only there in responses to the viewer
 (the history API and the reaction routes), not in broadcasts.
+
+### Replies and pins
+
+- **Replying**: "Reply" in a message's hover toolbar shows "Replying to …"
+  above the composer (✕ or Escape cancels) and sends `reply_to_id` with the
+  message. It must be a message of the same channel that is not deleted
+  (`StoreMessageRequest`, otherwise a `422` on `reply_to_id`). The reply
+  quotes the original above its header. In the payload, `reply_to` is
+  `{"id", "deleted", "author": {"id", "name"} | null, "content", "has_attachments"}`.
+  `content` is one line of at most 100 characters (`Message::excerpt()`).
+  When the original is deleted the quote says "Original message was deleted"
+  (`deleted: true`). Clicking the quote scrolls to the original
+  (`#message-{id}`) and highlights it. If it is not on screen yet, older pages
+  are loaded until it is (at most 20 pages). Quotes follow live edits and
+  deletes of the original.
+- **Pinning**: moderators (`MessagePolicy::pin`, i.e.
+  `ServerPolicy::manageMessages`, the owner until roles land) get Pin / Unpin
+  on every message: `POST` / `DELETE /servers/{id}/channels/{channel}/messages/{message}/pin`.
+  Pinned messages show 📌 and have `pinned_at` set (`pinned_by_id` remembers
+  who pinned them). A channel holds at most 50 pins (`422` on `message`
+  beyond that); deleted messages do not count. `App\Events\MessagePinned`
+  (`.message.pinned`, `{id, channel_id, pinned_at, pinned_by}`) goes out on
+  `channel.{id}`. Pinning a pinned message changes nothing and broadcasts
+  nothing.
+- **Pinned list**: "📌 Pinned" in the channel header opens a panel with
+  `GET /servers/{id}/channels/{channel}/pins` (any member, newest pin first;
+  JSON `{"pins": [... message payload + "pinned_by"]}`). It has Jump and,
+  for moderators, Unpin. Without JavaScript the same link opens a pins page,
+  and Pin / Unpin are plain forms that redirect back.
 
 ### Typing indicators
 
