@@ -18,6 +18,10 @@
         </div>
     @endunless
 
+    <p class="mb-4 text-center">
+        <a href="{{ route('settings.account') }}" class="font-medium text-[#00a8fc] hover:underline">Account settings</a>
+    </p>
+
     <form method="POST" action="{{ route('logout') }}">
         @csrf
         <button type="submit" class="w-full rounded bg-[#da373c] py-2 font-medium text-white hover:bg-[#a12828]">Log Out</button>

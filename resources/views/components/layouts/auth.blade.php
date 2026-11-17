@@ -21,8 +21,15 @@
 
             @if (session('status'))
                 <div role="status" class="mb-4 rounded bg-green-900/40 px-3 py-2 text-sm text-green-300">
-                    {{-- Fortify flashes a status key (not a sentence) after resending the verification email. --}}
-                    {{ session('status') === 'verification-link-sent' ? 'A new verification link has been sent to your email address.' : session('status') }}
+                    {{-- Fortify and the account settings flash status keys, not sentences. --}}
+                    @php($statusMessages = [
+                        'verification-link-sent' => 'A new verification link has been sent to your email address.',
+                        'password-updated' => 'Your password has been changed.',
+                        'email-updated' => 'Your email address has been changed. Check your inbox to verify it.',
+                        'email-unchanged' => 'That is already your email address.',
+                        'account-deleted' => 'Your account has been deleted.',
+                    ])
+                    {{ $statusMessages[session('status')] ?? session('status') }}
                 </div>
             @endif
 
