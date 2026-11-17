@@ -236,6 +236,39 @@ Users with a verified email address manage servers under `/servers`
   verified email, `view` needs membership, and `update` and `delete` are owner
   only until role permissions arrive (ISSUE-26).
 
+## Invites
+
+Invites (`InviteController`, also in the `['auth', 'verified']` group) let
+people join a server.
+
+- **Create** (`/servers/{id}/invites`, "Invite people" on the server page): any
+  member can generate a link. They choose an expiry (30 minutes, 1, 6 or 12
+  hours, 1 day, 7 days (the default) or never) and a maximum number of uses (no
+  limit, 1, 5, 10, 25, 50 or 100). `App\Actions\Servers\CreateInvite` makes a
+  random 8-character, case-sensitive code (`[A-Za-z0-9]`) and retries if the
+  code is already taken. The link is `/invite/{code}`.
+- **List and revoke**: the same page lists usable invites. The owner sees and
+  can revoke every invite. Other members see only their own invites, and can
+  revoke them while they are still a member (`App\Policies\InvitePolicy`).
+- **Join**: `GET /invite/{code}` shows the server name, icon, inviter and member
+  count. Opening the page does not count as a use. **Accept invite** posts to the
+  same URL, and `App\Actions\Servers\AcceptInvite` adds the user and counts one
+  use. Guests are sent to log in and then come back to the invite. Unverified
+  users are sent to `/email/verify`.
+- **Refusals**, checked in this order:
+  1. Banned from the server: 403, even if the invite has also expired.
+  2. Already a member: redirected to the server. No use is counted, and expired
+     or full invites still work for members.
+  3. Expired (`expires_at` has passed): 410.
+  4. Full (`uses` has reached `max_uses`): 410.
+
+  Unknown codes return 404.
+- Uses are counted with one guarded `UPDATE … WHERE uses < max_uses AND not
+  expired`, in the same transaction as the membership insert. Two people can
+  therefore never both take the last use, and a failed join gives the use back.
+- Both invite routes allow 30 requests per minute, and creating invites allows
+  20 per minute.
+
 ## Frontend
 
 - Entry points: `resources/css/app.css` and `resources/js/app.js`, set in `vite.config.js`.
