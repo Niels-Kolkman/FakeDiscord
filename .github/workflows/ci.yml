@@ -55,7 +55,8 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          extensions: mbstring, pdo_sqlite, sqlite3, fileinfo
+          # gd resizes uploaded avatars and generates the fake images used in tests.
+          extensions: mbstring, pdo_sqlite, sqlite3, fileinfo, gd
           coverage: none
 
       - uses: ramsey/composer-install@v3

@@ -21,6 +21,7 @@ erDiagram
         string username UK
         string email UK
         string avatar_path "nullable"
+        string bio "nullable, max 190"
         string status "online|idle|dnd|offline"
         timestamp email_verified_at "nullable"
         string password
