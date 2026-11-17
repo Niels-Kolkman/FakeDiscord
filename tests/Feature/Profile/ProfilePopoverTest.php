@@ -4,6 +4,7 @@ namespace Tests\Feature\Profile;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 /**
@@ -61,6 +62,35 @@ class ProfilePopoverTest extends TestCase
         $this->actingAs(User::factory()->create())
             ->getJson('/users/nobody-here/profile')
             ->assertNotFound();
+    }
+
+    public function test_the_profile_card_uses_the_uploaded_avatar_url(): void
+    {
+        Storage::fake('public');
+        $user = User::factory()->create(['avatar_path' => 'avatars/7/pic.png']);
+
+        $this->actingAs($user)
+            ->getJson("/users/{$user->username}/profile")
+            ->assertOk()
+            ->assertJsonPath('avatar_url', Storage::disk('public')->url('avatars/7/pic.png'));
+    }
+
+    public function test_the_profile_card_returns_a_generated_avatar_and_null_bio_by_default(): void
+    {
+        $user = User::factory()->create(['bio' => null, 'avatar_path' => null]);
+
+        $response = $this->actingAs($user)->getJson("/users/{$user->username}/profile")->assertOk();
+
+        $this->assertNull($response->json('bio'));
+        $this->assertStringStartsWith('data:image/svg+xml;base64,', (string) $response->json('avatar_url'));
+    }
+
+    public function test_profiles_are_looked_up_by_username_not_id(): void
+    {
+        $user = User::factory()->create(['username' => 'niels']);
+
+        $this->actingAs($user)->getJson("/users/{$user->id}/profile")->assertNotFound();
+        $this->actingAs($user)->getJson('/users/niels/profile')->assertOk();
     }
 
     public function test_the_dashboard_avatar_opens_the_popover(): void

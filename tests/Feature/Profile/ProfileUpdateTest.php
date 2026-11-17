@@ -316,6 +316,150 @@ class ProfileUpdateTest extends TestCase
         $this->assertSame([], Storage::disk('public')->allFiles());
     }
 
+    public function test_the_success_message_is_shown_after_saving(): void
+    {
+        $this->actingAs(User::factory()->create())
+            ->followingRedirects()
+            ->patch('/settings/profile', $this->payload())
+            ->assertOk()
+            ->assertSee('role="status"', false)
+            ->assertSee('Your profile has been updated.');
+    }
+
+    public function test_validation_errors_are_shown_and_input_is_kept(): void
+    {
+        $user = User::factory()->create(['bio' => 'Old bio']);
+
+        $this->actingAs($user)
+            ->from('/settings/profile')
+            ->followingRedirects()
+            ->patch('/settings/profile', $this->payload(['name' => 'Kept Name', 'bio' => str_repeat('b', 191)]))
+            ->assertOk()
+            ->assertSee('id="bio-error"', false)
+            ->assertSee('aria-invalid="true"', false)
+            ->assertSee('value="Kept Name"', false)
+            ->assertSee(str_repeat('b', 191));
+
+        $this->assertSame('Old bio', $user->refresh()->bio);
+    }
+
+    public function test_the_profile_page_escapes_user_supplied_text(): void
+    {
+        $user = User::factory()->create([
+            'name' => '"><script>alert(1)</script>',
+            'bio' => '</textarea><script>alert(2)</script>',
+        ]);
+
+        $this->actingAs($user)
+            ->get('/settings/profile')
+            ->assertOk()
+            ->assertDontSee('<script>alert', false)
+            ->assertSee('&lt;script&gt;alert(1)', false)
+            ->assertSee('&lt;/textarea&gt;', false);
+    }
+
+    public function test_the_profile_page_shows_the_uploaded_avatar(): void
+    {
+        $user = User::factory()->create(['avatar_path' => 'avatars/1/abc.png']);
+
+        $this->actingAs($user)
+            ->get('/settings/profile')
+            ->assertSee('src="'.Storage::disk('public')->url('avatars/1/abc.png').'"', false)
+            ->assertSee('name="remove_avatar"', false);
+    }
+
+    public function test_an_invalid_text_field_prevents_the_avatar_from_being_stored(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->patch('/settings/profile', $this->payload(['name' => '', 'avatar' => UploadedFile::fake()->image('a.png', 300, 300)]))
+            ->assertSessionHasErrors('name');
+
+        $this->assertNull($user->refresh()->avatar_path);
+        $this->assertSame([], Storage::disk('public')->allFiles());
+    }
+
+    public function test_removing_when_there_is_no_avatar_is_harmless(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->patch('/settings/profile', $this->payload(['remove_avatar' => '1']))
+            ->assertSessionHasNoErrors()
+            ->assertRedirect('/settings/profile');
+
+        $this->assertNull($user->refresh()->avatar_path);
+    }
+
+    public function test_an_unchecked_remove_box_keeps_the_avatar(): void
+    {
+        $user = User::factory()->create(['avatar_path' => 'avatars/1/abc.png']);
+        Storage::disk('public')->put('avatars/1/abc.png', 'x');
+
+        $this->actingAs($user)
+            ->patch('/settings/profile', $this->payload(['remove_avatar' => '0']))
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame('avatars/1/abc.png', $user->refresh()->avatar_path);
+        Storage::disk('public')->assertExists('avatars/1/abc.png');
+    }
+
+    public function test_a_non_boolean_remove_flag_is_rejected(): void
+    {
+        $user = User::factory()->create(['avatar_path' => 'avatars/1/abc.png']);
+
+        $this->actingAs($user)
+            ->patch('/settings/profile', $this->payload(['remove_avatar' => 'please']))
+            ->assertSessionHasErrors('remove_avatar');
+
+        $this->assertSame('avatars/1/abc.png', $user->refresh()->avatar_path);
+    }
+
+    public function test_an_avatar_of_exactly_4_mb_is_accepted(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->patch('/settings/profile', $this->payload(['avatar' => UploadedFile::fake()->image('big.jpg', 100, 100)->size(4096)]))
+            ->assertSessionHasNoErrors();
+
+        $this->assertNotNull($user->refresh()->avatar_path);
+    }
+
+    public function test_an_image_taller_than_4096px_is_rejected(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->patch('/settings/profile', $this->payload(['avatar' => UploadedFile::fake()->image('tall.png', 10, 4097)]))
+            ->assertSessionHasErrors('avatar');
+
+        $this->assertNull($user->refresh()->avatar_path);
+    }
+
+    public function test_a_name_of_exactly_255_characters_is_accepted(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->patch('/settings/profile', $this->payload(['name' => str_repeat('n', 255)]))
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame(255, strlen($user->refresh()->name));
+    }
+
+    public function test_a_missing_bio_field_clears_the_bio(): void
+    {
+        $user = User::factory()->create(['bio' => 'Something']);
+
+        $this->actingAs($user)
+            ->patch('/settings/profile', ['name' => 'Niels'])
+            ->assertSessionHasNoErrors();
+
+        $this->assertNull($user->refresh()->bio);
+    }
+
     public function test_avatar_url_points_at_the_disk_for_uploaded_avatars(): void
     {
         $user = User::factory()->create(['avatar_path' => 'avatars/1/abc.png']);
