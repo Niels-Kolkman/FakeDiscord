@@ -1,4 +1,4 @@
-{{-- Full-screen app shell: a sidebar slot on the left and the page content on the right. --}}
+{{-- Full-screen app shell: a sidebar slot on the left, the page content, and an optional aside slot on the right. --}}
 @props(['title'])
 
 <!DOCTYPE html>
@@ -31,5 +31,9 @@
 
             {{ $slot }}
         </main>
+
+        @isset($aside)
+            {{ $aside }}
+        @endisset
     </body>
 </html>

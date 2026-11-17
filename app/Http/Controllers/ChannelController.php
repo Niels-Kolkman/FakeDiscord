@@ -30,6 +30,7 @@ class ChannelController extends Controller
             'server' => $server,
             'layout' => $server->channelLayout(),
             'channel' => $channel,
+            'members' => $server->memberList(),
         ]);
     }
 

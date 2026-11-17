@@ -46,6 +46,28 @@ class ServerPolicyTest extends TestCase
         }
     }
 
+    public function test_leave_and_transfer_ownership_per_role(): void
+    {
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
+        $stranger = User::factory()->create();
+        $server = app(CreateServer::class)->create($owner, 'Policy Test');
+        ServerMember::factory()->create(['server_id' => $server->id, 'user_id' => $member->id]);
+
+        // ISSUE-13: the owner must transfer ownership before leaving.
+        $this->assertFalse($owner->can('leave', $server));
+        $this->assertSame(
+            'Transfer ownership to another member before leaving this server.',
+            Gate::forUser($owner)->inspect('leave', $server)->message(),
+        );
+        $this->assertTrue($member->can('leave', $server));
+        $this->assertFalse($stranger->can('leave', $server));
+
+        $this->assertTrue($owner->can('transferOwnership', $server));
+        $this->assertFalse($member->can('transferOwnership', $server));
+        $this->assertFalse($stranger->can('transferOwnership', $server));
+    }
+
     public function test_only_verified_users_can_create(): void
     {
         $this->assertTrue(User::factory()->create()->can('create', Server::class));

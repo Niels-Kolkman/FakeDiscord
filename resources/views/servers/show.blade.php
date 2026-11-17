@@ -7,6 +7,10 @@
         @include('servers.partials.sidebar', ['activeChannel' => $channel])
     </x-slot:sidebar>
 
+    <x-slot:aside>
+        @include('servers.partials.member-list')
+    </x-slot:aside>
+
     @if ($channel)
         <header class="flex min-h-12 items-center gap-2 border-b border-[#1f2023] px-4 py-2 shadow-sm">
             <span aria-hidden="true" class="text-xl text-[#80848e]">{{ $channel->isVoice() ? '🔊' : '#' }}</span>

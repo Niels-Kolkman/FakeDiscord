@@ -236,6 +236,31 @@ Users with a verified email address manage servers under `/servers`
   verified email, `view` needs membership, and `update` and `delete` are owner
   only until role permissions arrive (ISSUE-26).
 
+### Members and leaving
+
+- **Member sidebar**: server and channel pages show the members on the right
+  (`servers/partials/member-list.blade.php`, built by `App\Support\MemberList`
+  through `Server::memberList()`). Online members (status `online`, `idle` or
+  `dnd`) are grouped under their highest role other than `@everyone` (highest
+  `position`, then lowest id). Online members without such a role go under
+  **Online**, and everyone else goes under **Offline**, whatever their roles.
+  Empty groups are hidden. Members are sorted by nickname, or by name when there
+  is none, ignoring case. Online members' names use their highest role's colour
+  (only `#rrggbb` values are used), and the owner has a crown. The list takes
+  four queries, however many members there are.
+- **Leave** ("Leave server" in the channel sidebar, `GET /servers/{id}/leave`
+  to confirm, then `DELETE` the same URL): `App\Actions\Servers\LeaveServer`
+  deletes the membership and the member's `role_user` rows for that server's
+  roles. Invites they created keep working. They can rejoin with an invite.
+- **The owner cannot leave** (`ServerPolicy::leave`). The leave page explains
+  this and links to **Transfer ownership** on the settings page. The action
+  checks the owner again inside its transaction.
+- **Transfer ownership** (`PATCH /servers/{id}/owner`, owner only, 6 per
+  minute): the owner picks another member and types the server name to confirm.
+  `App\Actions\Servers\TransferServerOwnership` sets `owner_id`. The previous
+  owner stays a member and can then leave. Errors use their own error bag
+  (`transferOwnership`), so they never show on the delete form.
+
 ## Channels and categories
 
 A server's sidebar lists its uncategorised channels first, then its
