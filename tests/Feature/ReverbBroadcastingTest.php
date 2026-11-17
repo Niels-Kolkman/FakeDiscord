@@ -31,7 +31,7 @@ class ReverbBroadcastingTest extends TestCase
     public function test_broadcast_auth_route_is_registered(): void
     {
         $this->assertTrue(
-            collect(app('router')->getRoutes())->contains(fn ($route) => $route->uri() === 'broadcasting/auth'),
+            collect(app('router')->getRoutes()->getRoutes())->contains(fn ($route) => $route->uri() === 'broadcasting/auth'),
             'routes/channels.php should be loaded so /broadcasting/auth exists',
         );
     }

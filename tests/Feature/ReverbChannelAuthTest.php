@@ -8,6 +8,8 @@ use Illuminate\Broadcasting\Broadcasters\Broadcaster as BaseBroadcaster;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Testing\TestResponse;
+use Symfony\Component\HttpFoundation\Response;
 use Tests\TestCase;
 
 /**
@@ -42,7 +44,10 @@ class ReverbChannelAuthTest extends TestCase
         require base_path('routes/channels.php');
     }
 
-    private function authorize(string $channel, string $socketId = '1234.5678')
+    /**
+     * @return TestResponse<Response>
+     */
+    private function authorize(string $channel, string $socketId = '1234.5678'): TestResponse
     {
         return $this->post('/broadcasting/auth', [
             'channel_name' => $channel,
@@ -93,7 +98,7 @@ class ReverbChannelAuthTest extends TestCase
     {
         // If these drift apart, the browser connects but every broadcast is rejected.
         $client = config('broadcasting.connections.reverb');
-        $server = collect(config('reverb.apps.apps'))->first();
+        $server = collect(config()->array('reverb.apps.apps'))->first();
 
         $this->assertSame($client['key'], $server['key']);
         $this->assertSame($client['secret'], $server['secret']);
@@ -108,12 +113,17 @@ class ReverbChannelAuthTest extends TestCase
 
         $spy = new class extends BaseBroadcaster
         {
+            /** @var list<array{list<string>, string, array<string, mixed>}> */
             public array $sent = [];
 
             public function auth($request) {}
 
             public function validAuthenticationResponse($request, $result) {}
 
+            /**
+             * @param  array<int, mixed>  $channels
+             * @param  array<string, mixed>  $payload
+             */
             public function broadcast(array $channels, $event, array $payload = [])
             {
                 $this->sent[] = [array_map(fn ($c) => (string) $c, $channels), $event, $payload];
