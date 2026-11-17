@@ -130,8 +130,34 @@ The Blade views are in `resources/views/auth`.
 - Password reset links are sent by email. In local development, `MAIL_MAILER=log`
   writes the email to `storage/logs/laravel.log`.
 
-Fortify's other features (two-factor auth, passkeys, profile and password
-updates) are off in `config/fortify.php`.
+Fortify's password update feature is on for the account settings page (see
+below). Its other features (two-factor auth, passkeys, profile updates) are off
+in `config/fortify.php`.
+
+### Account settings
+
+`/settings/account` lets a logged-in user change their email address, change
+their password and delete their account. Each form asks for the current
+password again. Unverified users can open the page too, so they can fix a
+mistyped address.
+
+- **Email** (`PUT /settings/account/email`): the new address is lowercased and
+  must be unique. It starts unverified and a new verification link is sent, so
+  `verified` routes stay closed until the user confirms it. The logic is in
+  `app/Actions/Account/UpdateUserEmail.php`.
+- **Password** (`PUT /user/password`, Fortify): the new password follows the
+  same rules as registration and must differ from the current one. The rules
+  are in `app/Actions/Fortify/UpdateUserPassword.php`.
+- **Delete account** (`DELETE /settings/account`): the user's messages are kept
+  and anonymised, not removed. Their `user_id` becomes `NULL` and
+  `Message::authorName()` returns "Deleted User". Memberships, roles,
+  reactions, friendships, bans and DM participation are deleted with the
+  account, and all of the user's sessions are signed out. Users who own a server
+  can't delete their account until they transfer or delete it, because
+  deleting the owner would delete the whole server, including other members'
+  messages. The logic is in `app/Actions/Account/DeleteUser.php`.
+
+The email and delete routes are limited to 6 requests per minute.
 
 ### Email verification
 
