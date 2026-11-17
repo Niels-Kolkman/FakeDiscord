@@ -44,6 +44,7 @@
                 data-history-url="{{ route('messages.index', [$server, $channel]) }}"
                 data-older-cursor="{{ $feed->olderCursor }}"
                 data-viewer-id="{{ $viewerId }}"
+                data-reaction-emoji="{{ json_encode(\App\Support\Reactions::QUICK, JSON_UNESCAPED_UNICODE) }}"
                 @if ($canManageMessages) data-can-manage-messages @endif
             @endunless
         >

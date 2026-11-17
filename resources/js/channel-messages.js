@@ -23,6 +23,13 @@
  *   data-message-url). Edits from others arrive as ".message.updated" and
  *   replace the content and show "(edited)"; ".message.deleted" removes
  *   the message. The buttons are only a hint, MessagePolicy decides.
+ * - Reactions (ISSUE-18): "Add reaction" (🙂) in the hover toolbar opens a
+ *   picker of data-reaction-emoji; clicking a reaction adds yours or takes
+ *   it back (POST / DELETE data-reactions-url, field emoji). The response
+ *   and ".reactions.updated" carry the grouped reactions; the tooltip
+ *   names the first reactors (reactionTooltip()). Broadcasts have no `me`,
+ *   so the viewer's own state is kept from the page. The buttons are plain
+ *   forms, so they also work without this script.
  *
  * All user-provided text is inserted with textContent, never parsed as HTML.
  * renderMessage() must match resources/views/messages/item.blade.php.
@@ -85,39 +92,156 @@ export function applyEdited(marker, editedAt) {
     }
 }
 
+const TOOL_BUTTON = 'rounded px-2 py-0.5 text-xs text-[#b5bac1] hover:bg-[#404249] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]';
+const REACTION_BUTTON = 'flex items-center gap-1 rounded-lg border px-1.5 py-0.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]';
+const REACTION_MINE = 'border-[#5865f2] bg-[#5865f2]/25';
+const REACTION_OTHERS = 'border-transparent bg-[#2b2d31] hover:border-[#4e5058]';
+
 /**
- * Edit / Delete, like the actions in messages/item.blade.php.
- * context: { viewerId, canManageMessages, messagesUrl, csrfToken }.
+ * "Alice, Bob and 3 others reacted with 👍", like App\Support\Reactions::tooltip().
  */
-function renderActions(message, url, context) {
-    const own = message.author != null && String(message.author.id) === String(context.viewerId);
-    if (!own && !context.canManageMessages) return null;
+export function reactionTooltip(group) {
+    const names = (group.users ?? []).map((user) => user.name);
+    const others = group.count - names.length;
+    if (others > 0) names.push(others === 1 ? '1 other' : `${others} others`);
+    if (names.length === 0) return `Reacted with ${group.emoji}`;
 
-    const actions = el('div', 'absolute -top-3 right-4 hidden gap-1 rounded border border-[#1f2023] bg-[#313338] p-0.5 shadow group-hover:flex group-focus-within:flex');
-    actions.dataset.messageActions = '';
+    const last = names.pop();
+    const who = names.length === 0 ? last : `${names.join(', ')} and ${last}`;
+    return `${who} reacted with ${group.emoji}`;
+}
 
-    if (own) {
-        const edit = el('button', 'rounded px-2 py-0.5 text-xs text-[#b5bac1] hover:bg-[#404249] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]', 'Edit');
-        edit.type = 'button';
-        edit.dataset.messageEdit = '';
-        actions.appendChild(edit);
-    }
+/**
+ * "👍, 3 reactions", like App\Support\Reactions::label().
+ */
+export function reactionLabel(group) {
+    return `${group.emoji}, ${group.count} ${group.count === 1 ? 'reaction' : 'reactions'}`;
+}
 
+/**
+ * A POST form with the CSRF token, an optional _method and an emoji.
+ */
+function reactionForm(url, emoji, csrfToken, method = null) {
     const form = el('form');
     form.method = 'POST';
     form.action = url;
-    form.dataset.messageDeleteForm = '';
-    [['_token', context.csrfToken ?? ''], ['_method', 'DELETE']].forEach(([name, value]) => {
+    form.dataset.reactionForm = '';
+    const fields = [['_token', csrfToken ?? '']];
+    if (method) fields.push(['_method', method]);
+    fields.push(['emoji', emoji]);
+    fields.forEach(([name, value]) => {
         const input = el('input');
         input.type = 'hidden';
         input.name = name;
         input.value = value;
         form.appendChild(input);
     });
-    const remove = el('button', 'rounded px-2 py-0.5 text-xs text-red-400 hover:bg-[#404249] hover:text-red-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]', 'Delete');
-    remove.type = 'submit';
-    form.appendChild(remove);
-    actions.appendChild(form);
+    return form;
+}
+
+/**
+ * The reaction buttons of a message, like messages/item.blade.php. Each
+ * is a form: POST adds the viewer's reaction, DELETE (me) takes it back.
+ */
+export function renderReactions(groups, url, csrfToken) {
+    const row = el('div', 'mt-1 flex flex-wrap gap-1');
+    row.setAttribute('role', 'group');
+    row.setAttribute('aria-label', 'Reactions');
+    row.dataset.messageReactions = '';
+    fillReactions(row, groups, url, csrfToken);
+    return row;
+}
+
+function fillReactions(row, groups, url, csrfToken) {
+    row.replaceChildren();
+    (groups ?? []).forEach((group) => {
+        const me = Boolean(group.me);
+        const form = reactionForm(url, group.emoji, csrfToken, me ? 'DELETE' : null);
+        const button = el('button', `${REACTION_BUTTON} ${me ? REACTION_MINE : REACTION_OTHERS}`);
+        button.type = 'submit';
+        button.setAttribute('aria-pressed', me ? 'true' : 'false');
+        button.setAttribute('aria-label', reactionLabel(group));
+        button.title = reactionTooltip(group);
+        button.dataset.reaction = '';
+        button.dataset.emoji = group.emoji;
+        const emoji = el('span', null, group.emoji);
+        emoji.setAttribute('aria-hidden', 'true');
+        const count = el('span', 'text-xs font-medium text-[#dbdee1]', String(group.count));
+        count.setAttribute('aria-hidden', 'true');
+        count.dataset.reactionCount = '';
+        button.append(emoji, count);
+        form.appendChild(button);
+        row.appendChild(form);
+    });
+    row.hidden = row.childElementCount === 0;
+}
+
+function renderReactionPicker(url, context) {
+    const picker = el('details', 'relative');
+    picker.dataset.reactionPicker = '';
+
+    const summary = el('summary', `${TOOL_BUTTON} cursor-pointer list-none [&::-webkit-details-marker]:hidden`);
+    summary.title = 'Add reaction';
+    const icon = el('span', null, '🙂');
+    icon.setAttribute('aria-hidden', 'true');
+    summary.append(icon, el('span', 'sr-only', 'Add reaction'));
+    picker.appendChild(summary);
+
+    const choices = el('div', 'absolute right-0 top-full z-20 mt-1 flex gap-0.5 rounded-lg border border-[#1f2023] bg-[#2b2d31] p-1 shadow-lg');
+    choices.setAttribute('role', 'group');
+    choices.setAttribute('aria-label', 'Choose a reaction');
+    (context.quickEmoji ?? []).forEach((emoji) => {
+        const form = reactionForm(url, emoji, context.csrfToken);
+        const button = el('button', 'rounded p-1 text-lg leading-none hover:bg-[#404249] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]', emoji);
+        button.type = 'submit';
+        button.setAttribute('aria-label', `React with ${emoji}`);
+        button.title = `React with ${emoji}`;
+        button.dataset.reactionChoice = '';
+        button.dataset.emoji = emoji;
+        form.appendChild(button);
+        choices.appendChild(form);
+    });
+    picker.appendChild(choices);
+
+    return picker;
+}
+
+/**
+ * Add reaction / Edit / Delete, like the actions in messages/item.blade.php.
+ * context: { viewerId, canManageMessages, messagesUrl, csrfToken, quickEmoji }.
+ */
+function renderActions(message, url, context) {
+    const own = message.author != null && String(message.author.id) === String(context.viewerId);
+
+    const actions = el('div', 'absolute -top-3 right-4 hidden gap-1 rounded border border-[#1f2023] bg-[#313338] p-0.5 shadow group-hover:flex group-focus-within:flex has-[[open]]:flex');
+    actions.dataset.messageActions = '';
+
+    actions.appendChild(renderReactionPicker(`${url}/reactions`, context));
+
+    if (own) {
+        const edit = el('button', TOOL_BUTTON, 'Edit');
+        edit.type = 'button';
+        edit.dataset.messageEdit = '';
+        actions.appendChild(edit);
+    }
+
+    if (own || context.canManageMessages) {
+        const form = el('form');
+        form.method = 'POST';
+        form.action = url;
+        form.dataset.messageDeleteForm = '';
+        [['_token', context.csrfToken ?? ''], ['_method', 'DELETE']].forEach(([name, value]) => {
+            const input = el('input');
+            input.type = 'hidden';
+            input.name = name;
+            input.value = value;
+            form.appendChild(input);
+        });
+        const remove = el('button', 'rounded px-2 py-0.5 text-xs text-red-400 hover:bg-[#404249] hover:text-red-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]', 'Delete');
+        remove.type = 'submit';
+        form.appendChild(remove);
+        actions.appendChild(form);
+    }
 
     return actions;
 }
@@ -129,6 +253,7 @@ export function renderMessage(message, context = {}) {
     item.dataset.message = '';
     item.dataset.messageId = String(message.id);
     item.dataset.messageUrl = url;
+    item.dataset.reactionsUrl = url ? `${url}/reactions` : '';
 
     item.appendChild(renderAvatar(message.author));
 
@@ -154,6 +279,7 @@ export function renderMessage(message, context = {}) {
     applyEdited(edited, message.edited_at);
     text.appendChild(edited);
     body.appendChild(text);
+    body.appendChild(renderReactions(message.reactions, item.dataset.reactionsUrl, context.csrfToken));
 
     item.appendChild(body);
 
@@ -178,6 +304,22 @@ function editErrorMessage(error) {
     return response?.data?.errors?.content?.[0] ?? 'Your changes could not be saved. Try again.';
 }
 
+function parseJson(text, fallback) {
+    try {
+        return text ? JSON.parse(text) : fallback;
+    } catch {
+        return fallback;
+    }
+}
+
+function reactionErrorMessage(error) {
+    const response = error.response;
+    if (response?.status === 429) return 'You are reacting too quickly. Wait a moment and try again.';
+    if (response?.status === 403) return 'You cannot react to this message.';
+    if (response?.status === 404) return 'This message was deleted.';
+    return response?.data?.errors?.emoji?.[0] ?? 'Your reaction could not be saved. Try again.';
+}
+
 function socketHeaders() {
     const socketId = window.Echo?.socketId();
     return socketId ? { 'X-Socket-ID': socketId } : {};
@@ -195,6 +337,7 @@ function initChannel(root) {
         canManageMessages: root.dataset.canManageMessages !== undefined,
         messagesUrl: root.dataset.historyUrl ?? '',
         csrfToken: document.querySelector('meta[name="csrf-token"]')?.content ?? '',
+        quickEmoji: parseJson(root.dataset.reactionEmoji, []),
     };
 
     const seen = new Set([...list.querySelectorAll('[data-message]')].map((item) => item.dataset.messageId));
@@ -493,12 +636,110 @@ function initChannel(root) {
             });
     });
 
+    // --- Reactions (ISSUE-18) -------------------------------------------
+    const myReactions = (item) => new Set(
+        [...item.querySelectorAll('[data-reaction][aria-pressed="true"]')].map((button) => button.dataset.emoji),
+    );
+
+    // Redraw a message's reactions, keeping focus on the same emoji.
+    const setReactions = (item, groups) => {
+        const row = item.querySelector('[data-message-reactions]');
+        if (!row) return;
+        const focused = row.contains(document.activeElement)
+            ? document.activeElement.closest('[data-reaction]')?.dataset.emoji
+            : undefined;
+        changeItem(item, () => fillReactions(row, groups, item.dataset.reactionsUrl, context.csrfToken));
+        if (focused !== undefined) {
+            [...row.querySelectorAll('[data-reaction]')]
+                .find((button) => button.dataset.emoji === focused)
+                ?.focus({ preventScroll: true });
+        }
+    };
+
+    // Broadcasts have no `me`: keep ours, unless it was us in another tab.
+    const applyReactions = (event) => {
+        if (!event || String(event.channel_id) !== channelId) return;
+        const item = findItem(event.message_id);
+        if (!item) return;
+        const mine = myReactions(item);
+        if (String(event.user_id) === String(context.viewerId)) {
+            if (event.added) mine.add(event.emoji);
+            else mine.delete(event.emoji);
+        }
+        setReactions(item, (event.reactions ?? []).map((group) => ({ ...group, me: mine.has(group.emoji) })));
+    };
+
+    const closePickers = (except = null) => {
+        list.querySelectorAll('[data-reaction-picker][open]').forEach((picker) => {
+            if (picker !== except) picker.open = false;
+        });
+    };
+
+    // "toggle" does not bubble, so listen while capturing: one picker at a time.
+    list.addEventListener('toggle', (event) => {
+        if (event.target.matches?.('[data-reaction-picker]') && event.target.open) closePickers(event.target);
+    }, true);
+
+    document.addEventListener('click', (event) => {
+        if (!event.target.closest?.('[data-reaction-picker]')) closePickers();
+    });
+
+    list.addEventListener('keydown', (event) => {
+        const picker = event.target.closest?.('[data-reaction-picker][open]');
+        if (event.key !== 'Escape' || !picker) return;
+        event.preventDefault();
+        picker.open = false;
+        picker.querySelector('summary')?.focus({ preventScroll: true });
+    });
+
+    const pendingReactions = new Set();
+
+    list.addEventListener('submit', (event) => {
+        const reactionForm = event.target.closest('[data-reaction-form]');
+        if (!reactionForm) return;
+        event.preventDefault();
+
+        const item = reactionForm.closest('[data-message]');
+        const url = item?.dataset.reactionsUrl;
+        const emoji = reactionForm.querySelector('input[name="emoji"]')?.value;
+        if (!item || !url || !emoji) return;
+
+        const picker = reactionForm.closest('[data-reaction-picker]');
+        if (picker) {
+            picker.open = false;
+            picker.querySelector('summary')?.focus({ preventScroll: true });
+        }
+
+        const key = `${item.dataset.messageId}:${emoji}`;
+        if (pendingReactions.has(key)) return;
+        pendingReactions.add(key);
+
+        const remove = reactionForm.querySelector('input[name="_method"]')?.value === 'DELETE';
+        window.axios
+            .request({
+                method: remove ? 'delete' : 'post',
+                url,
+                data: { emoji },
+                headers: { Accept: 'application/json', ...socketHeaders() },
+            })
+            .then((response) => setReactions(item, response.data.reactions ?? []))
+            .catch((failure) => {
+                if (failure.response?.status === 404) {
+                    removeItem(item.dataset.messageId);
+                    return;
+                }
+                window.alert(reactionErrorMessage(failure));
+            })
+            .finally(() => pendingReactions.delete(key));
+    });
+
     window.Echo?.private(`channel.${channelId}`)
         .listen('.message.sent', (message) => append(message))
         .listen('.message.updated', (message) => applyUpdate(message))
         .listen('.message.deleted', (message) => {
             if (String(message?.channel_id) === channelId) removeItem(message.id);
-        });
+        })
+        .listen('.reactions.updated', (event) => applyReactions(event));
 
     if (!form) return;
 
