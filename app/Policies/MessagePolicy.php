@@ -37,6 +37,15 @@ class MessagePolicy
             || ($server !== null && $user->can('manageMessages', $server));
     }
 
+    /**
+     * Any member of the server may add and remove their own reactions
+     * (ISSUE-18), on anyone's message.
+     */
+    public function react(User $user, Message $message): bool
+    {
+        return $this->isMember($user, $message);
+    }
+
     private function isAuthor(User $user, Message $message): bool
     {
         return $message->user_id !== null && (int) $message->user_id === (int) $user->id;

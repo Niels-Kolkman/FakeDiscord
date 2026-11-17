@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Reactions;
 use Database\Factories\MessageFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -97,11 +98,18 @@ class Message extends Model
      * resources/js/channel-messages.js renders it the same way as
      * resources/views/messages/item.blade.php.
      *
-     * @return array{id: int, channel_id: int|null, content: string, created_at: string|null, edited_at: string|null, author: array{id: int, name: string, username: string, avatar_url: string, profile_url: string}|null}
+     * `reactions` are the grouped reactions (App\Support\Reactions::groups());
+     * with a $viewer each group also says whether they reacted (`me`).
+     *
+     * @return array{id: int, channel_id: int|null, content: string, created_at: string|null, edited_at: string|null, author: array{id: int, name: string, username: string, avatar_url: string, profile_url: string}|null, reactions: list<array<string, mixed>>}
      */
-    public function toPayload(): array
+    public function toPayload(?User $viewer = null): array
     {
         $author = $this->author;
+
+        if (! $this->relationLoaded('reactions')) {
+            $this->load(Reactions::relations());
+        }
 
         return [
             'id' => (int) $this->id,
@@ -116,6 +124,7 @@ class Message extends Model
                 'avatar_url' => $author->avatarUrl(),
                 'profile_url' => route('users.profile', $author),
             ],
+            'reactions' => Reactions::groups($this, $viewer === null ? null : (int) $viewer->id),
         ];
     }
 

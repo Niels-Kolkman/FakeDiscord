@@ -5,6 +5,7 @@ namespace Tests\Feature\Messages;
 use App\Actions\Servers\CreateServer;
 use App\Models\Channel;
 use App\Models\Message;
+use App\Models\Reaction;
 use App\Models\Server;
 use App\Models\ServerMember;
 use App\Models\User;
@@ -149,11 +150,14 @@ class ChannelMessagesPageTest extends TestCase
             ->assertSee('Messages can be at most 2000 characters long.');
     }
 
-    public function test_authors_are_eager_loaded(): void
+    public function test_authors_and_reactions_are_eager_loaded(): void
     {
         $authors = User::factory()->count(5)->create();
         foreach ($authors as $author) {
-            Message::factory()->count(5)->inChannel($this->channel)->create(['user_id' => $author->id]);
+            $messages = Message::factory()->count(5)->inChannel($this->channel)->create(['user_id' => $author->id]);
+            foreach ($messages as $message) {
+                Reaction::factory()->create(['message_id' => $message->id, 'user_id' => $author->id, 'emoji' => '👍']);
+            }
         }
 
         $this->actingAs($this->member);
@@ -166,7 +170,8 @@ class ChannelMessagesPageTest extends TestCase
         $this->get($this->channelUrl())->assertOk();
         $without = count(DB::getQueryLog());
 
-        // One extra query for the authors, not one per message.
-        $this->assertLessThanOrEqual($without + 1, $withMessages);
+        // Extra queries for the authors, the reactions and the reactors,
+        // not one per message.
+        $this->assertLessThanOrEqual($without + 3, $withMessages);
     }
 }

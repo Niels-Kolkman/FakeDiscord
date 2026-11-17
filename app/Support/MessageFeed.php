@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Models\Channel;
 use App\Models\Message;
+use App\Models\User;
 use Illuminate\Pagination\Cursor;
 use Illuminate\Support\Collection;
 
@@ -56,7 +57,7 @@ final readonly class MessageFeed
         // ?before= from the current request unvalidated. No message id is
         // ever PHP_INT_MAX, so this cursor means "start at the newest".
         $page = $channel->messages()
-            ->with('author')
+            ->with(['author', ...Reactions::relations()])
             ->orderByDesc('id')
             ->cursorPaginate($limit, ['*'], self::CURSOR, $before ?? new Cursor(['id' => PHP_INT_MAX]));
 
@@ -95,14 +96,15 @@ final readonly class MessageFeed
     }
 
     /**
-     * The JSON of MessageController::index.
+     * The JSON of MessageController::index. With a $viewer the reactions
+     * say whether they reacted (`me`).
      *
      * @return array{messages: list<array<string, mixed>>, next_cursor: string|null}
      */
-    public function toPayload(): array
+    public function toPayload(?User $viewer = null): array
     {
         return [
-            'messages' => $this->messages->map(fn (Message $message): array => $message->toPayload())->values()->all(),
+            'messages' => $this->messages->map(fn (Message $message): array => $message->toPayload($viewer))->values()->all(),
             'next_cursor' => $this->olderCursor,
         ];
     }
