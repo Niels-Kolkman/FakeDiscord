@@ -394,6 +394,40 @@ Voice channels have no messages.
   Its groups have no `me`, so each browser keeps track of its own reactions.
   Without JavaScript the picker (a `<details>`) and the reaction buttons are
   plain forms that redirect back to the channel.
+- **Attachments** (ISSUE-19): click **＋** in the composer, paste, or drop files
+  on it to attach up to **5 files** of at most **10 MB** each. The queued files
+  are listed above the composer and can be removed before sending. With files
+  the text is optional. The composer then posts `multipart/form-data` with
+  `attachments[]` (`StoreMessageRequest`):
+  - Allowed: images (png, jpg/jpeg, gif, webp), documents (pdf, txt, md, csv,
+    json, log, doc/docx, xls/xlsx, ppt/pptx, odt/ods/odp), archives (zip, 7z,
+    gz, tar) and audio/video (mp3, ogg, wav, mp4, webm, mov). Both the file name
+    (`extensions`) and the type sniffed from the contents (`File::types()`)
+    must be on the list, and a file named as an image must really be one. SVG
+    and HTML are never accepted. The list lives in
+    `MessageAttachment::ALLOWED_EXTENSIONS`.
+  - Files are stored on `ATTACHMENT_DISK` (`filesystems.attachment_disk`,
+    default the private `local` disk) at `attachments/{channel}/{uuid}.{ext}`.
+    The original name is only kept in the database. Each row remembers its disk,
+    so changing the setting later keeps older files working. If saving the
+    message fails, the stored files are deleted again.
+  - Files are only served through **temporary signed URLs**:
+    `GET /attachments/{id}/{filename}?expires=…&signature=…`
+    (`AttachmentController`), valid for `ATTACHMENT_URL_TTL` minutes (default
+    1440, one day). Like Discord's CDN links they work without a session, so
+    anyone with an unexpired link can open the file. Altered or expired links
+    are a `403`, and so are unknown ids, so ids cannot be probed. Files of
+    deleted messages are a `404`. PNG, JPEG, GIF and WebP are shown inline;
+    everything else, and `?download=1`, is sent as a download
+    (`application/octet-stream`, `nosniff`, a sandbox CSP). Limited to 600
+    requests per minute.
+  - Messages show images as previews of at most 400×300 (with their size
+    reserved, so the scroll position does not jump while they load) and other
+    files as a card with name, size and a download link. Deleting a channel or
+    server also deletes its files.
+  - PHP must accept the uploads: set `upload_max_filesize` to at least `10M`
+    and `post_max_size` to at least `55M` in `php.ini` (5 × 10 MB plus the
+    form). A request over `post_max_size` gets a `413`.
 
 The broadcast payload is the same as the JSON response (`Message::toPayload()`):
 
@@ -401,7 +435,9 @@ The broadcast payload is the same as the JSON response (`Message::toPayload()`):
 {"id": 1, "channel_id": 1, "content": "Hello!", "created_at": "2026-11-17T12:00:00+00:00",
  "edited_at": null,
  "author": {"id": 1, "name": "Test User", "username": "test", "avatar_url": "...", "profile_url": "..."},
- "reactions": [{"emoji": "👍", "count": 2, "users": [{"id": 1, "name": "Test User"}, {"id": 2, "name": "Alice"}], "me": true}]}
+ "reactions": [{"emoji": "👍", "count": 2, "users": [{"id": 1, "name": "Test User"}, {"id": 2, "name": "Alice"}], "me": true}],
+ "attachments": [{"id": 1, "name": "cat.png", "size": 48213, "mime_type": "image/png", "is_image": true,
+                  "width": 800, "height": 600, "url": "...", "download_url": "..."}]}
 ```
 
 `author` is `null` for messages of deleted accounts, which show as "Deleted User".

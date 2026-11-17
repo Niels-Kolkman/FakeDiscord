@@ -235,7 +235,7 @@ class MessageAttachment extends Model
 
     private function signedUrl(bool $download): string
     {
-        $parameters = ['attachment' => $this->id, 'filename' => $this->original_name];
+        $parameters = ['id' => $this->id, 'filename' => $this->original_name];
         if ($download) {
             $parameters['download'] = 1;
         }

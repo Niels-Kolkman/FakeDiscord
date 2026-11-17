@@ -21,10 +21,13 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class AttachmentController extends Controller
 {
-    public function show(Request $request, MessageAttachment $attachment): StreamedResponse
+    public function show(Request $request, string $id): StreamedResponse
     {
+        // Looked up here, after `signed` has checked the link.
+        $attachment = MessageAttachment::query()->find((int) $id);
+
         // The relation hides soft deleted messages.
-        abort_if($attachment->message === null, 404);
+        abort_if($attachment === null || $attachment->message === null, 404);
 
         $storage = Storage::disk($attachment->disk);
         abort_unless($storage->exists($attachment->path), 404);

@@ -27,10 +27,12 @@ Route::view('/dashboard', 'dashboard')->middleware('auth')->name('dashboard');
 // signed links in Message::toPayload() and messages/item.blade.php; the
 // signature is the access check, so no session is needed (like a CDN
 // link). {filename} is only there so saved files get a sensible name.
-Route::get('/attachments/{attachment}/{filename}', [AttachmentController::class, 'show'])
+// {id} is not model bound: binding runs before `signed`, and a 404 for
+// unknown ids would tell anyone which attachments exist.
+Route::get('/attachments/{id}/{filename}', [AttachmentController::class, 'show'])
     // One page can show 50 messages with 5 images each.
     ->middleware(['signed', 'throttle:600,1'])
-    ->where('filename', '[^/]+')
+    ->where(['id' => '[0-9]+', 'filename' => '[^/]+'])
     ->name('attachments.show');
 
 // Account settings (ISSUE-9). Only `auth`, not `verified`: a user with a

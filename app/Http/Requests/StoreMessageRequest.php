@@ -22,6 +22,9 @@ use Illuminate\Validation\Validator;
  */
 class StoreMessageRequest extends FormRequest
 {
+    /** @var list<string> */
+    private const IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg', 'gif', 'webp'];
+
     public function authorize(): bool
     {
         $server = $this->route('server');
@@ -97,6 +100,22 @@ class StoreMessageRequest extends FormRequest
             function (Validator $validator): void {
                 if ($this->channel()->isVoice()) {
                     $validator->errors()->add('content', 'You cannot send messages in a voice channel.');
+                }
+
+                // The rules accept any allowed name with any allowed contents
+                // (a text file named .png passes both). A file named as an
+                // image must really be one.
+                foreach ((array) $this->file('attachments', []) as $index => $file) {
+                    $key = "attachments.{$index}";
+                    if (! $file instanceof UploadedFile || $validator->errors()->has($key)) {
+                        continue;
+                    }
+
+                    $extension = strtolower($file->getClientOriginalExtension());
+                    if (in_array($extension, self::IMAGE_EXTENSIONS, true)
+                        && ! in_array($file->getMimeType(), MessageAttachment::INLINE_IMAGE_TYPES, true)) {
+                        $validator->errors()->add($key, $file->getClientOriginalName().' is not a valid image.');
+                    }
                 }
             },
         ];
