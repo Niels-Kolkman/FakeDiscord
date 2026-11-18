@@ -577,7 +577,23 @@ form, so the page also works without JavaScript.
   recipient. **Cancel** (`DELETE /friends/{id}/request`): only the sender.
   **Remove** (`DELETE /friends/{id}`): either friend, with a confirmation.
   **Unblock** (`DELETE /friends/{id}/block`): only the one who blocked.
-  Blocking itself comes with ISSUE-25.
+- **Block** (`POST /friends/block`, field `user_id`, ISSUE-25): **Block** on
+  the friends and pending lists, and in the profile popover (which also has
+  **Unblock**), both with a confirmation. `App\Actions\Friends\BlockUser`
+  turns a pending request (either way) or a friendship into a block row
+  (`user_id` = the blocker), and the other person gets the same `removed`
+  event as for a removal. Blocking someone who already blocked you adds a
+  second row, so each block is lifted on its own. You cannot block yourself.
+- **What a block does**: no friend requests and no new DMs in either
+  direction, and an existing DM becomes read-only for both (see Direct
+  messages). In servers you share, the **blocker** no longer sees the blocked
+  user's messages: `Message::visibleTo()` leaves them out of the channel page,
+  the history JSON, the pins and search. The channel panel carries
+  `data-blocked-user-ids`, so `channel-messages.js` also skips the ones that
+  arrive live, and a reply quoting a blocked message says "Blocked message".
+  The blocked person still sees everything, and DMs keep their whole history.
+  The profile JSON says whether *you* blocked someone (`blocked`), never
+  whether they blocked you.
 - `App\Policies\FriendshipPolicy` decides. Anyone who is not one of the two
   users gets a **404**, so friendship ids do not reveal who is friends with
   whom. A party asking for the wrong thing (accepting their own request) gets
