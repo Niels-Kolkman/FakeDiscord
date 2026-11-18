@@ -18,6 +18,9 @@
 
 export const DM_ACTIVITY_EVENT = '.conversation.activity';
 
+/** App\Events\ConversationUpdated: a group DM changed (ISSUE-24). */
+export const DM_UPDATED_EVENT = '.conversation.updated';
+
 /**
  * Reload [data-dm-list] from url. isCurrent() is asked before the new list
  * goes in, so a slow older response cannot overwrite a newer one. Returns
@@ -42,11 +45,62 @@ export async function refreshDmList({ document, fetch, parse, url, isCurrent = (
 }
 
 /**
- * options: { echo, userId, document, fetch, parse,
- *            location (the list is reloaded from location.href) }
- * Returns the event handler (for tests), or null without Echo or a user.
+ * A group DM changed (ISSUE-24, App\Events\ConversationUpdated): renamed,
+ * or people were added, removed or left.
+ *
+ * On any page the DM list is reloaded. On the page of that group
+ * ([data-group-details][data-conversation-id]) its header and settings
+ * are reloaded too, keeping the settings open if they were; when the page
+ * answers 404 the viewer is no longer in the group and goes to friendsUrl.
+ * Returns 'left', 'refreshed' or 'list'.
  */
-export function initDirectMessages({ echo, userId, document, fetch, parse, location }) {
+export async function refreshGroup({ document, fetch, parse, location, friendsUrl, conversationId, isCurrent = () => true }) {
+    const details = document.querySelector('[data-group-details]');
+    const here = details && Number(details.getAttribute('data-conversation-id')) === conversationId;
+
+    if (!here) {
+        await refreshDmList({ document, fetch, parse, url: location.href, isCurrent });
+        return 'list';
+    }
+
+    try {
+        const response = await fetch(location.href, { headers: { Accept: 'text/html' }, credentials: 'same-origin' });
+        if (response.status === 404 || response.status === 403) {
+            if (isCurrent()) location.assign(friendsUrl);
+            return 'left';
+        }
+        if (!response.ok) return 'list';
+
+        const page = parse(await response.text());
+        if (!isCurrent()) return 'list';
+
+        const fresh = page.querySelector('[data-group-details]');
+        const current = document.querySelector('[data-group-details]');
+        if (fresh && current) {
+            const wasOpen = current.querySelector('details')?.open ?? false;
+            current.replaceChildren(...fresh.childNodes);
+            const settings = current.querySelector('details');
+            if (settings && wasOpen) settings.open = true;
+        }
+
+        const list = page.querySelector('[data-dm-list]');
+        const currentList = document.querySelector('[data-dm-list]');
+        if (list && currentList) currentList.replaceChildren(...list.childNodes);
+
+        return 'refreshed';
+    } catch {
+        return 'list';
+    }
+}
+
+/**
+ * options: { echo, userId, document, fetch, parse,
+ *            location (the list is reloaded from location.href),
+ *            friendsUrl (where to go after being taken out of the open group) }
+ * Returns the activity handler (for tests, with .updated for group
+ * changes), or null without Echo or a user.
+ */
+export function initDirectMessages({ echo, userId, document, fetch, parse, location, friendsUrl = '/friends' }) {
     if (!echo || !userId) return null;
 
     let latest = 0;
@@ -58,7 +112,21 @@ export function initDirectMessages({ echo, userId, document, fetch, parse, locat
         return refreshDmList({ document, fetch, parse, url: location.href, isCurrent: () => run === latest });
     };
 
-    echo.private(`App.Models.User.${userId}`).listen(DM_ACTIVITY_EVENT, handle);
+    const updated = (event) => {
+        if (!Number.isInteger(event?.conversation_id)) return Promise.resolve(false);
+
+        const run = ++latest;
+        return refreshGroup({
+            document, fetch, parse, location, friendsUrl,
+            conversationId: event.conversation_id,
+            isCurrent: () => run === latest,
+        });
+    };
+    handle.updated = updated;
+
+    echo.private(`App.Models.User.${userId}`)
+        .listen(DM_ACTIVITY_EVENT, handle)
+        .listen(DM_UPDATED_EVENT, updated);
 
     return handle;
 }
