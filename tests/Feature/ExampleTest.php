@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use InvalidArgumentException;
 use Tests\TestCase;
 
 /**
@@ -38,6 +39,9 @@ class ExampleTest extends TestCase
 
     public function test_the_default_welcome_view_is_gone(): void
     {
-        $this->assertFalse(view()->exists('welcome'));
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('View [welcome] not found.');
+
+        app('view')->getFinder()->find('welcome');
     }
 }

@@ -236,7 +236,8 @@ class ChannelEdgeCasesTest extends TestCase
 
         $this->actingAs($owner)->patch("/servers/{$server->id}/channels/{$voice->id}", ['name' => 'Movie Night! 🎬'])
             ->assertSessionHasNoErrors();
-        $this->assertSame('Movie Night! 🎬', $voice->fresh()?->name);
+        $voice->refresh();
+        $this->assertSame('Movie Night! 🎬', $voice->name);
     }
 
     public function test_strangers_cannot_open_channel_settings(): void
@@ -303,8 +304,9 @@ class ChannelEdgeCasesTest extends TestCase
         $this->actingAs($owner)->delete("/servers/{$server->id}/categories/{$empty->id}")->assertRedirect(route('servers.show', $server));
 
         $this->assertModelMissing($empty);
-        $this->assertSame($kept->id, $inKept->fresh()?->category_id);
-        $this->assertSame(4, $inKept->fresh()?->position);
+        $inKept->refresh();
+        $this->assertSame($kept->id, $inKept->category_id);
+        $this->assertSame(4, $inKept->position);
         $this->assertSame(0, $server->channels()->where('name', 'general')->sole()->position);
     }
 
