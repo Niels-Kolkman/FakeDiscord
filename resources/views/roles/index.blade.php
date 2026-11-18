@@ -24,10 +24,16 @@
     <ul class="mb-6 space-y-2" aria-label="Roles">
         @foreach ($roles as $role)
             @php($index = $movable->search(fn ($r) => $r->is($role)))
+            {{-- The role hierarchy (ISSUE-27): only roles below your own highest role can be opened or moved, and not past it. --}}
+            @php($canManage = auth()->user()?->can('manage', $role) ?? false)
             <li class="flex items-center gap-3 rounded bg-[#1e1f22] px-3 py-2 text-sm" data-role="{{ $role->id }}">
                 <span class="h-3 w-3 shrink-0 rounded-full" aria-hidden="true"
                     style="background-color: {{ $role->displayColor() ?? '#99aab5' }}"></span>
-                <a href="{{ route('roles.edit', [$server, $role]) }}" class="min-w-0 flex-1 hover:underline">
+                @if ($canManage)
+                    <a href="{{ route('roles.edit', [$server, $role]) }}" class="min-w-0 flex-1 hover:underline">
+                @else
+                    <div class="min-w-0 flex-1" title="Only roles below your highest role can be changed">
+                @endif
                     <span class="block truncate font-medium text-white">{{ $role->name }}</span>
                     <span class="block text-xs text-[#949ba4]">
                         @if ($role->is_default)
@@ -36,10 +42,15 @@
                             {{ $role->users_count }} {{ \Illuminate\Support\Str::plural('member', $role->users_count) }}
                         @endif
                     </span>
-                </a>
+                @if ($canManage)
+                    </a>
+                @else
+                    </div>
+                @endif
 
-                @unless ($role->is_default)
-                    @foreach ([['up', '↑', 'Move up', $index === 0], ['down', '↓', 'Move down', $index === $movable->count() - 1]] as [$direction, $arrow, $label, $disabled])
+                @if (! $role->is_default && $canManage)
+                    @php($topBlocked = $index > 0 && ! (auth()->user()?->can('manage', $movable[$index - 1]) ?? false))
+                    @foreach ([['up', '↑', 'Move up', $index === 0 || $topBlocked], ['down', '↓', 'Move down', $index === $movable->count() - 1]] as [$direction, $arrow, $label, $disabled])
                         <form method="POST" action="{{ route('roles.move', [$server, $role]) }}">
                             @csrf
                             <input type="hidden" name="direction" value="{{ $direction }}">
@@ -47,7 +58,7 @@
                                 class="rounded px-2 py-1 text-[#b5bac1] hover:bg-[#35373c] hover:text-white disabled:opacity-30 disabled:hover:bg-transparent">{{ $arrow }}</button>
                         </form>
                     @endforeach
-                @endunless
+                @endif
             </li>
         @endforeach
     </ul>

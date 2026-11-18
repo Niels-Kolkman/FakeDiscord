@@ -5,10 +5,12 @@ namespace App\Http\Requests;
 use App\Enums\Permission;
 use App\Models\Role;
 use App\Models\Server;
+use App\Services\PermissionService;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 /**
  * Create or edit a role (ISSUE-26).
@@ -19,12 +21,56 @@ use Illuminate\Validation\Rule;
  */
 class StoreRoleRequest extends FormRequest
 {
+    /**
+     * ServerPolicy::manageRoles, and for an existing role RolePolicy::manage
+     * (it must be below the actor's highest role, ISSUE-27).
+     */
     public function authorize(): bool
     {
         $server = $this->route('server');
+        $user = $this->user();
 
-        return $server instanceof Server
-            && ($this->user()?->can('manageRoles', $server) ?? false);
+        if (! $server instanceof Server || $user === null || ! $user->can('manageRoles', $server)) {
+            return false;
+        }
+
+        $role = $this->route('role');
+
+        return ! $role instanceof Role || $user->can('manage', $role);
+    }
+
+    /**
+     * Like Discord, a member who is not the owner can only turn on or off the
+     * flags they have themselves (administrators have them all).
+     *
+     * @return array<int, callable(Validator): void>
+     */
+    public function after(): array
+    {
+        return [
+            function (Validator $validator): void {
+                $server = $this->route('server');
+                $user = $this->user();
+                if (! $server instanceof Server || $user === null || $validator->errors()->isNotEmpty()) {
+                    return;
+                }
+
+                $requested = 0;
+                foreach ((array) $this->input('permissions', []) as $value) {
+                    $requested |= is_numeric($value) ? (int) $value : 0;
+                }
+
+                $role = $this->route('role');
+                $current = $role instanceof Role ? (int) $role->permissions : 0;
+                $changed = ($requested ^ $current) & Permission::all();
+                $missing = $changed & ~app(PermissionService::class)->permissions($user, $server);
+
+                if ($missing !== 0) {
+                    $labels = array_map(fn (Permission $permission): string => $permission->label(), Permission::fromMask($missing));
+                    $validator->errors()->add('permissions', 'You can only change permissions you have yourself: '.implode(', ', $labels).'.');
+                }
+            },
+        ];
     }
 
     /**

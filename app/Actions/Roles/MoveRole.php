@@ -21,6 +21,28 @@ class MoveRole
     public const DOWN = 'down';
 
     /**
+     * The role that move() would swap $role with, or null at that end (and
+     * for @everyone). RoleController uses it so a member cannot move a role
+     * past their own highest role (ISSUE-27).
+     */
+    public function neighbour(Role $role, string $direction): ?Role
+    {
+        if ($role->is_default) {
+            return null;
+        }
+
+        $ids = $this->orderedIds((int) $role->server_id);
+        $index = array_search((int) $role->getKey(), $ids, true);
+        if ($index === false) {
+            return null;
+        }
+
+        $target = $direction === self::UP ? $index - 1 : $index + 1;
+
+        return isset($ids[$target]) ? Role::query()->find($ids[$target]) : null;
+    }
+
+    /**
      * @return bool false when the role is already at that end, or is @everyone
      */
     public function move(Role $role, string $direction): bool
@@ -36,16 +58,7 @@ class MoveRole
         return DB::transaction(function () use ($role, $direction): bool {
             Server::query()->whereKey($role->server_id)->lockForUpdate()->first();
 
-            // Top of the hierarchy first.
-            /** @var list<int> $ids */
-            $ids = Role::query()
-                ->where('server_id', $role->server_id)
-                ->where('is_default', false)
-                ->orderByDesc('position')
-                ->orderBy('id')
-                ->pluck('id')
-                ->map(fn (mixed $id): int => (int) $id)
-                ->all();
+            $ids = $this->orderedIds((int) $role->server_id);
 
             $index = array_search((int) $role->getKey(), $ids, true);
             if ($index === false) {
@@ -68,5 +81,23 @@ class MoveRole
 
             return true;
         });
+    }
+
+    /**
+     * The server's roles other than @everyone, top of the hierarchy first.
+     *
+     * @return list<int>
+     */
+    private function orderedIds(int $serverId): array
+    {
+        return Role::query()
+            ->where('server_id', $serverId)
+            ->where('is_default', false)
+            ->orderByDesc('position')
+            ->orderBy('id')
+            ->pluck('id')
+            ->map(fn (mixed $id): int => (int) $id)
+            ->values()
+            ->all();
     }
 }
