@@ -151,7 +151,8 @@ class DemoSeeder extends Seeder
         ]);
 
         foreach ($members as $member) {
-            ServerMember::factory()->create([
+            // A fifth of the members get a nickname, to show them in the lists.
+            ServerMember::factory()->when(fake()->boolean(20), fn ($factory) => $factory->withNickname())->create([
                 'server_id' => $server->id,
                 'user_id' => $member->id,
                 'joined_at' => $member->is($owner)

@@ -20,8 +20,18 @@ class ServerMemberFactory extends Factory
         return [
             'server_id' => Server::factory(),
             'user_id' => User::factory(),
-            'nickname' => fake()->optional(0.2)->regexify('[A-Za-z][A-Za-z0-9_]{3,15}'),
+            // No nickname by default: a random one would change the display
+            // name that sorting and "assertSee" tests rely on, and fail them
+            // at random. Use withNickname() when a test wants one.
+            'nickname' => null,
             'joined_at' => fake()->dateTimeBetween('-1 year'),
         ];
+    }
+
+    public function withNickname(?string $nickname = null): static
+    {
+        return $this->state(fn (): array => [
+            'nickname' => $nickname ?? fake()->regexify('[A-Za-z][A-Za-z0-9_]{3,15}'),
+        ]);
     }
 }
