@@ -15,8 +15,10 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
 // Live messages of a server channel (App\Events\MessageSent). Only members
 // who can see the channel (ChannelPolicy::view, ISSUE-27) may listen; an
 // unknown channel id is a 403. This is checked when the browser
-// subscribes, so someone removed from the server, or who loses View
-// Channels, keeps an open subscription until they reload.
+// subscribes, so someone who leaves or loses View Channels keeps an open
+// subscription until they reload. Kicked and banned members (ISSUE-29)
+// have their sockets closed by App\Support\RealtimeSessions, so they are
+// checked again when pusher-js reconnects.
 Broadcast::channel('channel.{channel}', function (User $user, Channel $channel) {
     return $user->can('view', $channel);
 });

@@ -254,9 +254,9 @@ settings page and the channel sidebar ("Roles").
   `Permission::mask(...)`, `Permission::fromMask($bits)`,
   `$role->hasPermission(Permission::X)` and `$role->permissionList()`. Every
   flag stays within bits 0–62, because SQLite stores the column as a signed
-  64-bit integer. What each flag allows is in [Permissions](#permissions).
-  Kick Members, Ban Members and Timeout Members are stored but have nothing to
-  allow yet (ISSUE-29).
+  64-bit integer. What each flag allows is in [Permissions](#permissions);
+  Kick Members, Ban Members and Timeout Members are used by
+  [Moderation](#moderation).
 - **@everyone**: every server has exactly one default role (`is_default`,
   position 0), created by `CreateServer`. Every member has it implicitly, so it
   has no `role_user` rows. It starts with `Permission::everyoneDefaults()`
@@ -298,6 +298,8 @@ the policies ask it; nothing else reads `roles.permissions` to decide.
 - **Effective permissions** in a server: none for someone who is not a member;
   every flag for the owner; for everyone else the `@everyone` flags OR-ed with
   the flags of every role they hold. **Administrator** turns into every flag.
+  A **timed-out** member keeps only View Channels until the timeout ends (see
+  [Moderation](#moderation)).
   A server without an `@everyone` row counts as having the defaults. Nothing is
   cached, so a change to a role counts from the next check.
 - **Channel permissions** (`channelPermissions()`) are the server permissions
@@ -315,6 +317,9 @@ the policies ask it; nothing else reads `roles.permissions` to decide.
   | Manage Server | rename the server and change its icon; see and revoke every invite | `ServerPolicy::update`, `manageInvites` |
   | Create Invite | create invites | `ServerPolicy::createInvite` |
   | Manage Roles | the role pages, for roles below your own highest role | `ServerPolicy::manageRoles`, `RolePolicy::manage` |
+  | Kick Members | kick members below your own highest role | `ServerPolicy::kick` |
+  | Ban Members | ban members below your own highest role; see the ban list and unban | `ServerPolicy::ban`, `manageBans` |
+  | Timeout Members | time out members below your own highest role (not Administrators), and end timeouts | `ServerPolicy::timeout` |
 
 - **Owner only**, also for administrators: deleting the server and
   transferring ownership. Viewing a server and leaving it need membership only.
@@ -350,6 +355,56 @@ the policies ask it; nothing else reads `roles.permissions` to decide.
   `App\Actions\Servers\TransferServerOwnership` sets `owner_id`. The previous
   owner stays a member and can then leave. Errors use their own error bag
   (`transferOwnership`), so they never show on the delete form.
+
+### Moderation
+
+Kicking, banning and timing out members (ISSUE-29). The **Members** page
+(`GET /servers/{id}/members`, linked from the channel sidebar) needs any of
+Kick, Ban or Timeout Members, and shows for each member only the actions you
+may take on them. The **Bans** page (`GET /servers/{id}/bans`) needs Ban
+Members. Every route allows 60 requests a minute.
+
+- **Who may act on whom** (`PermissionService::moderationCheck`, used by
+  `ServerPolicy::kick`, `ban` and `timeout`), like Discord: you need the flag;
+  the target must be a member (else a 404) and not yourself; nobody can act on
+  the owner; and anyone but the owner can only act on members whose highest
+  role is below their own. Administrator does not lift this, and
+  Administrators cannot be timed out.
+- **Kick** (`POST …/members/{user}/kick`, `App\Actions\Moderation\KickMember`):
+  removes the membership and the member's roles, like leaving. Their messages
+  stay, and they can rejoin with an invite.
+- **Ban** (`POST …/members/{user}/ban`, `App\Actions\Moderation\BanMember`):
+  fields `reason` (optional, up to 512 characters, shown on the ban list only)
+  and `delete_messages`: seconds of message history to delete, one of 0 (the
+  default), 1 hour, 6 hours, 12 hours, 24 hours, 3 days or 7 days. It writes a
+  `bans` row (with `banned_by_id`) and removes the member in one transaction.
+  Then it soft deletes their messages from that period in the server's channels
+  (never DMs) through `DeleteMessage`, so open pages drop them live. A banned
+  user gets a 403 on every invite of the server (`AcceptInvite`).
+- **Unban** (`DELETE …/bans/{user}`): deletes the ban, so they can join again
+  with an invite. They are not added back. A user who is not banned is a 404.
+- **Timeout** (`PUT …/members/{user}/timeout`, field `duration` in seconds: 60,
+  300, 600, 3600, 86400 or 604800; `DELETE` the same URL to end it early,
+  `App\Actions\Moderation\TimeoutMember`): sets
+  `server_members.timed_out_until`. Until then the member keeps only View
+  Channels (`PermissionService::TIMED_OUT_MASK`): they can read, but not post,
+  attach, react (also not joining existing reactions), invite or moderate. The
+  composer is replaced by a notice saying when it ends. Nothing has to run when
+  it ends: a time in the past counts as no timeout.
+- **Live**: the affected user gets `App\Events\MemberModerated`
+  (`.member.moderated`, type `kicked`, `banned`, `timed_out` or
+  `timeout_removed`, with the server id and name but never the ban reason) on
+  their private `App.Models.User.{id}` channel. `resources/js/moderation.js`
+  then, on that server's page only, leaves the page's live channels, removes
+  the message panel and shows a notice (kick or ban), or reloads (timeout).
+- **Websocket disconnect**: for kicks and bans `App\Support\RealtimeSessions`
+  also calls Reverb's Pusher-compatible `terminate_connections` API for the
+  user. Channel authorization only runs when a browser subscribes, so this
+  makes pusher-js reconnect, and every server channel is checked again, which
+  a former member fails. Reverb links a connection to a user through presence
+  channels (the typing channels every open message panel joins). With the
+  `null` or `log` broadcaster, and when Reverb is down, this does nothing. The
+  moderation itself has already happened.
 
 ## Channels and categories
 
