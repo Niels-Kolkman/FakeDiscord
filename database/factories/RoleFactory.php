@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\Permission;
 use App\Models\Role;
 use App\Models\Server;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -32,8 +33,9 @@ class RoleFactory extends Factory
     public function everyone(): static
     {
         return $this->state(fn () => [
-            'name' => '@everyone',
+            'name' => Role::EVERYONE,
             'color' => null,
+            'permissions' => Permission::everyoneDefaults(),
             'position' => 0,
             'is_default' => true,
         ]);
