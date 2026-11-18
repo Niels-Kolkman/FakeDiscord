@@ -8,6 +8,8 @@
 --}}
 @php
     $servers = auth()->user()?->servers()->orderBy('name')->get() ?? collect();
+    // Unread dots and mention badges (ISSUE-32).
+    $serverUnread = auth()->user() ? \App\Support\UnreadState::forServers(auth()->user(), $servers) : [];
     $onFriendsPage = ($activeConversation ?? null) === null;
 @endphp
 
@@ -38,6 +40,7 @@
                         <a href="{{ route('servers.show', $server) }}" class="flex items-center gap-2 rounded px-2 py-1.5 text-[#b5bac1] hover:bg-[#35373c] hover:text-white">
                             <x-server-icon :server="$server" :size="24" />
                             <span class="truncate">{{ $server->name }}</span>
+                            @include('servers.partials.server-unread', ['state' => $serverUnread[$server->id] ?? null])
                         </a>
                     </li>
                 @endforeach

@@ -77,6 +77,7 @@
             'historyUrl' => route('messages.index', [$server, $channel]),
             'storeUrl' => route('messages.store', [$server, $channel]),
             'pinsUrl' => route('pins.index', [$server, $channel]),
+            'readUrl' => $channel->isVoice() ? null : route('channels.read', [$server, $channel]),
             'broadcastChannel' => \App\Events\MessageSent::channelName((int) $channel->id),
             'typingChannel' => 'typing.'.$channel->id,
             'start' => 'messages.partials.channel-start',

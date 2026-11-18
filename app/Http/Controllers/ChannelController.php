@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Actions\Channels\CreateChannel;
+use App\Actions\Channels\MarkChannelRead;
 use App\Actions\Channels\UpdateChannel;
 use App\Http\Requests\StoreChannelRequest;
 use App\Http\Requests\UpdateChannelRequest;
 use App\Models\Channel;
 use App\Models\MessageAttachment;
 use App\Models\Server;
+use App\Models\User;
 use App\Support\MessageFeed;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -26,10 +28,20 @@ use Illuminate\View\View;
  */
 class ChannelController extends Controller
 {
-    public function show(Server $server, Channel $channel): View
+    /**
+     * Opening a text channel marks it read (ISSUE-32), before the sidebar
+     * works out what is still unread.
+     */
+    public function show(Request $request, Server $server, Channel $channel, MarkChannelRead $reads): View
     {
         Gate::authorize('view', $server);
         Gate::authorize('view', $channel);
+
+        /** @var User $user */
+        $user = $request->user();
+        if (! $channel->isVoice()) {
+            $reads->markRead($user, $channel);
+        }
 
         return view('servers.show', [
             'server' => $server,

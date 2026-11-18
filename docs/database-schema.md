@@ -76,6 +76,14 @@ erDiagram
         timestamps timestamps
     }
 
+    channel_reads {
+        bigint id PK
+        bigint user_id FK "cascade"
+        bigint channel_id FK "cascade"
+        bigint last_read_message_id "default 0, no FK: high-water mark"
+        timestamps timestamps
+    }
+
     roles {
         bigint id PK
         bigint server_id FK "cascade"
@@ -197,6 +205,8 @@ erDiagram
     servers ||--o{ roles : defines
     roles ||--o{ role_user : "assigned via"
     users ||--o{ role_user : has
+    users ||--o{ channel_reads : "reads up to"
+    channels ||--o{ channel_reads : "read by"
     channels ||--o{ channel_permission_overrides : "overrides in"
     roles ||--o{ channel_permission_overrides : "overridden by"
     servers ||--o{ invites : has
@@ -247,6 +257,7 @@ erDiagram
 | `invites` | unique `code`, `server_id` | Invite lookup by code |
 | `bans` | unique `(server_id, user_id)`, `user_id` | Ban checks on join |
 | `audit_log_entries` | `(server_id, action)`, `(actor_id, server_id)` | The audit log page and its action / user filters |
+| `channel_reads` | unique `(user_id, channel_id)`, `channel_id` | Unread dots and mention badges (one marker per user per channel); `ON DELETE` of a channel |
 
 SQLite does not index foreign key columns automatically, so every FK column
 used for lookups or `ON DELETE` actions has its own index, or is the first
@@ -265,6 +276,8 @@ downloaded.
   members, invites, bans, audit log and, through channels, its messages with
   their attachments and reactions.
 - **Deleting a channel or a role** deletes its `channel_permission_overrides`.
+  Deleting a channel also deletes its `channel_reads`; so does deleting a
+  user. Leaving a server keeps them, so a rejoin carries on where it left off.
 - **Deleting a channel category** keeps its channels: `category_id` is set to
   NULL (the app also moves them to the bottom of the uncategorised list).
 - **Deleting a user** deletes their memberships, role assignments, reactions,

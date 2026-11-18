@@ -17,6 +17,7 @@
         typingChannel     presence channel for typing indicators
         start             view for the "start of the conversation" header
         readOnlyNotice    shown instead of the composer when you cannot send (optional)
+        readUrl           POST marks messages read (ISSUE-32, resources/js/unread.js; optional)
 
     Also $feed (App\Support\MessageFeed), $viewerId, $canManageMessages and
     $canSendMessages, worked out once by the page for every message
@@ -45,6 +46,7 @@
         @if ($panel['pinsUrl']) data-pins-url="{{ $panel['pinsUrl'] }}" @endif
         data-broadcast-channel="{{ $panel['broadcastChannel'] }}"
         data-typing-channel="{{ $panel['typingChannel'] }}"
+        @if ($panel['readUrl'] ?? null) data-read-url="{{ $panel['readUrl'] }}" @endif
     @endif
 >
     @if ($messagesEnabled && $panel['pinsUrl'])
