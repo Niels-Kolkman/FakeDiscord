@@ -90,6 +90,10 @@
         @can('manageBans', $server)
             <a href="{{ route('bans.index', $server) }}" class="block rounded px-2 py-1 text-[#b5bac1] hover:bg-[#35373c] hover:text-white">Bans</a>
         @endcan
+        {{-- Audit log (ISSUE-30): owner only. --}}
+        @can('viewAuditLog', $server)
+            <a href="{{ route('audit-log.index', $server) }}" class="block rounded px-2 py-1 text-[#b5bac1] hover:bg-[#35373c] hover:text-white">Audit log</a>
+        @endcan
         {{-- The owner gets the same link; the page explains the transfer. --}}
         <a href="{{ route('servers.leave.confirm', $server) }}" class="block rounded px-2 py-1 text-[#f23f43] hover:bg-[#35373c]">Leave server</a>
         <a href="{{ route('dashboard') }}" class="block rounded px-2 py-1 text-[#b5bac1] hover:bg-[#35373c] hover:text-white">Back to dashboard</a>

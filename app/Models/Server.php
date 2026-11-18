@@ -4,10 +4,12 @@ namespace App\Models;
 
 use App\Actions\Servers\UpdateServerIcon;
 use App\Enums\Permission;
+use App\Observers\ServerObserver;
 use App\Services\PermissionService;
 use App\Support\ChannelLayout;
 use App\Support\MemberList;
 use Database\Factories\ServerFactory;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -18,6 +20,7 @@ use Illuminate\Support\Facades\Storage;
 /**
  * A community ("guild") owned by one user.
  */
+#[ObservedBy(ServerObserver::class)]
 class Server extends Model
 {
     /** @use HasFactory<ServerFactory> */
@@ -217,5 +220,15 @@ class Server extends Model
     public function bans(): HasMany
     {
         return $this->hasMany(Ban::class);
+    }
+
+    /**
+     * The audit log (ISSUE-30).
+     *
+     * @return HasMany<AuditLogEntry, $this>
+     */
+    public function auditLogEntries(): HasMany
+    {
+        return $this->hasMany(AuditLogEntry::class);
     }
 }

@@ -441,6 +441,38 @@ Members. Every route allows 60 requests a minute.
   `null` or `log` broadcaster, and when Reverb is down, this does nothing. The
   moderation itself has already happened.
 
+### Audit log
+
+Every moderation and settings change is recorded: who did it, what changed
+and when (ISSUE-30). The **Audit log** page (`GET /servers/{id}/audit-log`,
+linked from the channel sidebar) is for the **owner only**
+(`ServerPolicy::viewAuditLog`), also when others are Administrators. It
+lists entries newest first, 50 per page, and filters with `?action=` (an
+`AuditLogEntry::ACTIONS` key) and `?user=` (the user who made the change).
+Like search, invalid filters show an error rather than redirect.
+
+- **What is logged**: server name, description and icon changes, ownership
+  transfers; channels and categories created, renamed or deleted, a channel's
+  topic or privacy; channel permission overrides (with the role); roles
+  created, changed (permission changes read "+ Ban Members, − Kick Members")
+  or deleted; roles given or taken; kicks, bans (with the reason), unbans,
+  timeouts and timeouts ended early; invites created or revoked; and messages
+  deleted by someone other than their author.
+- **What is not**: reordering channels, categories or roles; deleting your
+  own messages; the messages a ban purges (the ban itself is logged once);
+  creating or deleting the server (the log belongs to it); and changes
+  nobody is signed in for (seeders, `artisan`), since there is no "who".
+- **How**: model observers in `app/Observers` (attached with
+  `#[ObservedBy]`) write through `App\Support\AuditLog`. A kick and handing out
+  a role change no model with events of its own (a kick deletes the same row
+  as leaving; `role_user` is a pivot), so `KickMember` and `AssignRole` call
+  `AuditLog::record()` themselves. `AuditLog::withoutRecording()` pauses it,
+  for example for the default role and channel `CreateServer` makes.
+- **Storage**: `audit_log_entries` (see `docs/database-schema.md`). An entry
+  keeps the target's name as it was, so deleted channels and roles still read
+  well. It goes with the server and stays when its actor deletes their
+  account ("Deleted User").
+
 ## Channels and categories
 
 A server's sidebar lists its uncategorised channels first, then its

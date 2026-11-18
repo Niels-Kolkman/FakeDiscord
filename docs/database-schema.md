@@ -175,6 +175,19 @@ erDiagram
         timestamps timestamps
     }
 
+    audit_log_entries {
+        bigint id PK
+        bigint server_id FK "cascade"
+        bigint actor_id FK "nullable, users, set null"
+        string action "e.g. member.ban, role.update"
+        string target_type "nullable: user|channel|role|..."
+        bigint target_id "nullable, no FK: outlives the target"
+        string target_label "nullable, name at the time"
+        json details "nullable, field => old/new"
+        string reason "nullable"
+        timestamp created_at
+    }
+
     users ||--o{ servers : owns
     users ||--o{ server_members : "joins via"
     servers ||--o{ server_members : has
@@ -192,6 +205,8 @@ erDiagram
     servers ||--o{ bans : has
     users ||--o{ bans : "is banned"
     users |o--o{ bans : issues
+    servers ||--o{ audit_log_entries : logs
+    users |o--o{ audit_log_entries : "acts in"
 
     users |o--o{ conversations : "owns (group)"
     conversations ||--o{ conversation_participants : has
@@ -231,6 +246,7 @@ erDiagram
 | `friendships` | unique `(user_id, friend_id)`, `(friend_id, status)` | Outgoing and incoming requests |
 | `invites` | unique `code`, `server_id` | Invite lookup by code |
 | `bans` | unique `(server_id, user_id)`, `user_id` | Ban checks on join |
+| `audit_log_entries` | `(server_id, action)`, `(actor_id, server_id)` | The audit log page and its action / user filters |
 
 SQLite does not index foreign key columns automatically, so every FK column
 used for lookups or `ON DELETE` actions has its own index, or is the first
@@ -246,15 +262,16 @@ deleting a message keeps its files (the row stays), but they can no longer be
 downloaded.
 
 - **Deleting a server** also deletes its channels, channel categories, roles,
-  members, invites, bans and, through channels, its messages with their
-  attachments and reactions.
+  members, invites, bans, audit log and, through channels, its messages with
+  their attachments and reactions.
 - **Deleting a channel or a role** deletes its `channel_permission_overrides`.
 - **Deleting a channel category** keeps its channels: `category_id` is set to
   NULL (the app also moves them to the bottom of the uncategorised list).
 - **Deleting a user** deletes their memberships, role assignments, reactions,
   friendships, DM participation and owned servers. Their **messages stay**, with
-  `user_id` set to NULL (shown as "Deleted User"). Invites they created and bans
-  they issued also stay, with the user column set to NULL. Messages they pinned
+  `user_id` set to NULL (shown as "Deleted User"). Invites they created, bans
+  they issued and audit log entries of what they did also stay, with the user
+  column set to NULL. Messages they pinned
   stay pinned, with `pinned_by_id` set to NULL.
 - **Deleting a message** sets `reply_to_id` on replies to NULL. The replies
   themselves stay.

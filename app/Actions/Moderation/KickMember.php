@@ -4,8 +4,10 @@ namespace App\Actions\Moderation;
 
 use App\Actions\Servers\LeaveServer;
 use App\Events\MemberModerated;
+use App\Models\AuditLogEntry;
 use App\Models\Server;
 use App\Models\User;
+use App\Support\AuditLog;
 use App\Support\RealtimeSessions;
 use Illuminate\Auth\Access\AuthorizationException;
 
@@ -24,6 +26,7 @@ class KickMember
     public function __construct(
         private readonly LeaveServer $members,
         private readonly RealtimeSessions $sessions,
+        private readonly AuditLog $log,
     ) {}
 
     /**
@@ -32,6 +35,10 @@ class KickMember
     public function kick(Server $server, User $member): void
     {
         $this->members->leave($server, $member);
+
+        // Leaving and being kicked delete the same row, so the audit log
+        // (ISSUE-30) cannot tell them apart from a model event: recorded here.
+        $this->log->record($server, AuditLogEntry::MEMBER_KICK, $member, $member->name);
 
         MemberModerated::dispatchFor(MemberModerated::KICKED, $server, $member);
         $this->sessions->disconnect($member);

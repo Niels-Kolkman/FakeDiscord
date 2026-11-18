@@ -10,6 +10,7 @@ use App\Models\Channel;
 use App\Models\Message;
 use App\Models\Server;
 use App\Models\User;
+use App\Support\AuditLog;
 use App\Support\RealtimeSessions;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Collection;
@@ -50,6 +51,7 @@ class BanMember
         private readonly LeaveServer $members,
         private readonly DeleteMessage $messages,
         private readonly RealtimeSessions $sessions,
+        private readonly AuditLog $log,
     ) {}
 
     /**
@@ -72,7 +74,11 @@ class BanMember
             $this->members->leave($server, $member);
         });
 
-        $deleted = $deleteMessageSeconds > 0 ? $this->deleteRecentMessages($server, $member, $deleteMessageSeconds) : 0;
+        // The ban is in the audit log (BanObserver); every purged message
+        // would bury it, so they are not logged one by one.
+        $deleted = $deleteMessageSeconds > 0
+            ? $this->log->withoutRecording(fn (): int => $this->deleteRecentMessages($server, $member, $deleteMessageSeconds))
+            : 0;
 
         MemberModerated::dispatchFor(MemberModerated::BANNED, $server, $member);
         $this->sessions->disconnect($member);
