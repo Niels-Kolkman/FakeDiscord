@@ -260,6 +260,11 @@ database, so these rules live in the app layer (validation, model events or poli
 - `conversations.type = 'direct'` has exactly two participants, and its
   `direct_key` is `"{lower user id}:{higher user id}"` of those two (NULL for
   group DMs). `last_message_at` is the newest message's time.
+- `conversations.type = 'group'` has at most 10 participants
+  (`Conversation::MAX_PARTICIPANTS`, checked with the row locked in
+  `ManageGroupConversation`). Its `owner_id` is one of them. When the owner
+  leaves, ownership passes to the longest-standing participant, and a group
+  whose last participant leaves is deleted.
 - Values in the `status` and `type` columns. These are plain strings, not
   `enum()`, because Laravel turns `enum()` into a CHECK constraint on SQLite,
   and changing it later would mean rebuilding the whole table.
