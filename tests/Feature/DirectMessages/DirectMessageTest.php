@@ -282,13 +282,13 @@ class DirectMessageTest extends TestCase
         $this->assertNull($message->fresh()?->edited_at);
     }
 
-    public function test_group_dms_are_not_shown_here(): void
+    public function test_group_dms_open_on_the_same_route_with_the_group_page(): void
     {
-        $group = Conversation::factory()->group()->create(['owner_id' => $this->alice->id]);
+        $group = Conversation::factory()->group()->create(['owner_id' => $this->alice->id, 'name' => 'Squad']);
         $group->users()->attach([$this->alice->id, $this->bob->id]);
 
-        $this->actingAs($this->alice)->get(route('dms.show', $group))->assertNotFound();
-        $this->send($this->alice, $group, ['content' => 'Hi all'])->assertForbidden();
+        $this->actingAs($this->alice)->get(route('dms.show', $group))->assertOk()->assertSee('data-group-details', false);
+        $this->send($this->alice, $group, ['content' => 'Hi all'])->assertCreated();
     }
 
     public function test_a_blocked_dm_keeps_its_history_but_has_no_composer(): void
@@ -381,14 +381,14 @@ class DirectMessageTest extends TestCase
             ->assertSee('aria-current="page"', false);
     }
 
-    public function test_the_sidebar_leaves_out_other_peoples_dms_and_group_dms(): void
+    public function test_the_sidebar_leaves_out_other_peoples_dms_and_groups(): void
     {
         $theirs = Conversation::factory()->between($this->bob, $this->stranger)->create(['last_message_at' => now()]);
         $group = Conversation::factory()->group()->create(['last_message_at' => now()]);
-        $group->users()->attach([$this->alice->id, $this->bob->id]);
+        $group->users()->attach([$this->bob->id, $this->stranger->id]);
 
         $this->assertTrue(Conversation::sidebarFor($this->alice)->isEmpty());
-        $this->assertSame([$theirs->id], Conversation::sidebarFor($this->stranger)->pluck('id')->all());
+        $this->assertEqualsCanonicalizing([$theirs->id, $group->id], Conversation::sidebarFor($this->stranger)->pluck('id')->all());
     }
 
     public function test_the_friends_list_has_a_message_button(): void

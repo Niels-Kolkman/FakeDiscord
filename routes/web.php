@@ -9,6 +9,7 @@ use App\Http\Controllers\ConversationMessageController;
 use App\Http\Controllers\ConversationReactionController;
 use App\Http\Controllers\DirectMessageController;
 use App\Http\Controllers\FriendController;
+use App\Http\Controllers\GroupConversationController;
 use App\Http\Controllers\InviteController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\MessageSearchController;
@@ -97,10 +98,28 @@ Route::middleware(['auth', 'verified'])->prefix('dms')->group(function () {
         ->middleware('throttle:30,1')
         ->name('dms.store');
 
+    // Group DMs (ISSUE-24): `user_ids[]` (friends only) and an optional
+    // `name`; at most Conversation::MAX_PARTICIPANTS people.
+    Route::post('/groups', [GroupConversationController::class, 'store'])
+        ->middleware('throttle:20,1')
+        ->name('dms.groups.store');
+
     // can:view runs before the form requests, so anyone who is not a
     // participant gets ConversationPolicy's 404 on every route, never a 403.
     Route::whereNumber('conversation')->scopeBindings()->middleware('can:view,conversation')->group(function () {
         Route::get('/{conversation}', [DirectMessageController::class, 'show'])->name('dms.show');
+
+        // Group DMs (ISSUE-24): any participant renames and adds friends;
+        // the owner removes people, anyone removes themselves (leaving).
+        // {user} is scoped to the participants, so anyone else is a 404.
+        Route::middleware('throttle:30,1')->group(function () {
+            Route::patch('/{conversation}', [GroupConversationController::class, 'update'])->name('dms.update');
+            Route::post('/{conversation}/participants', [GroupConversationController::class, 'addParticipants'])
+                ->name('dms.participants.store');
+            Route::delete('/{conversation}/participants/{user}', [GroupConversationController::class, 'removeParticipant'])
+                ->whereNumber('user')
+                ->name('dms.participants.destroy');
+        });
 
         Route::get('/{conversation}/messages', [ConversationMessageController::class, 'index'])
             ->middleware('throttle:60,1')

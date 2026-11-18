@@ -30,12 +30,19 @@
                         @if ($isActive) aria-current="page" @endif
                         class="flex items-center gap-2 rounded px-2 py-1.5 text-[#b5bac1] hover:bg-[#35373c] hover:text-white aria-[current=page]:bg-[#404249] aria-[current=page]:text-white"
                     >
-                        @if ($person)
+                        @if ($dm->isGroup())
+                            <span aria-hidden="true" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#5865f2] text-sm text-white">👥</span>
+                        @elseif ($person)
                             <x-user-avatar :user="$person" :size="32" />
                         @else
                             <span aria-hidden="true" class="h-8 w-8 shrink-0 rounded-full bg-[#4e5058]"></span>
                         @endif
-                        <span class="truncate">{{ $dm->displayName($viewer) }}</span>
+                        <span class="min-w-0">
+                            <span class="block truncate">{{ $dm->displayName($viewer) }}</span>
+                            @if ($dm->isGroup())
+                                <span class="block truncate text-xs text-[#949ba4]">{{ trans_choice('{1} 1 member|[2,*] :count members', $dm->users->count(), ['count' => $dm->users->count()]) }}</span>
+                            @endif
+                        </span>
                     </a>
                 </li>
             @endforeach

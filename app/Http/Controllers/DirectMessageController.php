@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Conversations\ManageGroupConversation;
 use App\Actions\Conversations\OpenDirectConversation;
 use App\Models\Conversation;
 use App\Models\Friendship;
@@ -23,7 +24,9 @@ use Illuminate\View\View;
  * the DM's own routes and its "conversation.{id}" broadcast channel.
  *
  * Only participants see a conversation (ConversationPolicy::view); anyone
- * else gets a 404. Group DMs are ISSUE-24, so they are a 404 here too.
+ * else gets a 404. A group DM (ISSUE-24) opens on the same route with
+ * conversations/group.blade.php: its people, Add friends, Rename and
+ * Leave (GroupConversationController handles those forms).
  */
 class DirectMessageController extends Controller
 {
@@ -57,10 +60,25 @@ class DirectMessageController extends Controller
     public function show(Request $request, Conversation $conversation): View
     {
         Gate::authorize('view', $conversation);
-        abort_unless($conversation->isDirect(), 404);
 
         $viewer = $this->user($request);
         $conversation->load('users');
+
+        if ($conversation->isGroup()) {
+            return view('conversations.group', [
+                'conversation' => $conversation,
+                'members' => $conversation->users
+                    ->sortBy(fn (User $user): string => ($conversation->isOwnedBy($user) ? '0' : '1').mb_strtolower($user->name))
+                    ->values(),
+                'invitable' => ManageGroupConversation::invitableFriends($viewer, $conversation),
+                'isOwner' => $conversation->isOwnedBy($viewer),
+                'feed' => MessageFeed::for($conversation),
+                'canSendMessages' => $viewer->can('sendMessage', $conversation),
+                'incomingCount' => Friendship::incomingCount($viewer),
+            ]);
+        }
+
+        abort_unless($conversation->isDirect(), 404);
 
         return view('conversations.show', [
             'conversation' => $conversation,

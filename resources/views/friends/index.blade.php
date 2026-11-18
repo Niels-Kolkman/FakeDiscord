@@ -63,6 +63,39 @@
             <p role="alert" class="mb-4 rounded bg-red-500/10 px-3 py-2 text-sm text-red-300" data-dm-error>{{ $message }}</p>
         @enderror
 
+        {{-- Group DMs (ISSUE-24): pick up to MAX_PARTICIPANTS - 1 friends. Only on the All tab, next to the friends list. --}}
+        @php($groupFriends = $tab === 'all' ? \App\Actions\Conversations\ManageGroupConversation::invitableFriends(auth()->user()) : collect())
+        @if ($groupFriends->isNotEmpty())
+            <details class="mb-6 border-b border-[#3f4147] pb-6" @if ($errors->has('user_ids') || $errors->has('name')) open @endif data-create-group>
+                <summary class="cursor-pointer font-semibold uppercase tracking-wide text-white">Create group DM</summary>
+                <form method="POST" action="{{ route('dms.groups.store') }}" class="mt-3 max-w-xl space-y-3">
+                    @csrf
+                    <p class="text-sm text-[#b5bac1]">Pick friends to talk to together. A group can have up to {{ \App\Models\Conversation::MAX_PARTICIPANTS }} people, you included.</p>
+                    <div>
+                        <label for="new-group-name" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-[#949ba4]">Group name (optional)</label>
+                        <input
+                            id="new-group-name"
+                            type="text"
+                            name="name"
+                            value="{{ old('name') }}"
+                            maxlength="{{ \App\Models\Conversation::NAME_MAX_LENGTH }}"
+                            autocomplete="off"
+                            @error('name') aria-invalid="true" aria-describedby="new-group-name-error" @enderror
+                            class="w-full rounded bg-[#1e1f22] px-2 py-1.5 text-white placeholder-[#949ba4] outline-none focus:ring-2 focus:ring-[#5865f2]"
+                        >
+                        @error('name')
+                            <p id="new-group-name-error" role="alert" class="mt-2 text-sm text-[#fa777c]">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    @include('conversations.partials.friend-picker', ['friends' => $groupFriends, 'idPrefix' => 'new-group-friend'])
+                    @error('user_ids')
+                        <p role="alert" class="text-sm text-[#fa777c]">{{ $message }}</p>
+                    @enderror
+                    <button type="submit" class="rounded bg-[#5865f2] px-4 py-1.5 text-sm font-medium text-white hover:bg-[#4752c4] focus:outline-none focus-visible:ring-2 focus-visible:ring-white">Create group DM</button>
+                </form>
+            </details>
+        @endif
+
         <div data-friends-panel>
             @php($tabs = ['all' => 'All', 'pending' => 'Pending', 'blocked' => 'Blocked'])
             <nav aria-label="Friends lists" class="mb-4">
