@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Actions\Servers\UpdateServerIcon;
 use App\Enums\Permission;
+use App\Services\PermissionService;
 use App\Support\ChannelLayout;
 use App\Support\MemberList;
 use Database\Factories\ServerFactory;
@@ -97,11 +98,28 @@ class Server extends Model
     /**
      * The sidebar: uncategorised channels first, then each category with its
      * channels, all in display order.
+     *
+     * With a $viewer, only the channels they can see (ChannelPolicy::view,
+     * ISSUE-27), and a category whose channels are all hidden from them is
+     * left out too. Without one, everything (for the settings pages).
      */
-    public function channelLayout(): ChannelLayout
+    public function channelLayout(?User $viewer = null): ChannelLayout
     {
         $channels = $this->channels()->get();
         $categories = $this->categories()->get();
+
+        foreach ($channels as $channel) {
+            $channel->setRelation('server', $this);
+        }
+
+        if ($viewer !== null) {
+            $visible = app(PermissionService::class)->visibleChannels($viewer, $this, $channels);
+            $hiddenCategories = $channels->diff($visible)->pluck('category_id')->filter()->unique()
+                ->diff($visible->pluck('category_id')->filter()->unique());
+            $channels = $visible;
+            $categories = $categories->reject(fn (ChannelCategory $category): bool => $hiddenCategories->contains($category->id))->values();
+        }
+
         $byCategory = $channels->groupBy(fn (Channel $channel): int => (int) $channel->category_id);
 
         foreach ($categories as $category) {

@@ -59,8 +59,10 @@
             // and for the script, which shows Reply / Pin / Edit / Delete
             // the same way.
             $viewerId = (int) auth()->id();
-            $canManageMessages = (bool) auth()->user()?->can('manageMessages', $server);
-            $canSendMessages = ! $channel->isVoice() && (bool) auth()->user()?->can('sendMessages', $server);
+            // Channel permissions (App\Policies\ChannelPolicy, ISSUE-27).
+            $canManageMessages = (bool) auth()->user()?->can('manageMessages', $channel);
+            $canSendMessages = ! $channel->isVoice() && (bool) auth()->user()?->can('sendMessages', $channel);
+            $canAttachFiles = $canSendMessages && (bool) auth()->user()?->can('attachFiles', $channel);
             // People the viewer blocked (ISSUE-25): the history already
             // leaves their messages out; this hides live ones and quotes.
             $blockedUserIds = auth()->user() ? \App\Models\Friendship::blockedIds(auth()->user()) : [];
@@ -81,6 +83,7 @@
         <section class="flex flex-1 flex-col items-center justify-center p-8 text-center">
             <h1 class="mb-2 text-xl font-semibold text-white">No text channels</h1>
             <p class="text-[#b5bac1]">
+                {{-- The layout only holds the channels the viewer can see (ISSUE-27). --}}
                 This server has no text channels yet.
                 @can('manageChannels', $server)
                     <a href="{{ route('channels.create', $server) }}" class="text-[#00a8fc] hover:underline">Create one</a>.

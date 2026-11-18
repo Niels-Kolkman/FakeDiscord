@@ -17,7 +17,8 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 
 /**
- * Open, create, edit and delete channels. Members can open channels;
+ * Open, create, edit and delete channels. Opening one needs
+ * ChannelPolicy::view (View Channels, ISSUE-27);
  * changing them needs ServerPolicy::manageChannels.
  *
  * Routes use scoped bindings, so a channel id from another server is a 404.
@@ -27,10 +28,11 @@ class ChannelController extends Controller
     public function show(Server $server, Channel $channel): View
     {
         Gate::authorize('view', $server);
+        Gate::authorize('view', $channel);
 
         return view('servers.show', [
             'server' => $server,
-            'layout' => $server->channelLayout(),
+            'layout' => $server->channelLayout(auth()->user()),
             'channel' => $channel,
             'feed' => MessageFeed::for($channel, viewer: auth()->user()),
             'members' => $server->memberList(),

@@ -6,7 +6,6 @@ use App\Models\Channel;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\MessageAttachment;
-use App\Models\Server;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\UploadedFile;
@@ -15,9 +14,11 @@ use Illuminate\Validation\Rules\File;
 use Illuminate\Validation\Validator;
 
 /**
- * Post a message in a text channel. Any member may (ServerPolicy::sendMessages).
+ * Post a message in a text channel: ChannelPolicy::sendMessages (View
+ * Channels and Send Messages, ISSUE-27).
  *
- * Attachments (ISSUE-19): up to MessageAttachment::MAX_FILES files in
+ * Attachments (ISSUE-19) also need ChannelPolicy::attachFiles; without it a
+ * message with files fails validation on `attachments`. Up to MessageAttachment::MAX_FILES files in
  * `attachments[]` (multipart), each at most MAX_KILOBYTES and one of
  * ALLOWED_EXTENSIONS, by name and by contents. With files the text is
  * optional, like on Discord.
@@ -46,9 +47,9 @@ class StoreMessageRequest extends FormRequest
             return $user->can('sendMessage', $conversation);
         }
 
-        $server = $this->route('server');
+        $channel = $this->route('channel');
 
-        return $server instanceof Server && $user->can('sendMessages', $server);
+        return $channel instanceof Channel && $user->can('sendMessages', $channel);
     }
 
     /**
@@ -128,6 +129,11 @@ class StoreMessageRequest extends FormRequest
                 $target = $this->target();
                 if ($target instanceof Channel && $target->isVoice()) {
                     $validator->errors()->add('content', 'You cannot send messages in a voice channel.');
+                }
+
+                // Attach Files (ISSUE-27). DMs have no permissions.
+                if ($target instanceof Channel && $this->attachments() !== [] && ! ($this->user()?->can('attachFiles', $target) ?? false)) {
+                    $validator->errors()->add('attachments', 'You do not have permission to attach files in this channel.');
                 }
 
                 // The rules accept any allowed name with any allowed contents

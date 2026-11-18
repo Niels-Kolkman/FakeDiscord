@@ -8,8 +8,9 @@ namespace App\Enums;
  * same as Discord's; every flag stays within bits 0-62 (SQLite stores the
  * column as a signed 64-bit INTEGER).
  *
- * Storing flags is all this does: which flags a member effectively has, and
- * what each one allows, is resolved by ISSUE-27.
+ * Storing flags is all this does: which flags a member effectively has is
+ * App\Services\PermissionService, and what each one allows is in the
+ * policies (ISSUE-27).
  */
 enum Permission: int
 {

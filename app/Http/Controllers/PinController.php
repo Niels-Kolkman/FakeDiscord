@@ -34,6 +34,7 @@ class PinController extends Controller
     public function index(Request $request, Server $server, Channel $channel): JsonResponse|View
     {
         Gate::authorize('view', $server);
+        Gate::authorize('view', $channel);
         abort_if($channel->isVoice(), 404);
 
         /** @var User $user */
@@ -49,11 +50,11 @@ class PinController extends Controller
 
         return view('channels.pins', [
             'server' => $server,
-            'layout' => $server->channelLayout(),
+            'layout' => $server->channelLayout($user),
             'channel' => $channel,
             'pins' => $pins,
             'members' => $server->memberList(),
-            'canManageMessages' => $user->can('manageMessages', $server),
+            'canManageMessages' => $user->can('manageMessages', $channel),
         ]);
     }
 
