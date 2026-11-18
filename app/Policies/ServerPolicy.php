@@ -9,7 +9,8 @@ use Illuminate\Auth\Access\Response;
 /**
  * Discovered automatically for App\Models\Server.
  *
- * Until role permissions exist (ISSUE-26) only the owner may change a server.
+ * Roles and their permission flags exist since ISSUE-26, but they are not
+ * enforced until ISSUE-27: until then only the owner may change a server.
  */
 class ServerPolicy
 {
@@ -95,6 +96,16 @@ class ServerPolicy
      * adds role permissions (Discord does the same).
      */
     public function transferOwnership(User $user, Server $server): bool
+    {
+        return $server->isOwnedBy($user);
+    }
+
+    /**
+     * Create, edit, reorder and delete roles, and give them to members
+     * (ISSUE-26). Owner only for now; ISSUE-27 lets members with the
+     * Manage Roles permission in, below their own highest role.
+     */
+    public function manageRoles(User $user, Server $server): bool
     {
         return $server->isOwnedBy($user);
     }

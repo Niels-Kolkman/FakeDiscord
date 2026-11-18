@@ -2,7 +2,9 @@
 
 namespace App\Actions\Servers;
 
+use App\Enums\Permission;
 use App\Models\Channel;
+use App\Models\Role;
 use App\Models\Server;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
@@ -35,8 +37,9 @@ class CreateServer
             ]);
 
             $server->roles()->create([
-                'name' => '@everyone',
+                'name' => Role::EVERYONE,
                 'position' => 0,
+                'permissions' => Permission::everyoneDefaults(),
                 'is_default' => true,
             ]);
 

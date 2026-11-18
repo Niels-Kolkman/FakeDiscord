@@ -236,7 +236,56 @@ Users with a verified email address manage servers under `/servers`
   icon show their initials (`<x-server-icon :server="$server" />`).
 - **Authorisation** is in `App\Policies\ServerPolicy`: `create` needs a
   verified email, `view` needs membership, and `update` and `delete` are owner
-  only until role permissions arrive (ISSUE-26).
+  only. Roles and their permission flags exist (see [Roles](#roles)) but are
+  not enforced until ISSUE-27.
+
+### Roles
+
+Roles (ISSUE-26) have a name (up to 100 characters), an optional `#rrggbb`
+colour, a `position` (higher is higher in the hierarchy) and a permission
+bitmask in `roles.permissions`. Managing them needs `ServerPolicy::manageRoles`,
+owner only for now. The pages are linked from the server settings page and the
+channel sidebar ("Roles").
+
+- **Permission flags** are the cases of `App\Enums\Permission`, using Discord's
+  bit values: Create Invite, Kick Members, Ban Members, Administrator, Manage
+  Channels, Manage Server, Add Reactions, View Channels, Send Messages, Manage
+  Messages, Attach Files, Manage Roles and Timeout Members. Use
+  `Permission::mask(...)`, `Permission::fromMask($bits)`,
+  `$role->hasPermission(Permission::X)` and `$role->permissionList()`. Every
+  flag stays within bits 0–62, because SQLite stores the column as a signed
+  64-bit integer. **The flags are only stored for now.** ISSUE-27 works out a
+  member's effective permissions and makes the policies use them; until then the
+  policies below still give these rights to the owner (or to every member).
+- **@everyone**: every server has exactly one default role (`is_default`,
+  position 0), created by `CreateServer`. Every member has it implicitly, so it
+  has no `role_user` rows. It starts with `Permission::everyoneDefaults()`
+  (Create Invite, Add Reactions, View Channels, Send Messages, Attach Files),
+  which is what every member could already do. Only its permissions can be
+  changed: it cannot be renamed, recoloured, moved, deleted, given or taken.
+  The `2026_11_18_000002` data migration gives older `@everyone` roles with no
+  bits these defaults, and adds `@everyone` to any server without one
+  (`Server::defaultRole()` also creates it if it is missing).
+- **List** (`GET /servers/{id}/roles`): highest role first, `@everyone` last,
+  with member counts. The ↑/↓ buttons (`POST …/roles/{role}/move`, field
+  `direction` = `up` or `down`) swap a role with its neighbour.
+  `App\Actions\Roles\MoveRole` then renumbers the other roles 1..n.
+- **Create** (`/servers/{id}/roles/create`): name, colour (or "No colour") and
+  the permission checkboxes (`permissions[]` holds the flag values). The name
+  `@everyone` is reserved, and repeated whitespace is collapsed. New roles go to
+  the top. A server can have at most 250 roles, `@everyone` included
+  (`App\Actions\Roles\CreateRole`).
+- **Edit** (`/servers/{id}/roles/{role}/settings`): change the same fields, see
+  who has the role, give it to members and take it away, or delete it. Deleting
+  takes the role from everyone who had it (`role_user` cascades).
+- **Members** (`POST …/roles/{role}/members` with `user_id`,
+  `DELETE …/roles/{role}/members/{user}`): `App\Actions\Roles\AssignRole` only
+  gives roles to members of the server, and checks the membership inside a
+  locked transaction. Taking a role from someone who does not have it is a 404.
+  The member sidebar groups and colours members by their highest role (see
+  below). Leaving a server removes the member's roles there.
+- A role of another server is a 404 (scoped bindings), and anyone without
+  `manageRoles` gets a 403. Every role route allows 60 requests a minute.
 
 ### Members and leaving
 
@@ -269,8 +318,8 @@ A server's sidebar lists its uncategorised channels first, then its
 **categories** (`channel_categories`), each with its own channels. Members can
 open any channel at `/servers/{id}/channels/{channel}`. The header shows the
 channel name and **topic**. Everything else needs
-`ServerPolicy::manageChannels`, which is owner only until role permissions
-arrive (ISSUE-26).
+`ServerPolicy::manageChannels`, which is owner only until the Manage Channels
+permission is enforced (ISSUE-27).
 
 - **Create channel** (`/servers/{id}/channels/create`, optional `?category={id}`):
   name, optional topic (up to 1024 characters) and optional category. Text
@@ -362,8 +411,8 @@ Voice channels have no messages.
   `DELETE /servers/{id}/channels/{channel}/messages/{message}`, which returns
   `204`. The author can delete their own messages. Moderators can delete anyone's,
   including messages of deleted accounts (`MessagePolicy::delete`,
-  `ServerPolicy::manageMessages`, owner only until role permissions arrive in
-  ISSUE-26). Messages are **soft deleted** (`messages.deleted_at`): they vanish
+  `ServerPolicy::manageMessages`, owner only until the Manage Messages
+  permission is enforced in ISSUE-27). Messages are **soft deleted** (`messages.deleted_at`): they vanish
   from the channel and the history API, but the row stays so replies keep their
   `reply_to_id`. A deleted message is a `404` for further edits and deletes.
   Without JavaScript, Delete is a normal form that redirects back to the
@@ -483,7 +532,7 @@ Members only; limited to 60 requests per minute.
   are loaded until it is (at most 20 pages). Quotes follow live edits and
   deletes of the original.
 - **Pinning**: moderators (`MessagePolicy::pin`, i.e.
-  `ServerPolicy::manageMessages`, the owner until roles land) get Pin / Unpin
+  `ServerPolicy::manageMessages`, the owner until ISSUE-27) get Pin / Unpin
   on every message: `POST` / `DELETE /servers/{id}/channels/{channel}/messages/{message}/pin`.
   Pinned messages show 📌 and have `pinned_at` set (`pinned_by_id` remembers
   who pinned them). A channel holds at most 50 pins (`422` on `message`

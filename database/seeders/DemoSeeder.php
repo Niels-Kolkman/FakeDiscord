@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\Permission;
 use App\Models\Ban;
 use App\Models\Channel;
 use App\Models\ChannelCategory;
@@ -136,13 +137,17 @@ class DemoSeeder extends Seeder
             'created_at' => now()->subDays(60),
         ]);
 
-        // Permission flags are defined in ISSUE-26; until then roles carry no bits.
         Role::factory()->everyone()->create(['server_id' => $server->id]);
         $moderator = Role::factory()->create([
             'server_id' => $server->id,
             'name' => 'Moderator',
             'color' => '#e67e22',
             'position' => 1,
+            'permissions' => Permission::mask(
+                Permission::ManageMessages,
+                Permission::KickMembers,
+                Permission::TimeoutMembers,
+            ),
         ]);
 
         foreach ($members as $member) {

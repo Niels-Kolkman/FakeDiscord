@@ -38,7 +38,11 @@ class DirectKeyBackfillTest extends TestCase
     public function test_existing_conversations_get_their_key_and_latest_message_time(): void
     {
         $this->artisan('migrate', ['--force' => true])->assertSuccessful();
-        $this->artisan('migrate:rollback', ['--step' => 1, '--force' => true])->assertSuccessful();
+        // Only this migration, by path, so later migrations do not get in the way.
+        $this->artisan('migrate:rollback', [
+            '--path' => 'database/migrations/2026_11_18_000001_add_direct_key_and_last_message_at_to_conversations_table.php',
+            '--force' => true,
+        ])->assertSuccessful();
 
         $now = '2026-01-01 00:00:00';
         foreach ([1, 2, 3, 4] as $id) {

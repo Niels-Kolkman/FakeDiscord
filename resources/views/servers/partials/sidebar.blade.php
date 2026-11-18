@@ -80,6 +80,9 @@
         @can('update', $server)
             <a href="{{ route('servers.edit', $server) }}" class="block rounded px-2 py-1 text-[#b5bac1] hover:bg-[#35373c] hover:text-white">Server settings</a>
         @endcan
+        @can('manageRoles', $server)
+            <a href="{{ route('roles.index', $server) }}" class="block rounded px-2 py-1 text-[#b5bac1] hover:bg-[#35373c] hover:text-white">Roles</a>
+        @endcan
         {{-- The owner gets the same link; the page explains the transfer. --}}
         <a href="{{ route('servers.leave.confirm', $server) }}" class="block rounded px-2 py-1 text-[#f23f43] hover:bg-[#35373c]">Leave server</a>
         <a href="{{ route('dashboard') }}" class="block rounded px-2 py-1 text-[#b5bac1] hover:bg-[#35373c] hover:text-white">Back to dashboard</a>

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Actions\Servers\UpdateServerIcon;
+use App\Enums\Permission;
 use App\Support\ChannelLayout;
 use App\Support\MemberList;
 use Database\Factories\ServerFactory;
@@ -131,6 +132,31 @@ class Server extends Model
     public function roles(): HasMany
     {
         return $this->hasMany(Role::class);
+    }
+
+    /**
+     * Roles in hierarchy order: highest position first, @everyone last.
+     *
+     * @return HasMany<Role, $this>
+     */
+    public function rolesInOrder(): HasMany
+    {
+        return $this->roles()
+            ->orderBy('is_default')
+            ->orderByDesc('position')
+            ->orderBy('id');
+    }
+
+    /**
+     * The @everyone role. App\Actions\Servers\CreateServer always makes one;
+     * it is created here for servers that somehow have none.
+     */
+    public function defaultRole(): Role
+    {
+        return $this->roles()->firstOrCreate(
+            ['is_default' => true],
+            ['name' => Role::EVERYONE, 'position' => 0, 'permissions' => Permission::everyoneDefaults()],
+        );
     }
 
     /**
