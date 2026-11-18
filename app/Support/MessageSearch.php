@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Models\Channel;
 use App\Models\Message;
 use App\Models\Server;
+use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
@@ -52,13 +53,15 @@ final readonly class MessageSearch
     /**
      * @return LengthAwarePaginator<int, Message>
      */
-    public function paginate(Server $server, int $perPage = self::PER_PAGE): LengthAwarePaginator
+    public function paginate(Server $server, int $perPage = self::PER_PAGE, ?User $viewer = null): LengthAwarePaginator
     {
         $search = Message::search($this->text ?? '')
-            ->query(function (Builder $query) use ($server): void {
+            ->query(function (Builder $query) use ($server, $viewer): void {
                 /** @var Builder<Message> $query */
                 $query
                     ->whereIn('messages.channel_id', Channel::query()->select('id')->where('server_id', $server->id))
+                    // Not the messages of people the viewer blocked (ISSUE-25).
+                    ->when($viewer !== null, fn (Builder $query) => $query->visibleTo($viewer))
                     ->when($this->text !== null, fn (Builder $query) => $query->whereRaw(
                         "messages.content LIKE ? ESCAPE '!'",
                         ['%'.self::escapeLike((string) $this->text).'%'],

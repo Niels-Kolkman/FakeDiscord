@@ -39,7 +39,7 @@ class PinController extends Controller
         /** @var User $user */
         $user = $request->user();
 
-        $pins = $this->pins($channel);
+        $pins = $this->pins($channel, $user);
 
         if ($request->expectsJson()) {
             return response()->json([
@@ -99,10 +99,12 @@ class PinController extends Controller
     /**
      * @return Collection<int, Message>
      */
-    private function pins(Channel $channel): Collection
+    private function pins(Channel $channel, User $viewer): Collection
     {
         return $channel->messages()
             ->whereNotNull('pinned_at')
+            // Not the messages of people the viewer blocked (ISSUE-25).
+            ->visibleTo($viewer)
             ->with(['author', 'attachments', 'pinnedBy', ...Reactions::relations(), ...Message::replyRelations()])
             ->orderByDesc('pinned_at')
             ->orderByDesc('id')

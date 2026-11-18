@@ -36,12 +36,17 @@ class ProfilePopoverTest extends TestCase
             ->getJson('/users/niels/profile')
             ->assertOk()
             ->assertExactJson([
+                'id' => $user->id,
                 'name' => 'Niels',
                 'username' => 'niels',
                 'bio' => 'Hi <b>there</b>',
                 'status' => 'online',
                 'avatar_url' => $user->avatarUrl(),
                 'member_since' => $user->created_at?->toIso8601String(),
+                'is_self' => false,
+                'blocked' => false,
+                'block_url' => route('friends.block'),
+                'unblock_url' => null,
             ]);
     }
 

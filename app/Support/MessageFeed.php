@@ -48,8 +48,12 @@ final readonly class MessageFeed
 
     /**
      * The newest page, or the page right before $before.
+     *
+     * With a $viewer, a server channel leaves out the messages of the
+     * people they blocked (ISSUE-25, Message::visibleTo()). A DM always
+     * shows its whole history.
      */
-    public static function for(Channel|Conversation|null $channel, int $limit = self::LIMIT, ?Cursor $before = null): self
+    public static function for(Channel|Conversation|null $channel, int $limit = self::LIMIT, ?Cursor $before = null, ?User $viewer = null): self
     {
         if ($channel === null || ($channel instanceof Channel && $channel->isVoice())) {
             return self::empty();
@@ -59,6 +63,7 @@ final readonly class MessageFeed
         // ?before= from the current request unvalidated. No message id is
         // ever PHP_INT_MAX, so this cursor means "start at the newest".
         $page = $channel->messages()
+            ->when($viewer !== null && $channel instanceof Channel, fn ($query) => $query->visibleTo($viewer))
             ->with(['author', 'attachments', ...Reactions::relations(), ...Message::replyRelations()])
             ->orderByDesc('id')
             ->cursorPaginate($limit, ['*'], self::CURSOR, $before ?? new Cursor(['id' => PHP_INT_MAX]));

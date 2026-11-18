@@ -8,6 +8,7 @@ import assert from 'node:assert/strict';
 import {
     applyPinned,
     excerpt,
+    isBlockedAuthor,
     previewText,
     renderMessage,
     renderPin,
@@ -130,6 +131,51 @@ test('renderReplyPreview names deleted authors', () => withFakeDocument(() => {
     const row = renderReplyPreview({ id: 7, deleted: false, author: null, content: 'Hi', has_attachments: false });
 
     assert.equal(find(row, byData('replyAuthor')).textContent, 'Deleted User');
+}));
+
+// --- Blocking (ISSUE-25) -------------------------------------------------
+
+test('isBlockedAuthor compares ids as strings and never blocks deleted accounts', () => {
+    const blocked = new Set(['5']);
+
+    assert.equal(isBlockedAuthor({ id: 5, name: 'Bob' }, blocked), true);
+    assert.equal(isBlockedAuthor({ id: '5' }, blocked), true);
+    assert.equal(isBlockedAuthor({ id: 6 }, blocked), false);
+    assert.equal(isBlockedAuthor(null, blocked), false);
+    assert.equal(isBlockedAuthor({ id: 5 }, null), false);
+    assert.equal(isBlockedAuthor({ id: 5 }, new Set()), false);
+});
+
+test('renderReplyPreview hides a quote of someone the viewer blocked', () => withFakeDocument(() => {
+    const reply = { id: 7, deleted: false, author: { id: 5, name: 'Bob' }, content: 'spam', has_attachments: false };
+
+    const row = renderReplyPreview(reply, { blockedUserIds: new Set(['5']) });
+    assert.equal(find(row, byData('replyJump')), null);
+    assert.equal(find(row, byData('replyContent')), null);
+    assert.equal(find(row, byData('replyBlocked')).textContent, 'Blocked message');
+
+    // A deleted original still says so, blocked or not.
+    const gone = renderReplyPreview({ ...reply, deleted: true }, { blockedUserIds: new Set(['5']) });
+    assert.ok(find(gone, byData('replyDeleted')));
+
+    // Without the block it quotes as usual.
+    assert.equal(find(renderReplyPreview(reply), byData('replyContent')).textContent, 'spam');
+}));
+
+test('renderMessage passes the blocked ids on to the reply quote', () => withFakeDocument(() => {
+    const item = renderMessage({
+        id: 8,
+        content: 'Replying',
+        created_at: null,
+        edited_at: null,
+        pinned_at: null,
+        author: { id: 2, name: 'Carol', username: 'carol', avatar_url: '', profile_url: '' },
+        reply_to: { id: 7, deleted: false, author: { id: 5, name: 'Bob' }, content: 'spam', has_attachments: false },
+        reactions: [],
+        attachments: [],
+    }, { blockedUserIds: new Set(['5']) });
+
+    assert.ok(find(item, byData('replyBlocked')));
 }));
 
 const message = (overrides = {}) => ({

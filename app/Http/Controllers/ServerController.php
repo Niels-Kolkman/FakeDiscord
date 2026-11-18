@@ -61,7 +61,7 @@ class ServerController extends Controller
             'server' => $server,
             'layout' => $layout,
             'channel' => $channel,
-            'feed' => MessageFeed::for($channel),
+            'feed' => MessageFeed::for($channel, viewer: auth()->user()),
             'members' => $server->memberList(),
         ]);
     }
