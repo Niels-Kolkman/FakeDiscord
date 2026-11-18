@@ -19,7 +19,8 @@ use Illuminate\View\View;
 /**
  * Open, create, edit and delete channels. Opening one needs
  * ChannelPolicy::view (View Channels, ISSUE-27);
- * changing them needs ServerPolicy::manageChannels.
+ * changing them needs ServerPolicy::manageChannels, and a channel hidden
+ * from the member (ISSUE-28) cannot be edited or deleted by them either.
  *
  * Routes use scoped bindings, so a channel id from another server is a 404.
  */
@@ -70,6 +71,7 @@ class ChannelController extends Controller
     public function edit(Server $server, Channel $channel): View
     {
         Gate::authorize('manageChannels', $server);
+        Gate::authorize('view', $channel);
 
         return view('channels.edit', [
             'server' => $server,
@@ -99,6 +101,7 @@ class ChannelController extends Controller
     public function destroy(Server $server, Channel $channel): RedirectResponse
     {
         Gate::authorize('manageChannels', $server);
+        Gate::authorize('view', $channel);
 
         // Messages and attachment rows go through ON DELETE CASCADE; the
         // attachment files are removed once that is committed.

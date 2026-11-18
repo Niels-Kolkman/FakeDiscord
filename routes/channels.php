@@ -13,7 +13,8 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
 });
 
 // Live messages of a server channel (App\Events\MessageSent). Only members
-// who can see the channel (ChannelPolicy::view, ISSUE-27) may listen; an
+// who can see the channel (ChannelPolicy::view, ISSUE-27) may listen, so a
+// private channel or one a role override hides (ISSUE-28) is refused; an
 // unknown channel id is a 403. This is checked when the browser
 // subscribes, so someone removed from the server, or who loses View
 // Channels, keeps an open subscription until they reload.

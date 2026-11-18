@@ -5,6 +5,7 @@ use App\Http\Controllers\AttachmentController;
 use App\Http\Controllers\ChannelCategoryController;
 use App\Http\Controllers\ChannelController;
 use App\Http\Controllers\ChannelLayoutController;
+use App\Http\Controllers\ChannelPermissionController;
 use App\Http\Controllers\ConversationMessageController;
 use App\Http\Controllers\ConversationReactionController;
 use App\Http\Controllers\DirectMessageController;
@@ -184,6 +185,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/servers/{server}/channels/{channel}/settings', [ChannelController::class, 'edit'])->name('channels.edit');
         Route::patch('/servers/{server}/channels/{channel}', [ChannelController::class, 'update'])->name('channels.update');
         Route::delete('/servers/{server}/channels/{channel}', [ChannelController::class, 'destroy'])->name('channels.destroy');
+
+        // Channel permissions (ISSUE-28): private toggle and per-role
+        // overrides. {role} cannot be scoped to {channel}, so the controller
+        // checks that the channel and role belong to {server} (404 if not).
+        Route::withoutScopedBindings()->group(function () {
+            Route::get('/servers/{server}/channels/{channel}/permissions', [ChannelPermissionController::class, 'edit'])
+                ->name('channels.permissions.edit');
+            Route::patch('/servers/{server}/channels/{channel}/privacy', [ChannelPermissionController::class, 'updatePrivacy'])
+                ->name('channels.privacy.update');
+            Route::put('/servers/{server}/channels/{channel}/permissions/{role}', [ChannelPermissionController::class, 'updateRole'])
+                ->whereNumber('role')
+                ->name('channels.permissions.update');
+        });
 
         // Messages (ISSUE-14): any member can post; MessageSent broadcasts
         // the message on the private "channel.{id}" channel. History

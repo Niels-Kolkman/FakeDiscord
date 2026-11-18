@@ -20,7 +20,7 @@ class DatabaseSchemaTest extends TestCase
         'users', 'servers', 'server_members', 'channels', 'messages',
         'message_attachments', 'reactions', 'friendships', 'conversations',
         'conversation_participants', 'roles', 'role_user', 'invites', 'bans',
-        'channel_categories',
+        'channel_categories', 'channel_permission_overrides',
     ];
 
     public function test_all_domain_tables_exist(): void
@@ -53,6 +53,8 @@ class DatabaseSchemaTest extends TestCase
         $this->assertHasIndex('channels', ['server_id', 'position']);
         $this->assertHasIndex('channels', ['category_id']);
         $this->assertHasIndex('channel_categories', ['server_id', 'position']);
+        $this->assertHasIndex('channel_permission_overrides', ['channel_id', 'role_id'], unique: true);
+        $this->assertHasIndex('channel_permission_overrides', ['role_id']);
     }
 
     public function test_every_foreign_key_column_leads_an_index(): void
@@ -79,6 +81,7 @@ class DatabaseSchemaTest extends TestCase
             'roles' => ['server_id' => ['servers', 'cascade']],
             'server_members' => ['server_id' => ['servers', 'cascade'], 'user_id' => ['users', 'cascade']],
             'role_user' => ['role_id' => ['roles', 'cascade'], 'user_id' => ['users', 'cascade']],
+            'channel_permission_overrides' => ['channel_id' => ['channels', 'cascade'], 'role_id' => ['roles', 'cascade']],
             'conversations' => ['owner_id' => ['users', 'set null']],
             'conversation_participants' => ['conversation_id' => ['conversations', 'cascade'], 'user_id' => ['users', 'cascade']],
             'messages' => [
@@ -123,6 +126,7 @@ class DatabaseSchemaTest extends TestCase
         $role = DB::table('roles')->insertGetId(['server_id' => $server, 'name' => '@everyone', 'is_default' => true]);
         DB::table('server_members')->insert(['server_id' => $server, 'user_id' => $member]);
         DB::table('role_user')->insert(['role_id' => $role, 'user_id' => $member]);
+        DB::table('channel_permission_overrides')->insert(['channel_id' => $channel, 'role_id' => $role, 'deny' => 1024]);
         DB::table('invites')->insert(['server_id' => $server, 'channel_id' => $channel, 'code' => 'abc123']);
         DB::table('bans')->insert(['server_id' => $server, 'user_id' => $this->user('troll')]);
         $message = DB::table('messages')->insertGetId(['channel_id' => $channel, 'user_id' => $member, 'content' => 'hi']);
@@ -134,7 +138,7 @@ class DatabaseSchemaTest extends TestCase
 
         DB::table('servers')->where('id', $server)->delete();
 
-        foreach (['channels', 'roles', 'server_members', 'role_user', 'invites', 'bans', 'messages', 'reactions', 'message_attachments'] as $table) {
+        foreach (['channels', 'roles', 'server_members', 'role_user', 'channel_permission_overrides', 'invites', 'bans', 'messages', 'reactions', 'message_attachments'] as $table) {
             $this->assertSame(0, DB::table($table)->count(), "[{$table}] should be emptied by the cascade.");
         }
         $this->assertSame(3, DB::table('users')->count());
