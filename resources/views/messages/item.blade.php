@@ -22,6 +22,14 @@
     download link. All links are temporary signed URLs. Eager loaded by
     App\Support\MessageFeed too.
 
+    Replies (ISSUE-20): a reply quotes its original above the header
+    (Message::replyPreview()); the quote links to #message-{id}, and the
+    script scrolls to it, loading older pages when it is not on screen.
+    "Reply" needs the script (it fills the composer's reply_to_id), so it
+    is rendered hidden, and only for members who can send ($canSendMessages).
+    Pins: 📌 marks a pinned message; moderators ($canManageMessages) get a
+    Pin / Unpin form that also works without JavaScript.
+
     @var \App\Models\Message $message
     @var \App\Models\Server $server
     @var \App\Models\Channel $channel
@@ -32,15 +40,38 @@
     $messageUrl = route('messages.update', [$server, $channel, $message]);
     $reactionsUrl = route('reactions.store', [$server, $channel, $message]);
     $reactionGroups = \App\Support\Reactions::groups($message, (int) ($viewerId ?? 0));
+    $pinUrl = route('pins.store', [$server, $channel, $message]);
+    $reply = $message->replyPreview();
     $toolButton = 'rounded px-2 py-0.5 text-xs text-[#b5bac1] hover:bg-[#404249] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]';
 @endphp
 <li
-    class="group relative flex gap-4 px-4 py-1 hover:bg-[#2e3035] focus-within:bg-[#2e3035]"
+    id="message-{{ $message->id }}"
+    class="group relative flex scroll-mt-16 flex-wrap gap-x-4 px-4 py-1 hover:bg-[#2e3035] focus-within:bg-[#2e3035]"
     data-message
     data-message-id="{{ $message->id }}"
     data-message-url="{{ $messageUrl }}"
     data-reactions-url="{{ $reactionsUrl }}"
+    data-pin-url="{{ $pinUrl }}"
 >
+    @if ($reply)
+        <div class="mb-0.5 flex w-full min-w-0 items-center gap-1 pl-14 text-sm text-[#b5bac1]" data-reply-preview data-reply-to-id="{{ $reply['id'] }}">
+            <span aria-hidden="true" class="shrink-0 text-[#80848e]">↱</span>
+            @if ($reply['deleted'])
+                <span class="italic text-[#949ba4]" data-reply-deleted>Original message was deleted</span>
+            @else
+                <a
+                    href="#message-{{ $reply['id'] }}"
+                    class="flex min-w-0 items-center gap-1 rounded hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]"
+                    data-reply-jump
+                >
+                    <span class="sr-only">Replying to</span>
+                    <span class="shrink-0 font-medium text-white" data-reply-author>{{ $reply['author']['name'] ?? __('Deleted User') }}</span>
+                    <span class="truncate" data-reply-content>{{ \App\Models\Message::previewText($reply) }}</span>
+                </a>
+            @endif
+        </div>
+    @endif
+
     @if ($message->author)
         <x-user-avatar :user="$message->author" :size="40" class="mt-0.5" />
     @else
@@ -55,6 +86,7 @@
                 datetime="{{ $message->created_at?->toIso8601String() }}"
                 data-local-time
             >{{ $message->created_at?->format('Y-m-d H:i') }}</time>
+            <span class="shrink-0 text-xs" title="Pinned" data-message-pinned @unless ($message->isPinned()) hidden @endunless><span aria-hidden="true">📌</span><span class="sr-only">Pinned</span></span>
         </p>
         <p class="whitespace-pre-wrap break-words text-[#dbdee1]" data-message-body><span data-message-content>{{ $message->content }}</span><span
             class="ml-1 text-xs text-[#949ba4]"
@@ -147,6 +179,21 @@
             </div>
         </details>
 
+        @if ($canSendMessages ?? false)
+            <button
+                type="button"
+                class="{{ $toolButton }}"
+                data-message-reply
+                hidden
+            >Reply</button>
+        @endif
+        @if ($canManageMessages ?? false)
+            <form method="POST" action="{{ $pinUrl }}" data-message-pin-form>
+                @csrf
+                @if ($message->isPinned()) @method('DELETE') @endif
+                <button type="submit" class="{{ $toolButton }}" data-message-pin>{{ $message->isPinned() ? 'Unpin' : 'Pin' }}</button>
+            </form>
+        @endif
         @if ($isOwn)
             <button
                 type="button"

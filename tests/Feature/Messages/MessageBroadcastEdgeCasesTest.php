@@ -186,21 +186,23 @@ class MessageBroadcastEdgeCasesTest extends TestCase
         $this->postMessage($this->owner, ['content' => 'Not affected'])->assertCreated();
     }
 
-    public function test_reply_and_edit_fields_cannot_be_set_through_the_request(): void
+    public function test_edit_and_pin_fields_cannot_be_set_through_the_request(): void
     {
         Event::fake([MessageSent::class]);
-        $original = Message::factory()->inChannel($this->channel)->create();
 
         $this->postMessage($this->member, [
             'content' => 'Plain message',
-            'reply_to_id' => $original->id,
             'edited_at' => '2020-01-01 00:00:00',
+            'pinned_at' => '2020-01-01 00:00:00',
+            'pinned_by_id' => $this->member->id,
         ])->assertCreated();
 
         $message = Message::query()->latest('id')->firstOrFail();
         $this->assertSame('Plain message', $message->content);
         $this->assertNull($message->reply_to_id);
         $this->assertNull($message->edited_at);
+        $this->assertNull($message->pinned_at);
+        $this->assertNull($message->pinned_by_id);
     }
 
     public function test_numeric_content_is_stored_as_a_string(): void

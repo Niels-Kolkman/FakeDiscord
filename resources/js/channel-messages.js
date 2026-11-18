@@ -41,6 +41,16 @@
  *   show image previews (sized by previewSize(), like
  *   MessageAttachment::previewSize()) and file cards; every link is a
  *   temporary signed URL from the payload.
+ * - Replies (ISSUE-20): "Reply" fills the composer's reply_to_id and shows
+ *   "Replying to …" (✕ or Escape cancels). A reply quotes its original
+ *   (payload `reply_to`); clicking the quote scrolls to the original and
+ *   highlights it, loading older pages (at most MAX_JUMP_PAGES) when it is
+ *   not on screen. Quotes follow edits and deletes of the original.
+ * - Pins (ISSUE-20): moderators get Pin / Unpin (POST / DELETE
+ *   data-pin-url); 📌 marks pinned messages. "📌 Pinned" in the header
+ *   opens [data-pins-panel] with the list from data-pins-url, newest pin
+ *   first, with Jump (and Unpin for moderators). ".message.pinned" updates
+ *   the marker and the open panel.
  *
  * All user-provided text is inserted with textContent, never parsed as HTML.
  * renderMessage() must match resources/views/messages/item.blade.php.
@@ -51,6 +61,11 @@ import { initTypingIndicator } from './typing-indicator.js';
 const NEAR_BOTTOM_PX = 120;
 const LOAD_OLDER_PX = 400;
 const MAX_CONTENT_LENGTH = 2000;
+// Like Message::REPLY_PREVIEW_LENGTH.
+const REPLY_PREVIEW_LENGTH = 100;
+// Older pages loaded at most to find a reply's original (50 messages each).
+const MAX_JUMP_PAGES = 20;
+const HIGHLIGHT = ['bg-[#5865f2]/20', 'transition-colors'];
 
 function el(tag, className, text) {
     const node = document.createElement(tag);
@@ -276,6 +291,126 @@ export function renderAttachments(attachments) {
     return list;
 }
 
+/**
+ * One line of at most REPLY_PREVIEW_LENGTH characters, like Message::excerpt().
+ */
+export function excerpt(content) {
+    const line = String(content ?? '').replace(/\s+/gu, ' ').trim();
+    const chars = [...line];
+    if (chars.length <= REPLY_PREVIEW_LENGTH) return line;
+    return `${chars.slice(0, REPLY_PREVIEW_LENGTH - 1).join('').trimEnd()}…`;
+}
+
+/**
+ * The quoted text of a reply preview, like Message::previewText().
+ */
+export function previewText(reply) {
+    if (reply?.content) return reply.content;
+    return reply?.has_attachments ? 'Click to see attachment' : '';
+}
+
+/**
+ * Fill a [data-reply-preview] row: a link to the original, or "deleted".
+ */
+function fillReplyPreview(row, reply) {
+    row.replaceChildren();
+    const arrow = el('span', 'shrink-0 text-[#80848e]', '↱');
+    arrow.setAttribute('aria-hidden', 'true');
+    row.appendChild(arrow);
+
+    if (reply.deleted) {
+        const gone = el('span', 'italic text-[#949ba4]', 'Original message was deleted');
+        gone.dataset.replyDeleted = '';
+        row.appendChild(gone);
+        return;
+    }
+
+    const link = el('a', 'flex min-w-0 items-center gap-1 rounded hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]');
+    link.href = `#message-${reply.id}`;
+    link.dataset.replyJump = '';
+    const author = el('span', 'shrink-0 font-medium text-white', reply.author?.name ?? 'Deleted User');
+    author.dataset.replyAuthor = '';
+    const content = el('span', 'truncate', previewText(reply));
+    content.dataset.replyContent = '';
+    link.append(el('span', 'sr-only', 'Replying to'), author, content);
+    row.appendChild(link);
+}
+
+/**
+ * The quote above a reply, like messages/item.blade.php. null when the
+ * message is not a reply.
+ */
+export function renderReplyPreview(reply) {
+    if (!reply) return null;
+    const row = el('div', 'mb-0.5 flex w-full min-w-0 items-center gap-1 pl-14 text-sm text-[#b5bac1]');
+    row.dataset.replyPreview = '';
+    row.dataset.replyToId = String(reply.id);
+    fillReplyPreview(row, reply);
+    return row;
+}
+
+/**
+ * One entry of the pinned messages panel, like channels/pins.blade.php.
+ * context: { canManageMessages }.
+ */
+export function renderPin(pin, context = {}) {
+    const item = el('li', 'border-b border-[#1f2023] px-4 py-3 last:border-b-0');
+    item.dataset.pin = '';
+    item.dataset.messageId = String(pin.id);
+
+    const header = el('p', 'flex items-baseline gap-2');
+    header.appendChild(el('span', 'truncate font-medium text-white', pin.author?.name ?? 'Deleted User'));
+    const time = el('time', 'shrink-0 text-xs text-[#949ba4]', formatTime(pin.created_at));
+    time.dateTime = pin.created_at ?? '';
+    header.appendChild(time);
+    item.appendChild(header);
+
+    if (pin.content) item.appendChild(el('p', 'line-clamp-6 whitespace-pre-wrap break-words text-sm text-[#dbdee1]', pin.content));
+    const files = pin.attachments?.length ?? 0;
+    if (files > 0) item.appendChild(el('p', 'text-xs text-[#949ba4]', files === 1 ? '1 attachment' : `${files} attachments`));
+
+    const footer = el('div', 'mt-1 flex items-center gap-3 text-xs text-[#949ba4]');
+    footer.appendChild(el('span', 'min-w-0 truncate', pin.pinned_by ? `Pinned by ${pin.pinned_by.name}` : 'Pinned'));
+    const jump = el('button', 'ml-auto shrink-0 rounded text-[#00a8fc] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]', 'Jump');
+    jump.type = 'button';
+    jump.dataset.pinJump = '';
+    footer.appendChild(jump);
+    if (context.canManageMessages) {
+        const unpin = el('button', 'shrink-0 rounded text-red-400 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]', 'Unpin');
+        unpin.type = 'button';
+        unpin.dataset.pinUnpin = '';
+        footer.appendChild(unpin);
+    }
+    item.appendChild(footer);
+
+    return item;
+}
+
+/**
+ * Show a message as pinned or not: the 📌 marker and the Pin / Unpin form.
+ */
+export function applyPinned(item, pinnedAt) {
+    if (!item) return;
+    const pinned = Boolean(pinnedAt);
+    const marker = item.querySelector('[data-message-pinned]');
+    if (marker) marker.hidden = !pinned;
+    const form = item.querySelector('[data-message-pin-form]');
+    if (!form) return;
+    let method = form.querySelector('input[name="_method"]');
+    if (pinned && !method) {
+        method = el('input');
+        method.type = 'hidden';
+        method.name = '_method';
+        form.appendChild(method);
+    }
+    if (method) {
+        if (pinned) method.value = 'DELETE';
+        else method.remove();
+    }
+    const button = form.querySelector('[data-message-pin]');
+    if (button) button.textContent = pinned ? 'Unpin' : 'Pin';
+}
+
 function renderReactionPicker(url, context) {
     const picker = el('details', 'relative');
     picker.dataset.reactionPicker = '';
@@ -306,9 +441,20 @@ function renderReactionPicker(url, context) {
     return picker;
 }
 
+function hiddenInputs(form, fields) {
+    fields.forEach(([name, value]) => {
+        const input = el('input');
+        input.type = 'hidden';
+        input.name = name;
+        input.value = value;
+        form.appendChild(input);
+    });
+}
+
 /**
- * Add reaction / Edit / Delete, like the actions in messages/item.blade.php.
- * context: { viewerId, canManageMessages, messagesUrl, csrfToken, quickEmoji }.
+ * Add reaction / Reply / Pin / Edit / Delete, like the actions in
+ * messages/item.blade.php.
+ * context: { viewerId, canManageMessages, canSendMessages, messagesUrl, csrfToken, quickEmoji }.
  */
 function renderActions(message, url, context) {
     const own = message.author != null && String(message.author.id) === String(context.viewerId);
@@ -317,6 +463,28 @@ function renderActions(message, url, context) {
     actions.dataset.messageActions = '';
 
     actions.appendChild(renderReactionPicker(`${url}/reactions`, context));
+
+    if (context.canSendMessages) {
+        const reply = el('button', TOOL_BUTTON, 'Reply');
+        reply.type = 'button';
+        reply.dataset.messageReply = '';
+        actions.appendChild(reply);
+    }
+
+    if (context.canManageMessages) {
+        const form = el('form');
+        form.method = 'POST';
+        form.action = `${url}/pin`;
+        form.dataset.messagePinForm = '';
+        hiddenInputs(form, message.pinned_at
+            ? [['_token', context.csrfToken ?? ''], ['_method', 'DELETE']]
+            : [['_token', context.csrfToken ?? '']]);
+        const pin = el('button', TOOL_BUTTON, message.pinned_at ? 'Unpin' : 'Pin');
+        pin.type = 'submit';
+        pin.dataset.messagePin = '';
+        form.appendChild(pin);
+        actions.appendChild(form);
+    }
 
     if (own) {
         const edit = el('button', TOOL_BUTTON, 'Edit');
@@ -330,13 +498,7 @@ function renderActions(message, url, context) {
         form.method = 'POST';
         form.action = url;
         form.dataset.messageDeleteForm = '';
-        [['_token', context.csrfToken ?? ''], ['_method', 'DELETE']].forEach(([name, value]) => {
-            const input = el('input');
-            input.type = 'hidden';
-            input.name = name;
-            input.value = value;
-            form.appendChild(input);
-        });
+        hiddenInputs(form, [['_token', context.csrfToken ?? ''], ['_method', 'DELETE']]);
         const remove = el('button', 'rounded px-2 py-0.5 text-xs text-red-400 hover:bg-[#404249] hover:text-red-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]', 'Delete');
         remove.type = 'submit';
         form.appendChild(remove);
@@ -349,11 +511,16 @@ function renderActions(message, url, context) {
 export function renderMessage(message, context = {}) {
     const url = context.messagesUrl ? `${context.messagesUrl}/${message.id}` : '';
 
-    const item = el('li', 'group relative flex gap-4 px-4 py-1 hover:bg-[#2e3035] focus-within:bg-[#2e3035]');
+    const item = el('li', 'group relative flex scroll-mt-16 flex-wrap gap-x-4 px-4 py-1 hover:bg-[#2e3035] focus-within:bg-[#2e3035]');
+    item.id = `message-${message.id}`;
     item.dataset.message = '';
     item.dataset.messageId = String(message.id);
     item.dataset.messageUrl = url;
     item.dataset.reactionsUrl = url ? `${url}/reactions` : '';
+    item.dataset.pinUrl = url ? `${url}/pin` : '';
+
+    const reply = renderReplyPreview(message.reply_to);
+    if (reply) item.appendChild(reply);
 
     item.appendChild(renderAvatar(message.author));
 
@@ -367,6 +534,14 @@ export function renderMessage(message, context = {}) {
     time.dateTime = message.created_at ?? '';
     time.dataset.localTime = '';
     header.appendChild(time);
+    const pinned = el('span', 'shrink-0 text-xs');
+    pinned.title = 'Pinned';
+    pinned.dataset.messagePinned = '';
+    const pinIcon = el('span', null, '📌');
+    pinIcon.setAttribute('aria-hidden', 'true');
+    pinned.append(pinIcon, el('span', 'sr-only', 'Pinned'));
+    pinned.hidden = !message.pinned_at;
+    header.appendChild(pinned);
     body.appendChild(header);
 
     const text = el('p', 'whitespace-pre-wrap break-words text-[#dbdee1]');
@@ -402,6 +577,7 @@ export function uploadErrorMessage(error) {
     if (response?.status === 413) return 'Your files are too large to upload together. Send fewer at a time.';
     const errors = response?.data?.errors ?? {};
     if (errors.content?.[0]) return errors.content[0];
+    if (errors.reply_to_id?.[0]) return errors.reply_to_id[0];
     const fileErrors = Object.keys(errors).filter((key) => key === 'attachments' || key.startsWith('attachments.')).sort();
     if (fileErrors.length > 0) return errors[fileErrors[0]][0];
     return 'Your message could not be sent. Try again.';
@@ -448,6 +624,7 @@ function initChannel(root) {
     const context = {
         viewerId: root.dataset.viewerId ?? '',
         canManageMessages: root.dataset.canManageMessages !== undefined,
+        canSendMessages: root.dataset.canSendMessages !== undefined && form !== null,
         messagesUrl: root.dataset.historyUrl ?? '',
         csrfToken: document.querySelector('meta[name="csrf-token"]')?.content ?? '',
         quickEmoji: parseJson(root.dataset.reactionEmoji, []),
@@ -463,8 +640,8 @@ function initChannel(root) {
         applyEdited(marker, marker.title.replace(/^Edited /, ''));
     });
 
-    // Editing needs this script, so the server renders Edit hidden.
-    list.querySelectorAll('[data-message-edit]').forEach((button) => {
+    // Editing and replying need this script, so the server renders them hidden.
+    list.querySelectorAll('[data-message-edit], [data-message-reply]').forEach((button) => {
         button.hidden = false;
     });
 
@@ -501,7 +678,7 @@ function initChannel(root) {
     const statusLoading = root.querySelector('[data-history-loading]');
     const statusError = root.querySelector('[data-history-error]');
     let olderCursor = root.dataset.olderCursor || null;
-    let loadingOlder = false;
+    let loadingOlder = null;
     let failed = false;
 
     // Everything that grows or shrinks above the viewport goes through
@@ -531,13 +708,15 @@ function initChannel(root) {
         list.insertBefore(fragment, list.firstChild);
     };
 
+    // Resolves once the page is in (also when one was already loading),
+    // or right away when there is nothing to load.
     const loadOlder = () => {
-        if (!historyUrl || !olderCursor || loadingOlder || failed) return;
+        if (loadingOlder) return loadingOlder;
+        if (!historyUrl || !olderCursor || failed) return Promise.resolve();
 
-        loadingOlder = true;
         keepPosition(() => showStatus('loading'));
 
-        window.axios
+        loadingOlder = window.axios
             .get(historyUrl, { params: { before: olderCursor }, headers: { Accept: 'application/json' } })
             .then((response) => {
                 olderCursor = response.data.next_cursor ?? null;
@@ -552,10 +731,12 @@ function initChannel(root) {
                 keepPosition(() => showStatus('error'));
             })
             .finally(() => {
-                loadingOlder = false;
+                loadingOlder = null;
                 // A short page may not fill the screen: keep going.
                 if (!failed) requestAnimationFrame(maybeLoadOlder);
             });
+
+        return loadingOlder;
     };
 
     const maybeLoadOlder = () => {
@@ -618,8 +799,20 @@ function initChannel(root) {
         updateJump();
     };
 
+    // Quotes of a message in the replies to it (ISSUE-20).
+    const quotesOf = (id) => [...list.querySelectorAll(`[data-reply-preview][data-reply-to-id="${CSS.escape(String(id))}"]`)];
+
     const applyUpdate = (message) => {
         if (!message || String(message.channel_id) !== channelId) return;
+        quotesOf(message.id).forEach((row) => {
+            const content = row.querySelector('[data-reply-content]');
+            if (content) {
+                content.textContent = previewText({
+                    content: excerpt(message.content),
+                    has_attachments: (message.attachments?.length ?? 0) > 0,
+                });
+            }
+        });
         const item = findItem(message.id);
         if (!item) return;
         changeItem(item, () => {
@@ -629,12 +822,175 @@ function initChannel(root) {
         });
     };
 
+    // Called with the id of every removed message (the pins panel, the reply bar).
+    const removedListeners = [];
+
     const removeItem = (id) => {
         // Stays in `seen`, so a late ".message.sent" cannot bring it back.
         seen.add(String(id));
+        quotesOf(id).forEach((row) => fillReplyPreview(row, { id, deleted: true }));
         const item = findItem(id);
         if (item) changeItem(item, () => item.remove());
+        removedListeners.forEach((listener) => listener(String(id)));
     };
+
+    // --- Jump to a message (replies and pins, ISSUE-20) -------------------
+    const highlight = (item) => {
+        item.classList.add(...HIGHLIGHT);
+        window.setTimeout(() => item.classList.remove(HIGHLIGHT[0]), 1500);
+    };
+
+    // Older messages have smaller ids, so loading older pages finds any
+    // message of this channel that still exists.
+    const jumpTo = async (id) => {
+        let item = findItem(id);
+        for (let page = 0; !item && olderCursor && !failed && page < MAX_JUMP_PAGES; page += 1) {
+            await loadOlder();
+            item = findItem(id);
+        }
+        if (!item) {
+            window.alert('That message could not be found. It may have been deleted, or it is too far back.');
+            return false;
+        }
+        item.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        highlight(item);
+        updateJump();
+        return true;
+    };
+
+    list.addEventListener('click', (event) => {
+        const link = event.target.closest('[data-reply-jump]');
+        if (!link || !list.contains(link)) return;
+        event.preventDefault();
+        const id = link.closest('[data-reply-preview]')?.dataset.replyToId;
+        if (id) jumpTo(id);
+    });
+
+    // --- Pins (ISSUE-20) --------------------------------------------------
+    const pinsPanel = root.querySelector('[data-pins-panel]');
+    const pinsList = pinsPanel?.querySelector('[data-pins-list]');
+    const pinsStatus = pinsPanel?.querySelector('[data-pins-status]');
+    const pinsToggle = document.querySelector('[data-pins-toggle]');
+    const pinsUrl = root.dataset.pinsUrl;
+    let pinsRequest = 0;
+
+    const showPinsStatus = (text) => {
+        if (!pinsStatus) return;
+        pinsStatus.textContent = text ?? '';
+        pinsStatus.hidden = !text;
+    };
+
+    const loadPins = () => {
+        if (!pinsPanel || !pinsList || !pinsUrl) return;
+        const request = ++pinsRequest;
+        if (pinsList.childElementCount === 0) showPinsStatus('Loading…');
+        window.axios
+            .get(pinsUrl, { headers: { Accept: 'application/json' } })
+            .then((response) => {
+                if (request !== pinsRequest) return;
+                const pins = response.data.pins ?? [];
+                pinsList.replaceChildren(...pins.map((pin) => renderPin(pin, context)));
+                showPinsStatus(pins.length === 0 ? 'This channel has no pinned messages yet.' : null);
+            })
+            .catch(() => {
+                if (request === pinsRequest) showPinsStatus('Pinned messages could not be loaded.');
+            });
+    };
+
+    const pinsOpen = () => pinsPanel !== null && !pinsPanel.hidden;
+
+    const closePins = (focusToggle = false) => {
+        if (!pinsOpen()) return;
+        pinsPanel.hidden = true;
+        pinsToggle?.setAttribute('aria-expanded', 'false');
+        if (focusToggle) pinsToggle?.focus({ preventScroll: true });
+    };
+
+    const openPins = () => {
+        if (!pinsPanel) return;
+        pinsPanel.hidden = false;
+        pinsToggle?.setAttribute('aria-expanded', 'true');
+        loadPins();
+        pinsPanel.querySelector('[data-pins-close]')?.focus({ preventScroll: true });
+    };
+
+    if (pinsPanel && pinsToggle) {
+        pinsToggle.setAttribute('aria-expanded', 'false');
+        pinsToggle.setAttribute('aria-haspopup', 'dialog');
+        pinsToggle.addEventListener('click', (event) => {
+            event.preventDefault();
+            if (pinsOpen()) closePins();
+            else openPins();
+        });
+        pinsPanel.querySelector('[data-pins-close]')?.addEventListener('click', () => closePins(true));
+        pinsPanel.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                closePins(true);
+            }
+        });
+        document.addEventListener('click', (event) => {
+            if (pinsOpen() && !pinsPanel.contains(event.target) && !pinsToggle.contains(event.target)) closePins();
+        });
+    }
+
+    const pinErrorMessage = (failure) => {
+        const response = failure.response;
+        if (response?.status === 429) return 'You are pinning too quickly. Wait a moment and try again.';
+        if (response?.status === 403) return 'You cannot pin messages in this channel.';
+        if (response?.status === 404) return 'This message was deleted.';
+        return response?.data?.errors?.message?.[0] ?? 'The message could not be pinned. Try again.';
+    };
+
+    // A deleted message leaves the pinned list too.
+    removedListeners.push((id) => {
+        pinsList?.querySelector(`[data-pin][data-message-id="${CSS.escape(id)}"]`)?.remove();
+        if (pinsOpen() && pinsList?.childElementCount === 0) showPinsStatus('This channel has no pinned messages yet.');
+    });
+
+    const pendingPins = new Set();
+
+    const setPin = (id, url, pin) => {
+        if (!url || pendingPins.has(id)) return;
+        pendingPins.add(id);
+        window.axios
+            .request({ method: pin ? 'post' : 'delete', url, headers: { Accept: 'application/json', ...socketHeaders() } })
+            .then((response) => {
+                applyPinned(findItem(id), response.data.message?.pinned_at);
+                if (pinsOpen()) loadPins();
+            })
+            .catch((failure) => {
+                if (failure.response?.status === 404) {
+                    removeItem(id);
+                    if (pinsOpen()) loadPins();
+                    return;
+                }
+                window.alert(pinErrorMessage(failure));
+            })
+            .finally(() => pendingPins.delete(id));
+    };
+
+    list.addEventListener('submit', (event) => {
+        const pinForm = event.target.closest('[data-message-pin-form]');
+        if (!pinForm) return;
+        event.preventDefault();
+        const item = pinForm.closest('[data-message]');
+        if (!item) return;
+        const unpin = pinForm.querySelector('input[name="_method"]')?.value === 'DELETE';
+        setPin(item.dataset.messageId, item.dataset.pinUrl, !unpin);
+    });
+
+    pinsList?.addEventListener('click', (event) => {
+        const entry = event.target.closest('[data-pin]');
+        if (!entry) return;
+        const id = entry.dataset.messageId;
+        if (event.target.closest('[data-pin-jump]')) {
+            closePins();
+            jumpTo(id);
+        } else if (event.target.closest('[data-pin-unpin]')) {
+            setPin(id, `${context.messagesUrl}/${id}/pin`, false);
+        }
+    });
 
     const stopEditing = (item) => {
         item.querySelector('[data-message-editor]')?.remove();
@@ -862,7 +1218,16 @@ function initChannel(root) {
         .listen('.message.deleted', (message) => {
             if (String(message?.channel_id) === channelId) removeItem(message.id);
         })
-        .listen('.reactions.updated', (event) => applyReactions(event));
+        .listen('.reactions.updated', (event) => applyReactions(event))
+        .listen('.message.pinned', (event) => {
+            if (String(event?.channel_id) !== channelId) return;
+            applyPinned(findItem(event.id), event.pinned_at);
+            if (pinsOpen()) loadPins();
+        });
+
+    // A link such as the pins page's "Jump" (#message-{id}).
+    const linked = /^#message-(\d+)$/.exec(window.location.hash);
+    if (linked) jumpTo(linked[1]);
 
     if (!form) return;
 
@@ -882,7 +1247,49 @@ function initChannel(root) {
 
     input.addEventListener('input', resize);
 
+    // --- Replying (ISSUE-20) ---------------------------------------------
+    const replyInput = form.querySelector('[data-reply-input]');
+    const replyBar = form.querySelector('[data-reply-bar]');
+    const replyAuthor = form.querySelector('[data-reply-bar-author]');
+
+    const replyingTo = () => replyInput?.value || null;
+
+    const clearReply = () => {
+        if (replyInput) replyInput.value = '';
+        if (replyBar) replyBar.hidden = true;
+    };
+
+    const startReply = (item) => {
+        if (!replyInput) return;
+        replyInput.value = item.dataset.messageId;
+        if (replyAuthor) replyAuthor.textContent = item.querySelector('[data-message-author]')?.textContent ?? '';
+        if (replyBar) replyBar.hidden = false;
+        input.focus();
+    };
+
+    list.addEventListener('click', (event) => {
+        const button = event.target.closest('[data-message-reply]');
+        if (!button || !list.contains(button)) return;
+        const item = button.closest('[data-message]');
+        if (item) startReply(item);
+    });
+
+    form.querySelector('[data-reply-cancel]')?.addEventListener('click', () => {
+        clearReply();
+        input.focus();
+    });
+
+    // The message being answered was deleted: nothing to reply to any more.
+    removedListeners.push((id) => {
+        if (replyingTo() === id) clearReply();
+    });
+
     input.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && replyingTo()) {
+            event.preventDefault();
+            clearReply();
+            return;
+        }
         if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
             event.preventDefault();
             form.requestSubmit();
@@ -962,10 +1369,12 @@ function initChannel(root) {
         sending = true;
         typing?.sent();
 
-        let data = { content };
+        const replyTo = replyingTo();
+        let data = replyTo ? { content, reply_to_id: replyTo } : { content };
         if (files.length > 0) {
             data = new FormData();
             data.append('content', content);
+            if (replyTo) data.append('reply_to_id', replyTo);
             files.forEach((file) => data.append('attachments[]', file, file.name));
         }
 
@@ -976,10 +1385,15 @@ function initChannel(root) {
                 input.value = '';
                 files = [];
                 renderQueue();
+                clearReply();
                 resize();
                 showError(null);
             })
-            .catch((error) => showError(errorMessage(error)))
+            .catch((error) => {
+                // The original is gone: drop the reply, keep the text.
+                if (error?.response?.data?.errors?.reply_to_id) clearReply();
+                showError(errorMessage(error));
+            })
             .finally(() => {
                 sending = false;
                 input.focus();

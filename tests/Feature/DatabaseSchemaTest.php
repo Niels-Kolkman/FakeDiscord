@@ -86,6 +86,7 @@ class DatabaseSchemaTest extends TestCase
                 'conversation_id' => ['conversations', 'cascade'],
                 'user_id' => ['users', 'set null'],
                 'reply_to_id' => ['messages', 'set null'],
+                'pinned_by_id' => ['users', 'set null'],
             ],
             'message_attachments' => ['message_id' => ['messages', 'cascade']],
             'reactions' => ['message_id' => ['messages', 'cascade'], 'user_id' => ['users', 'cascade']],

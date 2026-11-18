@@ -8,6 +8,7 @@ use App\Http\Controllers\ChannelLayoutController;
 use App\Http\Controllers\InviteController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\MessageSearchController;
+use App\Http\Controllers\PinController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReactionController;
 use App\Http\Controllers\ServerController;
@@ -123,6 +124,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/servers/{server}/channels/{channel}/messages/{message}/reactions', [ReactionController::class, 'destroy'])
             ->middleware('throttle:60,1')
             ->name('reactions.destroy');
+
+        // Pinned messages (ISSUE-20): any member sees the list (JSON for the
+        // panel, a page without JavaScript); pinning needs MessagePolicy::pin.
+        // MessagePinned goes out on "channel.{id}".
+        Route::get('/servers/{server}/channels/{channel}/pins', [PinController::class, 'index'])
+            ->middleware('throttle:60,1')
+            ->name('pins.index');
+        Route::post('/servers/{server}/channels/{channel}/messages/{message}/pin', [PinController::class, 'store'])
+            ->middleware('throttle:30,1')
+            ->name('pins.store');
+        Route::delete('/servers/{server}/channels/{channel}/messages/{message}/pin', [PinController::class, 'destroy'])
+            ->middleware('throttle:30,1')
+            ->name('pins.destroy');
 
         // Drag and drop saves the whole sidebar order as JSON.
         Route::put('/servers/{server}/layout', [ChannelLayoutController::class, 'update'])

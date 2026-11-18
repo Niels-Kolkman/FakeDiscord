@@ -107,6 +107,8 @@ erDiagram
         text content
         timestamp edited_at "nullable"
         timestamp deleted_at "nullable, soft delete"
+        timestamp pinned_at "nullable, NULL = not pinned"
+        bigint pinned_by_id FK "nullable, users, set null"
         timestamps timestamps
     }
 
@@ -184,6 +186,7 @@ erDiagram
     conversations |o--o{ messages : contains
     users |o--o{ messages : writes
     messages |o--o{ messages : "replies to"
+    users |o--o{ messages : pins
     messages ||--o{ message_attachments : has
     messages ||--o{ reactions : has
     users ||--o{ reactions : adds
@@ -198,7 +201,8 @@ erDiagram
 |-------|-------|----------|
 | `messages` | `(channel_id, created_at)` | Paging through a channel's history |
 | `messages` | `(conversation_id, created_at)` | Paging through a DM's history |
-| `messages` | `user_id`, `reply_to_id` | FK lookups and `ON DELETE` actions |
+| `messages` | `(channel_id, pinned_at)` | A channel's pinned messages, newest pin first |
+| `messages` | `user_id`, `reply_to_id`, `pinned_by_id` | FK lookups and `ON DELETE` actions |
 | `channels` | `(server_id, position)` | Sidebar order |
 | `channels` | `category_id` | A category's channels; `ON DELETE SET NULL` |
 | `channel_categories` | `(server_id, position)` | Sidebar order of categories |
@@ -232,7 +236,8 @@ downloaded.
 - **Deleting a user** deletes their memberships, role assignments, reactions,
   friendships, DM participation and owned servers. Their **messages stay**, with
   `user_id` set to NULL (shown as "Deleted User"). Invites they created and bans
-  they issued also stay, with the user column set to NULL.
+  they issued also stay, with the user column set to NULL. Messages they pinned
+  stay pinned, with `pinned_by_id` set to NULL.
 - **Deleting a message** sets `reply_to_id` on replies to NULL. The replies
   themselves stay.
 
