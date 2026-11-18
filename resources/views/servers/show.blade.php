@@ -30,6 +30,19 @@
                 <span aria-hidden="true" class="h-6 w-px shrink-0 bg-[#3f4147]"></span>
                 <p class="truncate text-sm text-[#b5bac1]" title="{{ $channel->topic }}" data-channel-topic>{{ $channel->topic }}</p>
             @endif
+            {{-- Message search (ISSUE-21) over the whole server; filters are on the results page. --}}
+            <form method="GET" action="{{ route('servers.search', $server) }}" role="search" class="ml-auto shrink-0" data-header-search>
+                <label for="header-search" class="sr-only">Search {{ $server->name }}</label>
+                <input
+                    id="header-search"
+                    type="search"
+                    name="q"
+                    maxlength="{{ \App\Support\MessageSearch::MAX_QUERY_LENGTH }}"
+                    placeholder="Search"
+                    autocomplete="off"
+                    class="w-36 rounded bg-[#1e1f22] px-2 py-1 text-sm text-white placeholder-[#949ba4] outline-none transition-[width] focus:w-56 focus:ring-2 focus:ring-[#5865f2]"
+                >
+            </form>
         </header>
 
         @php

@@ -7,6 +7,7 @@ use App\Http\Controllers\ChannelController;
 use App\Http\Controllers\ChannelLayoutController;
 use App\Http\Controllers\InviteController;
 use App\Http\Controllers\MessageController;
+use App\Http\Controllers\MessageSearchController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReactionController;
 use App\Http\Controllers\ServerController;
@@ -67,6 +68,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/servers', [ServerController::class, 'store'])->name('servers.store');
     Route::get('/servers/{server}', [ServerController::class, 'show'])->name('servers.show');
     Route::get('/servers/{server}/settings', [ServerController::class, 'edit'])->name('servers.edit');
+
+    // Message search (ISSUE-21): ?q= plus the channel / author / from / to
+    // filters, through Laravel Scout's database engine. Members only.
+    Route::get('/servers/{server}/search', [MessageSearchController::class, 'index'])
+        ->middleware('throttle:60,1')
+        ->name('servers.search');
     Route::patch('/servers/{server}', [ServerController::class, 'update'])->name('servers.update');
     Route::delete('/servers/{server}', [ServerController::class, 'destroy'])->name('servers.destroy');
 
