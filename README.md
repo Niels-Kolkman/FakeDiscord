@@ -734,6 +734,35 @@ request goes through Laravel. Everything happens over Reverb
   authorised one by one, so a member without the send permission could still
   whisper "typing".
 
+### Unread and mentions
+
+Each user has a read marker per channel (`channel_reads.last_read_message_id`,
+`App\Actions\Channels\MarkChannelRead`). The marker only ever moves forward, and
+never past the channel's newest message.
+
+- **Marking read**: opening a text channel (or a server, which opens its first
+  text channel) marks everything in it as read. While the channel stays open,
+  `resources/js/unread.js` posts `POST /servers/{id}/channels/{channel}/read`
+  (optional `message_id`, `ChannelReadController`) for messages that arrive
+  live. The posts are batched over a second, and only go out while the tab is
+  visible. A hidden tab waits until you come back to it. You need
+  `ChannelPolicy::view` for the channel.
+- **Unread**: a channel is unread when it has messages newer than your marker.
+  Without a marker, only messages sent after you joined the server count. Your
+  own messages, deleted ones and those of people you blocked never count, and
+  neither do channels you cannot see. `App\Support\UnreadState` works this out
+  in one query for all channels, plus one for mentions when anything is unread.
+- **Mentions**: `@username` (`App\Support\Mentions`), case-insensitive. It does
+  not match inside a word or an e-mail address, and `@bobby` does not mention
+  bob. `@role` and `@everyone` come with ISSUE-33.
+- **Where it shows**: in the channel sidebar, an unread channel gets a white dot
+  and a bold name, and unread mentions show as a red badge. The open channel is
+  never unread. In the server lists (dashboard, friends and DM sidebar), a
+  server with unread channels gets a dot, or a badge with its total mentions.
+- **Live**: the channel sidebar subscribes to `channel.{id}` for every text
+  channel in it and updates dots and badges as `.message.sent` arrives. The
+  server lists are worked out when the page loads.
+
 `npm test` runs the JavaScript tests in `tests/js` with Node's built-in test runner.
 
 ## Invites
