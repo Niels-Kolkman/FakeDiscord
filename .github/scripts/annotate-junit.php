@@ -48,8 +48,11 @@ foreach ($problems as $case) {
     $detail = $case->xpath('failure|error')[0] ?? null;
     $message = trim((string) $detail);
 
+    // Keep the start and the end: PHPUnit puts the useful part (which assertion
+    // failed, the file and line) last, after a possibly huge dump of the response.
     if (strlen($message) > MAX_MESSAGE_LENGTH) {
-        $message = substr($message, 0, MAX_MESSAGE_LENGTH).'...';
+        $head = (int) (MAX_MESSAGE_LENGTH * 0.2);
+        $message = substr($message, 0, $head)."\n[...]\n".substr($message, -(MAX_MESSAGE_LENGTH - $head));
     }
 
     $file = str_replace('\\', '/', (string) $case['file']);

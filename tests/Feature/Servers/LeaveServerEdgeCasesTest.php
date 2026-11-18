@@ -43,7 +43,9 @@ class LeaveServerEdgeCasesTest extends TestCase
 
     private function addMember(User $user): void
     {
-        ServerMember::factory()->create(['server_id' => $this->server->id, 'user_id' => $user->id]);
+        // No nickname: the factory gives one to 1 in 5 members, which would make
+        // tests that read display names fail at random.
+        ServerMember::factory()->create(['server_id' => $this->server->id, 'user_id' => $user->id, 'nickname' => null]);
     }
 
     /**

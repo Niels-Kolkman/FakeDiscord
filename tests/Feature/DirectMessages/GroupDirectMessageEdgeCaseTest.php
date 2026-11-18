@@ -266,10 +266,12 @@ class GroupDirectMessageEdgeCaseTest extends TestCase
         $group = $this->group();
 
         $this->actingAs($this->alice)->delete(route('dms.participants.destroy', [$group, $this->bob]));
-        $this->assertTrue($group->fresh()?->isOwnedBy($this->alice));
+        $group->refresh();
+        $this->assertTrue($group->isOwnedBy($this->alice));
 
         $this->actingAs($this->carol)->delete(route('dms.participants.destroy', [$group, $this->carol]));
-        $this->assertTrue($group->fresh()?->isOwnedBy($this->alice));
+        $group->refresh();
+        $this->assertTrue($group->isOwnedBy($this->alice));
     }
 
     public function test_an_ownerless_group_passes_ownership_to_the_longest_standing_member(): void
