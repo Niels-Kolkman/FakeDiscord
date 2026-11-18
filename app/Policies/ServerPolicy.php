@@ -2,18 +2,28 @@
 
 namespace App\Policies;
 
+use App\Enums\Permission;
 use App\Models\Server;
 use App\Models\User;
+use App\Services\PermissionService;
 use Illuminate\Auth\Access\Response;
 
 /**
  * Discovered automatically for App\Models\Server.
  *
- * Roles and their permission flags exist since ISSUE-26, but they are not
- * enforced until ISSUE-27: until then only the owner may change a server.
+ * Server-wide abilities, decided by the member's effective permissions
+ * (App\Services\PermissionService, ISSUE-27): the owner can do everything,
+ * Administrator gives every permission, and everyone else has what their
+ * roles and the default role (@everyone) give them. Deleting the server and
+ * handing it to someone else stay owner only, like on Discord.
+ *
+ * What happens inside one channel (reading, posting, attaching, reacting,
+ * moderating messages) is App\Policies\ChannelPolicy.
  */
 class ServerPolicy
 {
+    public function __construct(private readonly PermissionService $permissions) {}
+
     /**
      * Any signed-in user with a verified email address can create servers.
      */
@@ -23,7 +33,8 @@ class ServerPolicy
     }
 
     /**
-     * Members (including the owner) can open a server.
+     * Members (including the owner) can open a server. Which channels they
+     * see is ChannelPolicy::view.
      */
     public function view(User $user, Server $server): bool
     {
@@ -31,51 +42,74 @@ class ServerPolicy
     }
 
     /**
-     * Rename the server or change its icon.
+     * Rename the server or change its icon: Manage Server.
      */
     public function update(User $user, Server $server): bool
     {
-        return $server->isOwnedBy($user);
+        return $this->permissions->has($user, $server, Permission::ManageServer);
     }
 
+    /**
+     * Owner only, also for administrators (Discord does the same).
+     */
     public function delete(User $user, Server $server): bool
     {
         return $server->isOwnedBy($user);
     }
 
     /**
-     * Like Discord's default @everyone permission, any member can invite.
+     * Create Invite (an @everyone default).
      */
     public function createInvite(User $user, Server $server): bool
     {
-        return $server->hasMember($user);
+        return $this->permissions->has($user, $server, Permission::CreateInvite);
     }
 
     /**
-     * Like Discord's default @everyone "Send Messages" permission, any
-     * member can post in the server's text channels.
+     * See and revoke every invite of the server, not only your own: Manage
+     * Server, like Discord's invite settings.
+     */
+    public function manageInvites(User $user, Server $server): bool
+    {
+        return $this->permissions->has($user, $server, Permission::ManageServer);
+    }
+
+    /**
+     * Send Messages anywhere in the server (an @everyone default). Posting
+     * in one channel is ChannelPolicy::sendMessages, which also needs View
+     * Channels.
      */
     public function sendMessages(User $user, Server $server): bool
     {
-        return $server->hasMember($user);
+        return $this->permissions->has($user, $server, Permission::SendMessages);
     }
 
     /**
-     * Discord's "Manage Messages": delete other members' messages (ISSUE-16).
-     * The moderator permission; owner only until ISSUE-26 adds roles.
+     * Manage Messages: delete and pin other members' messages. Per channel
+     * this is ChannelPolicy::manageMessages.
      */
     public function manageMessages(User $user, Server $server): bool
     {
-        return $server->isOwnedBy($user);
+        return $this->permissions->has($user, $server, Permission::ManageMessages);
     }
 
     /**
-     * Discord's "Manage Channels": create, rename, reorder and delete
-     * channels and categories.
+     * Manage Channels: create, rename, reorder and delete channels and
+     * categories.
      */
     public function manageChannels(User $user, Server $server): bool
     {
-        return $server->isOwnedBy($user);
+        return $this->permissions->has($user, $server, Permission::ManageChannels);
+    }
+
+    /**
+     * Manage Roles: open the role settings and create roles. Which existing
+     * roles a member may change, move or hand out is RolePolicy::manage
+     * (only roles below their own highest role).
+     */
+    public function manageRoles(User $user, Server $server): bool
+    {
+        return $this->permissions->has($user, $server, Permission::ManageRoles);
     }
 
     /**
@@ -92,28 +126,10 @@ class ServerPolicy
     }
 
     /**
-     * Hand the server to another member. Owner only, also once ISSUE-26
-     * adds role permissions (Discord does the same).
+     * Hand the server to another member. Owner only, also for
+     * administrators (Discord does the same).
      */
     public function transferOwnership(User $user, Server $server): bool
-    {
-        return $server->isOwnedBy($user);
-    }
-
-    /**
-     * Create, edit, reorder and delete roles, and give them to members
-     * (ISSUE-26). Owner only for now; ISSUE-27 lets members with the
-     * Manage Roles permission in, below their own highest role.
-     */
-    public function manageRoles(User $user, Server $server): bool
-    {
-        return $server->isOwnedBy($user);
-    }
-
-    /**
-     * See and revoke every invite of the server, not only your own.
-     */
-    public function manageInvites(User $user, Server $server): bool
     {
         return $server->isOwnedBy($user);
     }

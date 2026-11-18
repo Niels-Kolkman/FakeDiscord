@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Channel;
 use App\Models\Server;
 use App\Models\ServerMember;
+use App\Models\User;
+use App\Services\PermissionService;
 use App\Support\MessageSearch;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -27,11 +29,16 @@ class MessageSearchController extends Controller
     {
         Gate::authorize('view', $server);
 
-        $channels = $server->channels()
+        /** @var User $user */
+        $user = $request->user();
+
+        // Only the text channels the member can see (ChannelPolicy::view,
+        // ISSUE-27): the filter offers them and the search stays inside them.
+        $channels = app(PermissionService::class)->visibleChannels($user, $server, $server->channels()
             ->where('type', '!=', Channel::TYPE_VOICE)
             ->orderBy('position')
             ->orderBy('id')
-            ->get();
+            ->get());
 
         $authors = $server->memberships()
             ->with('user')
@@ -69,13 +76,13 @@ class MessageSearchController extends Controller
             );
 
             if (! $search->isEmpty()) {
-                $results = $search->paginate($server, viewer: $request->user())->withQueryString();
+                $results = $search->paginate($server, viewer: $user, channelIds: $channels->modelKeys())->withQueryString();
             }
         }
 
         return view('servers.search', [
             'server' => $server,
-            'layout' => $server->channelLayout(),
+            'layout' => $server->channelLayout($user),
             'members' => $server->memberList(),
             'channels' => $channels,
             'authors' => $authors,

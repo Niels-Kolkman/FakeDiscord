@@ -41,6 +41,7 @@ class MessageController extends Controller
     public function index(Request $request, Server $server, Channel $channel): JsonResponse
     {
         Gate::authorize('view', $server);
+        Gate::authorize('view', $channel);
         abort_if($channel->isVoice(), 404);
 
         $before = null;

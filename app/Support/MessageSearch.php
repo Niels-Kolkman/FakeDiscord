@@ -51,15 +51,18 @@ final readonly class MessageSearch
     }
 
     /**
+     * @param  list<int>|null  $channelIds  limit the search to these channels (the ones the viewer can see); null for all
      * @return LengthAwarePaginator<int, Message>
      */
-    public function paginate(Server $server, int $perPage = self::PER_PAGE, ?User $viewer = null): LengthAwarePaginator
+    public function paginate(Server $server, int $perPage = self::PER_PAGE, ?User $viewer = null, ?array $channelIds = null): LengthAwarePaginator
     {
         $search = Message::search($this->text ?? '')
-            ->query(function (Builder $query) use ($server, $viewer): void {
+            ->query(function (Builder $query) use ($server, $viewer, $channelIds): void {
                 /** @var Builder<Message> $query */
                 $query
                     ->whereIn('messages.channel_id', Channel::query()->select('id')->where('server_id', $server->id))
+                    // Only channels the viewer can see (ISSUE-27).
+                    ->when($channelIds !== null, fn (Builder $query) => $query->whereIn('messages.channel_id', $channelIds))
                     // Not the messages of people the viewer blocked (ISSUE-25).
                     ->when($viewer !== null, fn (Builder $query) => $query->visibleTo($viewer))
                     ->when($this->text !== null, fn (Builder $query) => $query->whereRaw(

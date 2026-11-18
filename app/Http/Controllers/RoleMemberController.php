@@ -8,10 +8,12 @@ use App\Models\Server;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 /**
  * Give a role to members and take it away again (ISSUE-26). Needs
- * ServerPolicy::manageRoles, like the rest of the role routes.
+ * ServerPolicy::manageRoles, like the rest of the role routes, and the role
+ * must be below the actor's own highest role (RolePolicy::manage, ISSUE-27).
  */
 class RoleMemberController extends Controller
 {
@@ -20,6 +22,8 @@ class RoleMemberController extends Controller
      */
     public function store(Request $request, Server $server, Role $role, AssignRole $roles): RedirectResponse
     {
+        Gate::authorize('manage', $role);
+
         $validated = $request->validate([
             'user_id' => ['required', 'integer', 'exists:users,id'],
         ]);
@@ -39,6 +43,8 @@ class RoleMemberController extends Controller
      */
     public function destroy(Server $server, Role $role, User $user, AssignRole $roles): RedirectResponse
     {
+        Gate::authorize('manage', $role);
+
         $roles->remove($role, $user);
 
         return redirect()

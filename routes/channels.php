@@ -13,11 +13,12 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
 });
 
 // Live messages of a server channel (App\Events\MessageSent). Only members
-// of the channel's server may listen; an unknown channel id is a 403.
-// Membership is checked when the browser subscribes, so someone removed
-// from the server keeps an open subscription until they reload.
+// who can see the channel (ChannelPolicy::view, ISSUE-27) may listen; an
+// unknown channel id is a 403. This is checked when the browser
+// subscribes, so someone removed from the server, or who loses View
+// Channels, keeps an open subscription until they reload.
 Broadcast::channel('channel.{channel}', function (User $user, Channel $channel) {
-    return $channel->server->hasMember($user);
+    return $user->can('view', $channel);
 });
 
 // Typing indicators (ISSUE-17): a presence channel per server channel, used
@@ -48,7 +49,7 @@ Broadcast::channel('conversation-typing.{conversation}', function (User $user, C
 Broadcast::channel('typing.{channel}', function (User $user, Channel $channel) {
     $member = $channel->server->memberships()->where('user_id', $user->getKey())->first();
 
-    if ($member === null) {
+    if ($member === null || ! $user->can('view', $channel)) {
         return false;
     }
 

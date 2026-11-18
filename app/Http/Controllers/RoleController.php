@@ -9,8 +9,11 @@ use App\Http\Requests\StoreRoleRequest;
 use App\Models\Role;
 use App\Models\Server;
 use App\Models\ServerMember;
+use App\Models\User;
+use App\Services\PermissionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -19,6 +22,12 @@ use Illuminate\View\View;
  * Server roles (ISSUE-26): list, create, edit, reorder and delete. Every
  * route needs ServerPolicy::manageRoles (the `can` middleware in
  * routes/web.php); scoped bindings make another server's role a 404.
+ *
+ * The role hierarchy (ISSUE-27): an existing role can only be opened,
+ * changed, moved or deleted by someone who outranks it (RolePolicy::manage),
+ * and a move cannot take it past their own highest role. A member who is not
+ * the owner creates roles just below their own highest role, and only turns
+ * on or off flags they have themselves (StoreRoleRequest).
  */
 class RoleController extends Controller
 {
@@ -38,9 +47,13 @@ class RoleController extends Controller
         return view('roles.create', ['server' => $server, 'permissions' => Permission::cases()]);
     }
 
-    public function store(StoreRoleRequest $request, Server $server, CreateRole $roles): RedirectResponse
+    public function store(StoreRoleRequest $request, Server $server, CreateRole $roles, PermissionService $permissions): RedirectResponse
     {
-        $role = $roles->create($server, $request->roleName(), $request->color(), $request->permissionMask());
+        /** @var User $user */
+        $user = $request->user();
+        $below = $server->isOwnedBy($user) ? null : $permissions->highestPosition($user, $server);
+
+        $role = $roles->create($server, $request->roleName(), $request->color(), $request->permissionMask(), $below);
 
         return redirect()
             ->route('roles.edit', [$server, $role])
@@ -49,6 +62,8 @@ class RoleController extends Controller
 
     public function edit(Server $server, Role $role): View
     {
+        Gate::authorize('manage', $role);
+
         $holders = $role->users()->pluck('users.id')->map(fn (mixed $id): int => (int) $id)->all();
 
         $members = $server->memberships()
@@ -67,7 +82,8 @@ class RoleController extends Controller
     }
 
     /**
-     * @everyone keeps its name, colour and position; only its permissions change.
+     * @everyone keeps its name, colour and position; only its permissions
+     * change. StoreRoleRequest checks RolePolicy::manage.
      */
     public function update(StoreRoleRequest $request, Server $server, Role $role): RedirectResponse
     {
@@ -83,16 +99,24 @@ class RoleController extends Controller
     }
 
     /**
-     * Field `direction`: `up` or `down`, one place at a time.
+     * Field `direction`: `up` or `down`, one place at a time. Both the role
+     * and the one it swaps with must be below the mover's highest role.
      */
     public function move(Request $request, Server $server, Role $role, MoveRole $roles): RedirectResponse
     {
+        Gate::authorize('manage', $role);
+
         $validated = $request->validate([
             'direction' => ['required', 'string', Rule::in([MoveRole::UP, MoveRole::DOWN])],
         ]);
 
         if ($role->is_default) {
             throw ValidationException::withMessages(['direction' => Role::EVERYONE.' is always the lowest role.']);
+        }
+
+        $neighbour = $roles->neighbour($role, $validated['direction']);
+        if ($neighbour !== null && Gate::denies('manage', $neighbour)) {
+            throw ValidationException::withMessages(['direction' => 'You can only move roles below your own highest role.']);
         }
 
         $roles->move($role, $validated['direction']);
@@ -105,6 +129,8 @@ class RoleController extends Controller
      */
     public function destroy(Server $server, Role $role): RedirectResponse
     {
+        Gate::authorize('manage', $role);
+
         if ($role->is_default) {
             throw ValidationException::withMessages(['role' => 'The '.Role::EVERYONE.' role cannot be deleted.']);
         }

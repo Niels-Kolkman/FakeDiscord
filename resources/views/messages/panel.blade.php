@@ -20,7 +20,8 @@
 
     Also $feed (App\Support\MessageFeed), $viewerId, $canManageMessages and
     $canSendMessages, worked out once by the page for every message
-    (messages/item.blade.php) and for the script.
+    (messages/item.blade.php) and for the script. $canAttachFiles (optional,
+    default true) hides the attach button without Attach Files (ISSUE-27).
 
     The "start" header is always there but hidden while older pages exist;
     the script shows it once the last page is loaded.
@@ -135,6 +136,8 @@
             <ul class="mb-1 flex flex-wrap gap-2" aria-label="Files to upload" data-attachment-list hidden></ul>
             <label for="message-content" class="sr-only">Message {{ $panel['label'] }}</label>
             <div class="flex items-end gap-2 rounded-lg bg-[#383a40] px-4 py-2">
+                {{-- Attach Files (ISSUE-27); DM pages do not set it, and every participant may attach there. --}}
+                @if ($canAttachFiles ?? true)
                 <label
                     class="shrink-0 cursor-pointer rounded-full px-1 py-0.5 text-xl leading-none text-[#b5bac1] hover:text-white has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-[#5865f2]"
                     title="Attach files (up to {{ \App\Models\MessageAttachment::MAX_FILES }}, {{ \App\Models\MessageAttachment::MAX_KILOBYTES / 1024 }} MB each)"
@@ -151,6 +154,7 @@
                         data-attachment-input
                     >
                 </label>
+                @endif
                 <textarea
                     id="message-content"
                     name="content"

@@ -18,9 +18,26 @@ use Illuminate\Foundation\Http\FormRequest;
  */
 class ReactionRequest extends FormRequest
 {
+    /**
+     * Removing needs MessagePolicy::react. Adding needs
+     * MessagePolicy::addReaction, which also wants Add Reactions for an
+     * emoji nobody reacted with yet (ISSUE-27).
+     */
     public function authorize(): bool
     {
-        return $this->user()?->can('react', $this->message()) ?? false;
+        $user = $this->user();
+        if ($user === null) {
+            return false;
+        }
+
+        if ($this->isMethod('POST')) {
+            // Runs before validation, so `emoji` may be anything here.
+            $emoji = $this->input('emoji');
+
+            return $user->can('addReaction', [$this->message(), is_string($emoji) ? $emoji : '']);
+        }
+
+        return $user->can('react', $this->message());
     }
 
     /**

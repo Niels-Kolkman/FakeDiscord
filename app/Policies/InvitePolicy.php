@@ -11,14 +11,15 @@ use App\Models\User;
 class InvitePolicy
 {
     /**
-     * The server owner, and the person who made the invite while they are
-     * still a member, can revoke it.
+     * Members who manage the server's invites (ServerPolicy::manageInvites:
+     * the owner and Manage Server, ISSUE-27), and the person who made the
+     * invite while they are still a member, can revoke it.
      */
     public function delete(User $user, Invite $invite): bool
     {
         $server = $invite->server;
 
-        if ($server->isOwnedBy($user)) {
+        if ($user->can('manageInvites', $server)) {
             return true;
         }
 
