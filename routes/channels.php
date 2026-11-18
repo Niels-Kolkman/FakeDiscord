@@ -4,6 +4,8 @@ use App\Models\Channel;
 use App\Models\User;
 use Illuminate\Support\Facades\Broadcast;
 
+// A user's own channel. Friend requests and friendship changes arrive here
+// (App\Events\FriendshipChanged, ISSUE-22).
 Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
     return (int) $user->id === (int) $id;
 });
