@@ -59,6 +59,11 @@
  *   ("conversation.{id}") and types on data-typing-channel. A DM has no
  *   data-pins-url and no moderators, so no pins and no Pin buttons.
  *
+ * - Blocking (ISSUE-25): a server channel carries data-blocked-user-ids,
+ *   the people the viewer blocked. The history already leaves their
+ *   messages out (Message::visibleTo()); this skips the ones that arrive
+ *   live and shows "Blocked message" instead of quoting them in replies.
+ *
  * All user-provided text is inserted with textContent, never parsed as HTML.
  * renderMessage() must match resources/views/messages/item.blade.php.
  */
@@ -317,9 +322,19 @@ export function previewText(reply) {
 }
 
 /**
- * Fill a [data-reply-preview] row: a link to the original, or "deleted".
+ * Whether a payload's author is someone the viewer blocked (ISSUE-25).
+ * blockedUserIds is a Set of id strings (data-blocked-user-ids); messages
+ * of deleted accounts (no author) are never blocked.
  */
-function fillReplyPreview(row, reply) {
+export function isBlockedAuthor(author, blockedUserIds) {
+    return Boolean(author && blockedUserIds?.has(String(author.id)));
+}
+
+/**
+ * Fill a [data-reply-preview] row: a link to the original, "deleted", or
+ * "Blocked message" when the original is by someone the viewer blocked.
+ */
+function fillReplyPreview(row, reply, blockedUserIds = null) {
     row.replaceChildren();
     const arrow = el('span', 'shrink-0 text-[#80848e]', '↱');
     arrow.setAttribute('aria-hidden', 'true');
@@ -329,6 +344,13 @@ function fillReplyPreview(row, reply) {
         const gone = el('span', 'italic text-[#949ba4]', 'Original message was deleted');
         gone.dataset.replyDeleted = '';
         row.appendChild(gone);
+        return;
+    }
+
+    if (isBlockedAuthor(reply.author, blockedUserIds)) {
+        const blocked = el('span', 'italic text-[#949ba4]', 'Blocked message');
+        blocked.dataset.replyBlocked = '';
+        row.appendChild(blocked);
         return;
     }
 
@@ -345,14 +367,14 @@ function fillReplyPreview(row, reply) {
 
 /**
  * The quote above a reply, like messages/item.blade.php. null when the
- * message is not a reply.
+ * message is not a reply. context: { blockedUserIds }.
  */
-export function renderReplyPreview(reply) {
+export function renderReplyPreview(reply, context = {}) {
     if (!reply) return null;
     const row = el('div', 'mb-0.5 flex w-full min-w-0 items-center gap-1 pl-14 text-sm text-[#b5bac1]');
     row.dataset.replyPreview = '';
     row.dataset.replyToId = String(reply.id);
-    fillReplyPreview(row, reply);
+    fillReplyPreview(row, reply, context.blockedUserIds);
     return row;
 }
 
@@ -526,7 +548,7 @@ export function renderMessage(message, context = {}) {
     item.dataset.reactionsUrl = url ? `${url}/reactions` : '';
     item.dataset.pinUrl = url ? `${url}/pin` : '';
 
-    const reply = renderReplyPreview(message.reply_to);
+    const reply = renderReplyPreview(message.reply_to, context);
     if (reply) item.appendChild(reply);
 
     item.appendChild(renderAvatar(message.author));
@@ -649,7 +671,10 @@ function initChannel(root) {
         messagesUrl: root.dataset.historyUrl ?? '',
         csrfToken: document.querySelector('meta[name="csrf-token"]')?.content ?? '',
         quickEmoji: parseJson(root.dataset.reactionEmoji, []),
+        // People the viewer blocked (ISSUE-25), only on server channels.
+        blockedUserIds: new Set(parseJson(root.dataset.blockedUserIds, []).map(String)),
     };
+    const blockedAuthor = (message) => isBlockedAuthor(message?.author, context.blockedUserIds);
 
     const seen = new Set([...list.querySelectorAll('[data-message]')].map((item) => item.dataset.messageId));
 
@@ -722,7 +747,7 @@ function initChannel(root) {
         const fragment = document.createDocumentFragment();
         messages.forEach((message) => {
             const id = String(message.id);
-            if (seen.has(id)) return;
+            if (seen.has(id) || blockedAuthor(message)) return;
             seen.add(id);
             fragment.appendChild(renderMessage(message, context));
         });
@@ -791,7 +816,8 @@ function initChannel(root) {
         if (!belongs(message)) return;
         if (!own) typing?.messageArrived(message.author?.id);
         const id = String(message.id);
-        if (seen.has(id)) return;
+        // The server leaves them out of the history; live ones too (ISSUE-25).
+        if (seen.has(id) || (!own && blockedAuthor(message))) return;
 
         const stick = own || nearBottom();
         seen.add(id);

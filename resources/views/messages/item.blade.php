@@ -62,6 +62,9 @@
             <span aria-hidden="true" class="shrink-0 text-[#80848e]">↱</span>
             @if ($reply['deleted'])
                 <span class="italic text-[#949ba4]" data-reply-deleted>Original message was deleted</span>
+            @elseif (in_array($reply['author']['id'] ?? null, $blockedUserIds ?? [], true))
+                {{-- The original is by someone the viewer blocked (ISSUE-25). --}}
+                <span class="italic text-[#949ba4]" data-reply-blocked>Blocked message</span>
             @else
                 <a
                     href="#message-{{ $reply['id'] }}"

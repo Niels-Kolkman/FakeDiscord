@@ -37,6 +37,7 @@
         data-history-url="{{ $panel['historyUrl'] }}"
         data-older-cursor="{{ $feed->olderCursor }}"
         data-viewer-id="{{ $viewerId }}"
+        data-blocked-user-ids="{{ json_encode(array_values($blockedUserIds ?? [])) }}"
         data-reaction-emoji="{{ json_encode(\App\Support\Reactions::QUICK, JSON_UNESCAPED_UNICODE) }}"
         @if ($canManageMessages) data-can-manage-messages @endif
         @if ($canSendMessages) data-can-send-messages @endif

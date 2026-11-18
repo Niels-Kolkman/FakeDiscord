@@ -32,7 +32,7 @@ class ChannelController extends Controller
             'server' => $server,
             'layout' => $server->channelLayout(),
             'channel' => $channel,
-            'feed' => MessageFeed::for($channel),
+            'feed' => MessageFeed::for($channel, viewer: auth()->user()),
             'members' => $server->memberList(),
         ]);
     }

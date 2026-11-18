@@ -48,8 +48,54 @@ function render(profile) {
         body.appendChild(el('p', 'mt-1 text-sm', since));
     }
 
+    const block = renderBlockButton(profile);
+    if (block) body.appendChild(block);
+
     card.appendChild(body);
     return card;
+}
+
+/**
+ * Block / Unblock (ISSUE-25), for anyone but yourself. Blocking posts
+ * user_id to profile.block_url (FriendController::block), unblocking
+ * DELETEs profile.unblock_url. Either reloads the page, so the blocked
+ * person's messages disappear (or come back) everywhere at once.
+ */
+export function renderBlockButton(profile) {
+    if (profile.is_self || !profile.block_url) return null;
+
+    const button = el(
+        'button',
+        'mt-4 w-full rounded px-3 py-1.5 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2] '
+            + (profile.blocked ? 'bg-[#4e5058] text-white hover:bg-[#6d6f78]' : 'text-[#fa777c] hover:bg-[#da373c] hover:text-white'),
+        profile.blocked ? 'Unblock' : 'Block',
+    );
+    button.type = 'button';
+    button.dataset.profileBlock = profile.blocked ? 'unblock' : 'block';
+    button.setAttribute('aria-label', `${profile.blocked ? 'Unblock' : 'Block'} ${profile.name}`);
+    button.addEventListener('click', () => toggleBlock(profile, button));
+    return button;
+}
+
+async function toggleBlock(profile, button) {
+    if (!profile.blocked && !window.confirm(`Block ${profile.name}? You will not see their messages, and they cannot message you or send you friend requests.`)) {
+        return;
+    }
+
+    button.disabled = true;
+    try {
+        const headers = { headers: { Accept: 'application/json' } };
+        if (profile.blocked && profile.unblock_url) {
+            await window.axios.delete(profile.unblock_url, headers);
+        } else {
+            await window.axios.post(profile.block_url, { user_id: profile.id }, headers);
+        }
+        cache.clear();
+        window.location.reload();
+    } catch {
+        button.disabled = false;
+        window.alert('That did not work. Please try again.');
+    }
 }
 
 function position(card, trigger) {

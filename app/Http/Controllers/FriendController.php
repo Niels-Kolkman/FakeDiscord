@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Friends\BlockUser;
 use App\Actions\Friends\ManageFriendship;
 use App\Actions\Friends\SendFriendRequest;
 use App\Models\Friendship;
@@ -11,6 +12,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 /**
@@ -99,6 +101,28 @@ class FriendController extends Controller
             __(':name was removed from your friends.', ['name' => $friendship->otherUser($user)->name]), 'all');
     }
 
+    /**
+     * Block `user_id` (ISSUE-25): from the friends list or the profile
+     * popover. Ends a request or friendship between the two.
+     */
+    public function block(Request $request, BlockUser $action): JsonResponse|RedirectResponse
+    {
+        $validated = $request->validate([
+            'user_id' => ['required', 'integer'],
+        ]);
+
+        $other = User::query()->find($validated['user_id']);
+
+        if ($other === null) {
+            throw ValidationException::withMessages(['user' => __('That user does not exist.')]);
+        }
+
+        [$friendship, $changed] = $action->block($this->user($request), $other);
+
+        return $this->respond($request, $friendship, $changed,
+            __(':name is blocked.', ['name' => $other->name]), 'blocked');
+    }
+
     public function unblock(Request $request, Friendship $friendship, ManageFriendship $action): JsonResponse|RedirectResponse
     {
         Gate::authorize('unblock', $friendship);
@@ -143,7 +167,7 @@ class FriendController extends Controller
     }
 
     /**
-     * People this user blocked, by name (blocking itself is ISSUE-25).
+     * People this user blocked, by name.
      * Being blocked by someone is never shown.
      *
      * @return Collection<int, array{friendship: Friendship, user: User}>

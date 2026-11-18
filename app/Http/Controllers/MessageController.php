@@ -57,7 +57,7 @@ class MessageController extends Controller
         /** @var User $user */
         $user = $request->user();
 
-        return response()->json(MessageFeed::for($channel, before: $before)->toPayload($user));
+        return response()->json(MessageFeed::for($channel, before: $before, viewer: $user)->toPayload($user));
     }
 
     public function store(StoreMessageRequest $request, Server $server, Channel $channel, SendMessage $messages): JsonResponse|RedirectResponse

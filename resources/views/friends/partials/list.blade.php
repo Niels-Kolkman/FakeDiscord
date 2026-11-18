@@ -1,7 +1,8 @@
 {{--
     One list on the friends page with its count, and the actions for its
-    kind: friend (Remove), incoming (Accept / Decline), outgoing (Cancel),
-    blocked (Unblock). Removing a friend asks for confirmation first
+    kind: friend (Message / Remove), incoming (Accept / Decline), outgoing
+    (Cancel), blocked (Unblock). Every kind but blocked also gets Block
+    (ISSUE-25). Removing and blocking ask for confirmation first
     (data-confirm, handled in resources/js/channel-sidebar.js).
 
     @var string $heading
@@ -66,7 +67,16 @@
                                 @method('DELETE')
                                 <button type="submit" class="{{ $button }} text-[#fa777c] hover:bg-[#da373c] hover:text-white" aria-label="Remove {{ $person->name }} from your friends">Remove</button>
                             </form>
-                        @elseif ($kind === 'blocked')
+                        @endif
+
+                        @if ($kind !== 'blocked')
+                            {{-- Blocking (ISSUE-25) ends the request or friendship too. --}}
+                            <form method="POST" action="{{ route('friends.block') }}" data-confirm="Block {{ $person->name }}? You will not see their messages, and they cannot message you or send you friend requests.">
+                                @csrf
+                                <input type="hidden" name="user_id" value="{{ $person->id }}">
+                                <button type="submit" class="{{ $button }} text-[#fa777c] hover:bg-[#da373c] hover:text-white" aria-label="Block {{ $person->name }}" data-block-user>Block</button>
+                            </form>
+                        @else
                             <form method="POST" action="{{ route('friends.unblock', $friendship) }}">
                                 @csrf
                                 @method('DELETE')

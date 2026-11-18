@@ -62,7 +62,14 @@ class SendFriendRequest
      */
     private function sendTo(User $from, User $to): array
     {
-        $existing = Friendship::query()->between($from, $to)->lockForUpdate()->first();
+        // Two rows only when both blocked each other (BlockUser); then the
+        // sender's own block decides the message.
+        $existing = Friendship::query()
+            ->between($from, $to)
+            ->lockForUpdate()
+            ->get()
+            ->sortByDesc(fn (Friendship $row): bool => $row->isBlocked() && $row->sentBy($from))
+            ->first();
 
         if ($existing === null) {
             $friendship = Friendship::query()->create([

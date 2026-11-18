@@ -61,6 +61,9 @@
             $viewerId = (int) auth()->id();
             $canManageMessages = (bool) auth()->user()?->can('manageMessages', $server);
             $canSendMessages = ! $channel->isVoice() && (bool) auth()->user()?->can('sendMessages', $server);
+            // People the viewer blocked (ISSUE-25): the history already
+            // leaves their messages out; this hides live ones and quotes.
+            $blockedUserIds = auth()->user() ? \App\Models\Friendship::blockedIds(auth()->user()) : [];
         @endphp
         @include('messages.panel', ['panel' => [
             'target' => 'channel',

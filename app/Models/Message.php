@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Events\MessageSent;
 use App\Support\Reactions;
 use Database\Factories\MessageFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -92,6 +93,21 @@ class Message extends Model
     public function author(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    /**
+     * Leaves out the messages of everyone $viewer blocked (ISSUE-25), like
+     * Discord hides them in shared servers. Messages of deleted accounts
+     * (no author) stay. Used for server channels only: a DM with someone
+     * you blocked keeps its history.
+     *
+     * @param  Builder<self>  $query
+     */
+    public function scopeVisibleTo(Builder $query, User $viewer): void
+    {
+        $query->where(fn (Builder $query) => $query
+            ->whereNull('messages.user_id')
+            ->orWhereNotIn('messages.user_id', Friendship::blockedIdsQuery($viewer)));
     }
 
     /**

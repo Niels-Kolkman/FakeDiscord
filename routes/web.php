@@ -77,6 +77,11 @@ Route::middleware(['auth', 'verified'])->prefix('friends')->group(function () {
         ->middleware('throttle:20,1')
         ->name('friends.store');
 
+    // Blocking (ISSUE-25), field `user_id`: App\Actions\Friends\BlockUser.
+    Route::post('/block', [FriendController::class, 'block'])
+        ->middleware('throttle:30,1')
+        ->name('friends.block');
+
     Route::middleware('throttle:60,1')->whereNumber('friendship')->group(function () {
         Route::post('/{friendship}/accept', [FriendController::class, 'accept'])->name('friends.accept');
         Route::post('/{friendship}/decline', [FriendController::class, 'decline'])->name('friends.decline');

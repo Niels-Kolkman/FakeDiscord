@@ -69,7 +69,7 @@ class MessageSearchController extends Controller
             );
 
             if (! $search->isEmpty()) {
-                $results = $search->paginate($server)->withQueryString();
+                $results = $search->paginate($server, viewer: $request->user())->withQueryString();
             }
         }
 

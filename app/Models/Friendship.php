@@ -14,7 +14,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  *
  * The pair is unique in both directions (A->B and B->A never both exist);
  * App\Actions\Friends\SendFriendRequest looks up the pair with between()
- * before it inserts.
+ * before it inserts. The one exception is a mutual block: when both
+ * blocked each other there is a blocked row in each direction
+ * (App\Actions\Friends\BlockUser), so each block is lifted on its own.
  */
 class Friendship extends Model
 {
@@ -123,6 +125,28 @@ class Friendship extends Model
     {
         /** @var User */
         return $this->sentBy($viewer) ? $this->friend : $this->user;
+    }
+
+    /**
+     * Ids of the users $user blocked (ISSUE-25), as a subquery. People who
+     * blocked $user are not in it.
+     *
+     * @return Builder<self>
+     */
+    public static function blockedIdsQuery(User $user): Builder
+    {
+        return self::query()
+            ->select('friend_id')
+            ->where('user_id', $user->getKey())
+            ->where('status', self::STATUS_BLOCKED);
+    }
+
+    /**
+     * @return list<int>
+     */
+    public static function blockedIds(User $user): array
+    {
+        return self::blockedIdsQuery($user)->pluck('friend_id')->map(fn (mixed $id): int => (int) $id)->values()->all();
     }
 
     /**
