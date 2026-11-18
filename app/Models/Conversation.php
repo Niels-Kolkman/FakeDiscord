@@ -22,6 +22,9 @@ use Illuminate\Support\Facades\DB;
  * participants may join (routes/channels.php). last_message_at orders the
  * DM list in the sidebar (scopeByLatestActivity()).
  *
+ * Group DMs (ISSUE-24): up to MAX_PARTICIPANTS people with an optional
+ * name and an owner, managed by App\Actions\Conversations\ManageGroupConversation.
+ *
  * @property string|null $direct_key
  * @property Carbon|null $last_message_at
  */
@@ -36,6 +39,12 @@ class Conversation extends Model
 
     /** How many conversations the sidebar lists. */
     public const SIDEBAR_LIMIT = 50;
+
+    /** The most people in a group DM, the owner included (ISSUE-24). */
+    public const MAX_PARTICIPANTS = 10;
+
+    /** The longest group DM name (conversations.name is 100 characters). */
+    public const NAME_MAX_LENGTH = 100;
 
     /**
      * @var list<string>
@@ -91,6 +100,16 @@ class Conversation extends Model
         return $this->type === self::TYPE_DIRECT;
     }
 
+    public function isGroup(): bool
+    {
+        return $this->type === self::TYPE_GROUP;
+    }
+
+    public function isOwnedBy(User $user): bool
+    {
+        return $this->owner_id !== null && (int) $this->owner_id === (int) $user->getKey();
+    }
+
     public function hasParticipant(User $user): bool
     {
         if ($this->relationLoaded('users')) {
@@ -111,12 +130,23 @@ class Conversation extends Model
     }
 
     /**
-     * What the sidebar and the header call the conversation.
+     * What the sidebar and the header call the conversation. A group DM
+     * without a name is called after the other people in it, like Discord
+     * ("Bob, Carol, Dave"), or after the viewer when they are alone.
      */
     public function displayName(User $viewer): string
     {
         if (! $this->isDirect()) {
-            return $this->name ?? __('Group DM');
+            if ($this->name !== null && $this->name !== '') {
+                return $this->name;
+            }
+
+            $names = $this->users
+                ->reject(fn (User $user): bool => (int) $user->getKey() === (int) $viewer->getKey())
+                ->sortBy(fn (User $user): string => mb_strtolower($user->name))
+                ->pluck('name');
+
+            return $names->isEmpty() ? $viewer->name : $names->implode(', ');
         }
 
         return $this->otherParticipant($viewer)->name ?? __('Deleted User');
@@ -134,20 +164,22 @@ class Conversation extends Model
     }
 
     /**
-     * The 1:1 DMs of a user for the sidebar, latest activity first, with
-     * both participants loaded. Like Discord, a conversation nobody has
-     * written in yet is left out (opening a DM with someone does not put
-     * it in their list), except $active, the one on screen.
+     * The DMs and group DMs of a user for the sidebar, latest activity
+     * first, with their participants loaded. Like Discord, a 1:1 DM nobody
+     * has written in yet is left out (opening a DM with someone does not
+     * put it in their list), except $active, the one on screen. A group DM
+     * shows from the moment you are added (ISSUE-24).
      *
      * @return Collection<int, self>
      */
     public static function sidebarFor(User $user, ?self $active = null, int $limit = self::SIDEBAR_LIMIT): Collection
     {
         return self::query()
-            ->where('type', self::TYPE_DIRECT)
+            ->whereIn('type', [self::TYPE_DIRECT, self::TYPE_GROUP])
             ->whereHas('participants', fn (Builder $query) => $query->where('user_id', $user->getKey()))
             ->where(function (Builder $query) use ($active): void {
-                $query->whereNotNull('last_message_at');
+                $query->whereNotNull('last_message_at')
+                    ->orWhere('type', self::TYPE_GROUP);
                 if ($active !== null) {
                     $query->orWhere($query->qualifyColumn('id'), $active->getKey());
                 }

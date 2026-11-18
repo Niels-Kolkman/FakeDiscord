@@ -619,8 +619,8 @@ form, so the page also works without JavaScript.
 
 ## Direct messages
 
-1:1 DMs (ISSUE-23) live under `/dms`, in the `['auth', 'verified']` group.
-Group DMs come with ISSUE-24.
+1:1 DMs (ISSUE-23) and group DMs (ISSUE-24) live under `/dms`, in the
+`['auth', 'verified']` group.
 
 - **Opening a DM**: **Message** on the friends list posts `user_id` to
   `POST /dms` (`DirectMessageController::store`), which goes to `/dms/{id}`.
@@ -658,6 +658,43 @@ Group DMs come with ISSUE-24.
   ids and time only) to both participants' `App.Models.User.{id}` channels, and
   `resources/js/direct-messages.js` reloads `[data-dm-list]`, so the
   conversation moves to the top live.
+
+### Group DMs
+
+- **Creating**: **Create group DM** on the friends page (All tab) posts
+  `user_ids[]` and an optional `name` to `POST /dms/groups`
+  (`GroupConversationController::store`). Like Discord you can only pick your
+  friends (accepted, so never across a block), and a group has at most **10
+  people** (`Conversation::MAX_PARTICIPANTS`), you included. Picking a single
+  friend opens your 1:1 DM with them instead. The creator owns the group.
+- **The group page** is `/dms/{id}` too (`conversations/group.blade.php`): the
+  same message panel as a DM, where every participant writes, and **Group
+  settings** with the people, Rename, Add friends and Leave. A group shows in
+  every participant's DM list from the moment they are added, without waiting
+  for a message. An unnamed group is called after the other people in it
+  ("Bob, Carol").
+- **Rules** (`App\Actions\Conversations\ManageGroupConversation`,
+  `App\Policies\ConversationPolicy`):
+  - any participant renames (`PATCH /dms/{id}`, `name`, up to 100 characters;
+    empty goes back to the people's names) and adds their own friends
+    (`POST /dms/{id}/participants`, `user_ids[]`). Seats are counted with the
+    conversation row locked, so two people adding at once cannot pass 10;
+  - only the owner removes others (`DELETE /dms/{id}/participants/{user}`), and
+    anyone may remove themselves, which is leaving. `{user}` is scoped to the
+    participants, so anyone else is a 404. Removed people lose access at once
+    (a 404 on every route), and their messages stay;
+  - when the owner leaves, the longest-standing participant becomes owner.
+    When the last person leaves, the group is deleted with its messages and
+    their attachment files;
+  - none of this exists for 1:1 DMs (404).
+- **Live updates**: every change sends `App\Events\ConversationUpdated`
+  (`.conversation.updated`, only the id) to the `App.Models.User.{id}` channel
+  of everyone in the group and of whoever just left or was removed.
+  `resources/js/direct-messages.js` reloads the DM list and, on that group's
+  page, its header and settings (`[data-group-details]`). It sends people who
+  are no longer in the group to the friends page. If Reverb is down, the change
+  is still saved.
+- Creating allows 20 requests per minute, and the other group actions allow 30.
 
 ## Frontend
 

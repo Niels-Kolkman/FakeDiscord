@@ -115,6 +115,21 @@ class MessageAttachment extends Model
     }
 
     /**
+     * The same for one conversation (ISSUE-24: a group DM is deleted when
+     * its last participant leaves).
+     *
+     * @return list<array{disk: string, path: string}>
+     */
+    public static function filesInConversation(int $conversationId): array
+    {
+        return self::query()
+            ->whereIn('message_id', Message::withTrashed()->where('conversation_id', $conversationId)->select('id'))
+            ->get(['disk', 'path'])
+            ->map(fn (self $attachment): array => ['disk' => $attachment->disk, 'path' => $attachment->path])
+            ->all();
+    }
+
+    /**
      * @param  list<array{disk: string, path: string}>  $files
      */
     public static function deleteFiles(array $files): void
