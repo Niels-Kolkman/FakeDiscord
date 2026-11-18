@@ -82,6 +82,16 @@ enum Permission: int
     }
 
     /**
+     * The flags a channel override can allow or deny for a role (ISSUE-28).
+     *
+     * @return list<self>
+     */
+    public static function channelOverridable(): array
+    {
+        return [self::ViewChannels, self::SendMessages];
+    }
+
+    /**
      * Every known flag OR-ed together.
      */
     public static function all(): int

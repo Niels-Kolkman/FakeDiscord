@@ -303,7 +303,8 @@ the policies ask it; nothing else reads `roles.permissions` to decide.
   A server without an `@everyone` row counts as having the defaults. Nothing is
   cached, so a change to a role counts from the next check.
 - **Channel permissions** (`channelPermissions()`) are the server permissions
-  for now; ISSUE-28 adds per-channel overrides there.
+  with the channel's overrides applied. See
+  [Private channels and overrides](#private-channels-and-overrides).
 - **What each flag allows**:
 
   | Flag | Allows | Ability |
@@ -330,6 +331,40 @@ the policies ask it; nothing else reads `roles.permissions` to decide.
   flags you have yourself (`StoreRoleRequest`). A member whose only role is
   `@everyone` cannot create roles.
 - Every channel ability needs View Channels first. DMs have no permissions.
+
+### Private channels and overrides
+
+ISSUE-28. A channel can be **private** (`channels.is_private`) and can have
+**role overrides** (`channel_permission_overrides`, one row per channel and
+role): `allow` and `deny` masks for **View Channels** and **Send Messages**
+(`Permission::channelOverridable()`). A flag in neither mask is inherited.
+
+- **Resolution** (`PermissionService::channelPermissions()`, like Discord):
+  start from the server permissions; apply the `@everyone` override (remove
+  its denies, add its allows); a private channel then removes View Channels;
+  last, the overrides of every role the member holds together (remove all their
+  denies, then add all their allows, so an allow on one role beats a deny on
+  another). The owner and Administrator skip all this and see every channel.
+- **Hidden channels** (no View Channels after overrides) are left out of the
+  sidebar, the server's default channel, the search filter and search results.
+  Their page, history, pins, messages, settings and permissions pages give a
+  403, and the `channel.{id}` and `typing.{id}` broadcast channels refuse to
+  authorise. `PermissionService::visibleChannels()` filters a list with one
+  query for all the overrides.
+- **Managing** (`GET /servers/{id}/channels/{channel}/permissions`, linked from
+  the channel settings): needs Manage Channels and a channel you can see.
+  `PATCH …/privacy` (`is_private`) toggles private. `PUT …/permissions/{role}`
+  with `permissions[ViewChannels]` and `permissions[SendMessages]` set to
+  `allow`, `inherit` or `deny` sets one role's override
+  (`App\Actions\Channels\SetChannelOverride`; all inherit deletes the row). That
+  also needs `RolePolicy::manage` for the role (Manage Roles and the role below
+  your highest one), and you can only change a flag you have in that channel.
+  A role from another server is a 404.
+- **Reordering**: the sidebar of a member who cannot see every channel only
+  holds the visible ones, so the drag and drop layout is checked against those;
+  hidden channels and categories keep their place.
+- Making a channel private hides it from yourself too unless one of your roles
+  is allowed View Channels in it, or you are the owner or an Administrator.
 
 ### Members and leaving
 

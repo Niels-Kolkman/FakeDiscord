@@ -2,7 +2,9 @@
 
 namespace App\Actions\Channels;
 
+use App\Models\Channel;
 use App\Models\Server;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -13,6 +15,11 @@ use Illuminate\Validation\ValidationException;
  * every channel and category of the server exactly once. If another tab or
  * user added or deleted one in the meantime, the request is rejected and
  * the client reloads, so a stale sidebar never overwrites a newer one.
+ *
+ * A member who cannot see every channel (ISSUE-28) only has the visible
+ * ones in their sidebar. With a $viewer the layout must then name exactly
+ * the channels and categories of Server::channelLayout($viewer); the hidden
+ * ones keep their category and position.
  */
 class ReorderChannels
 {
@@ -21,17 +28,27 @@ class ReorderChannels
     /**
      * @param  list<int>  $uncategorized  channel ids without a category, in order
      * @param  list<array{id: int, channels: list<int>}>  $categories  categories in order, each with its channel ids in order
+     * @param  User|null  $viewer  the member reordering; null checks against every channel and category
      *
      * @throws ValidationException when the layout does not match the server's channels and categories
      */
-    public function reorder(Server $server, array $uncategorized, array $categories): void
+    public function reorder(Server $server, array $uncategorized, array $categories, ?User $viewer = null): void
     {
-        DB::transaction(function () use ($server, $uncategorized, $categories): void {
+        DB::transaction(function () use ($server, $uncategorized, $categories, $viewer): void {
             $sentCategories = array_map(fn (array $category): int => $category['id'], $categories);
             $sentChannels = array_merge($uncategorized, ...array_map(fn (array $category): array => $category['channels'], $categories));
 
-            $this->assertSameSet($sentCategories, $server->categories()->getQuery()->pluck('id')->all());
-            $this->assertSameSet($sentChannels, $server->channels()->getQuery()->pluck('id')->all());
+            if ($viewer === null) {
+                $knownCategories = $server->categories()->getQuery()->pluck('id')->all();
+                $knownChannels = $server->channels()->getQuery()->pluck('id')->all();
+            } else {
+                $layout = $server->channelLayout($viewer);
+                $knownCategories = $layout->categories->modelKeys();
+                $knownChannels = $layout->channels()->map(fn (Channel $channel): int => (int) $channel->getKey())->all();
+            }
+
+            $this->assertSameSet($sentCategories, $knownCategories);
+            $this->assertSameSet($sentChannels, $knownChannels);
 
             foreach ($categories as $position => $category) {
                 $server->categories()->getQuery()->whereKey($category['id'])->update(['position' => $position]);

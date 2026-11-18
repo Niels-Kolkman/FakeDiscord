@@ -13,6 +13,9 @@
     >
         <span aria-hidden="true" class="w-4 shrink-0 text-center text-lg leading-none text-[#80848e]">{{ $channel->isVoice() ? '🔊' : '#' }}</span>
         <span class="truncate">{{ $channel->name }}</span>
+        @if ($channel->is_private)
+            <span class="shrink-0 text-xs" title="Private channel" data-private-channel>🔒<span class="sr-only">(private)</span></span>
+        @endif
     </a>
     @if ($canManage)
         <a href="{{ route('channels.edit', [$server, $channel]) }}" draggable="false"

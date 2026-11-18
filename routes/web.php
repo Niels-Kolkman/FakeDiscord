@@ -6,6 +6,7 @@ use App\Http\Controllers\BanController;
 use App\Http\Controllers\ChannelCategoryController;
 use App\Http\Controllers\ChannelController;
 use App\Http\Controllers\ChannelLayoutController;
+use App\Http\Controllers\ChannelPermissionController;
 use App\Http\Controllers\ConversationMessageController;
 use App\Http\Controllers\ConversationReactionController;
 use App\Http\Controllers\DirectMessageController;
@@ -239,6 +240,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::patch('/servers/{server}/categories/{category}', [ChannelCategoryController::class, 'update'])->name('categories.update');
         Route::delete('/servers/{server}/categories/{category}', [ChannelCategoryController::class, 'destroy'])->name('categories.destroy');
     });
+
+    // Channel permissions (ISSUE-28): private toggle and per-role overrides.
+    // Not scope-bound ({role} would be looked up on the channel), so the
+    // controller checks that the channel and role belong to {server}: 404
+    // if not.
+    Route::get('/servers/{server}/channels/{channel}/permissions', [ChannelPermissionController::class, 'edit'])
+        ->name('channels.permissions.edit');
+    Route::patch('/servers/{server}/channels/{channel}/privacy', [ChannelPermissionController::class, 'updatePrivacy'])
+        ->name('channels.privacy.update');
+    Route::put('/servers/{server}/channels/{channel}/permissions/{role}', [ChannelPermissionController::class, 'updateRole'])
+        ->whereNumber('role')
+        ->name('channels.permissions.update');
 
     // Roles (ISSUE-26): ServerPolicy::manageRoles (owner only for now) on
     // every route. Scoped bindings make another server's role a 404, and

@@ -9,6 +9,15 @@ use App\Models\Channel;
  */
 class UpdateChannelRequest extends StoreChannelRequest
 {
+    /**
+     * Manage Channels, and the channel must be one the member can see
+     * (ISSUE-28): a hidden channel's settings are closed too.
+     */
+    public function authorize(): bool
+    {
+        return parent::authorize() && ($this->user()?->can('view', $this->channel()) ?? false);
+    }
+
     public function channel(): Channel
     {
         $channel = $this->route('channel');

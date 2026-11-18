@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\Permission;
 use App\Models\Channel;
+use App\Models\ChannelPermissionOverride;
 use App\Models\Role;
 use App\Models\Server;
 use App\Models\User;
@@ -11,6 +12,7 @@ use Carbon\CarbonInterface;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Support\Collection;
 
 /**
  * Works out what a member may do in a server (ISSUE-27). ServerPolicy,
@@ -27,13 +29,30 @@ use Illuminate\Database\Eloquent\Collection as EloquentCollection;
  * - a timed-out member (ISSUE-29) keeps only View Channels until the
  *   timeout runs out.
  *
- * Channel permissions are the server permissions for now. ISSUE-28 adds
- * per-channel role overrides in channelPermissions(); callers that ask
- * about a channel already go through it.
+ * Channel permissions (ISSUE-28) start from the server permissions and
+ * apply the channel's role overrides (App\Models\ChannelPermissionOverride),
+ * in Discord's order:
+ *
+ * 1. the @everyone override: its deny flags are removed, then its allow
+ *    flags added;
+ * 2. a private channel removes View Channels at this point, so a private
+ *    channel is hidden from everyone whatever @everyone is allowed;
+ * 3. the overrides of every role the member holds, combined: all their deny
+ *    flags are removed, then all their allow flags added. An allow on one
+ *    role beats a deny on another, as in Discord.
+ *
+ * The owner and Administrator skip the overrides and see every channel.
+ *
+ * A timed-out member (ISSUE-29) keeps only View Channels in channels too:
+ * the channel overrides are applied first, then the result is cut down to
+ * TIMED_OUT_MASK, so a channel that hides from them stays hidden.
+ *
+ * @phpstan-type Standing array{mask: int, final: bool, everyone: int|null, roles: list<int>, timedOutUntil: CarbonInterface|null}
  *
  * Nothing is cached: feature tests change roles between requests in one
  * application instance, and a stale answer would be a security bug. Each
- * call is two small queries.
+ * call is a few small queries (membership, roles, and for channels one more
+ * for the overrides).
  */
 class PermissionService
 {
@@ -42,25 +61,12 @@ class PermissionService
      */
     public function permissions(User $user, Server $server): int
     {
-        if ($server->isOwnedBy($user)) {
-            return Permission::all();
-        }
-
-        $membership = $server->membershipOf($user);
-
-        if ($membership === null) {
-            return 0;
-        }
-
-        $mask = $this->roleMask($user, $server);
-
-        if (Permission::Administrator->in($mask)) {
-            return Permission::all();
-        }
+        $standing = $this->standing($user, $server);
 
         // A timed-out member (ISSUE-29) keeps only TIMED_OUT_MASK: reading.
-        // Administrators cannot be timed out, like on Discord.
-        return $membership->isTimedOut() ? $mask & self::TIMED_OUT_MASK : $mask;
+        // standing() never reports a timeout for the owner or an
+        // Administrator, like on Discord.
+        return $standing['timedOutUntil'] === null ? $standing['mask'] : $standing['mask'] & self::TIMED_OUT_MASK;
     }
 
     /**
@@ -84,18 +90,7 @@ class PermissionService
      */
     public function timedOutUntil(User $user, Server $server): ?CarbonInterface
     {
-        if ($server->isOwnedBy($user)) {
-            return null;
-        }
-
-        $membership = $server->membershipOf($user);
-
-        if ($membership === null || ! $membership->isTimedOut()
-            || Permission::Administrator->in($this->roleMask($user, $server))) {
-            return null;
-        }
-
-        return $membership->timed_out_until;
+        return $this->standing($user, $server)['timedOutUntil'];
     }
 
     /**
@@ -133,8 +128,9 @@ class PermissionService
             return Response::deny('You can only do this to members whose highest role is below yours.');
         }
 
-        if ($permission === Permission::TimeoutMembers
-            && Permission::Administrator->in($this->roleMask($target, $server))) {
+        // $target is a member but not the owner here, so a final standing is
+        // an Administrator.
+        if ($permission === Permission::TimeoutMembers && $this->standing($target, $server)['final']) {
             return Response::deny('Administrators cannot be timed out.');
         }
 
@@ -147,12 +143,21 @@ class PermissionService
     }
 
     /**
-     * The member's effective permission mask in a channel of the server.
-     * The same as permissions() until ISSUE-28 adds channel overrides.
+     * The member's effective permission mask in a channel of the server:
+     * the server permissions with the channel's overrides applied (see the
+     * class comment).
      */
     public function channelPermissions(User $user, Channel $channel): int
     {
-        return $this->permissions($user, $channel->server);
+        $standing = $this->standing($user, $channel->server);
+
+        if ($standing['final']) {
+            return $standing['mask'];
+        }
+
+        $overrides = $this->overrides([(int) $channel->getKey()], $standing)->get((int) $channel->getKey(), collect());
+
+        return $this->applyOverrides($standing, $channel, $overrides);
     }
 
     public function hasInChannel(User $user, Channel $channel, Permission $permission): bool
@@ -162,18 +167,31 @@ class PermissionService
 
     /**
      * The channels of $server in $channels that the user can see
-     * (ChannelPolicy::view), in the same order. Works the permissions out
-     * once instead of once per channel; ISSUE-28 applies channel overrides
-     * here.
+     * (ChannelPolicy::view), in the same order. Works the server
+     * permissions out once and loads the overrides of all the channels in
+     * one query, instead of asking once per channel.
      *
      * @param  EloquentCollection<int, Channel>  $channels
      * @return EloquentCollection<int, Channel>
      */
     public function visibleChannels(User $user, Server $server, EloquentCollection $channels): EloquentCollection
     {
-        return Permission::ViewChannels->in($this->permissions($user, $server))
-            ? $channels->values()
-            : $channels->take(0);
+        $channels = $channels
+            ->filter(fn (Channel $channel): bool => (int) $channel->server_id === (int) $server->getKey())
+            ->values();
+        $standing = $this->standing($user, $server);
+
+        if ($standing['final']) {
+            return Permission::ViewChannels->in($standing['mask']) ? $channels : $channels->take(0);
+        }
+
+        $overrides = $this->overrides(array_map('intval', $channels->modelKeys()), $standing);
+
+        return $channels
+            ->filter(fn (Channel $channel): bool => Permission::ViewChannels->in(
+                $this->applyOverrides($standing, $channel, $overrides->get((int) $channel->getKey(), collect())),
+            ))
+            ->values();
     }
 
     /**
@@ -221,25 +239,126 @@ class PermissionService
     }
 
     /**
-     * The flags of the default role (@everyone) OR-ed with those of every
-     * role the user holds in the server. A server without an @everyone row (older data) counts as
+     * Where the user stands in the server: their server permission mask,
+     * whether channel overrides can still change it ('final' is true for
+     * the owner, Administrator and non-members), and the ids of the
+     *
+     * @everyone role and the other roles they hold, for the overrides.
+     *
+     * The mask is the flags of @everyone OR-ed with those of every role the
+     * user holds. A server without an @everyone row (older data) counts as
      * having the defaults, which Server::defaultRole() would create.
+     *
+     * 'timedOutUntil' is when an active timeout (ISSUE-29) ends, null for
+     * members who are not timed out and for the owner and Administrators,
+     * whom a timeout does not touch. It does not change 'mask': permissions()
+     * and applyOverrides() cut it down to TIMED_OUT_MASK.
+     *
+     * @return Standing
      */
-    private function roleMask(User $user, Server $server): int
+    private function standing(User $user, Server $server): array
     {
+        if ($server->isOwnedBy($user)) {
+            return ['mask' => Permission::all(), 'final' => true, 'everyone' => null, 'roles' => [], 'timedOutUntil' => null];
+        }
+
+        $membership = $server->membershipOf($user);
+
+        if ($membership === null) {
+            return ['mask' => 0, 'final' => true, 'everyone' => null, 'roles' => [], 'timedOutUntil' => null];
+        }
+
         $roles = Role::query()
             ->where('server_id', $server->getKey())
             ->where(fn (Builder $query) => $query
                 ->where('is_default', true)
                 ->orWhereHas('users', fn (Builder $users) => $users->whereKey($user->getKey())))
-            ->get(['permissions', 'is_default']);
+            ->get(['id', 'permissions', 'is_default']);
 
-        $mask = $roles->contains('is_default', true) ? 0 : Permission::everyoneDefaults();
+        $everyone = $roles->firstWhere('is_default', true);
+        $mask = $everyone === null ? Permission::everyoneDefaults() : 0;
 
         foreach ($roles as $role) {
             $mask |= (int) $role->permissions;
         }
 
-        return $mask;
+        if (Permission::Administrator->in($mask)) {
+            return ['mask' => Permission::all(), 'final' => true, 'everyone' => null, 'roles' => [], 'timedOutUntil' => null];
+        }
+
+        return [
+            'mask' => $mask,
+            'final' => false,
+            'everyone' => $everyone === null ? null : (int) $everyone->getKey(),
+            'roles' => $roles->where('is_default', false)->map(fn (Role $role): int => (int) $role->getKey())->values()->all(),
+            'timedOutUntil' => $membership->isTimedOut() ? $membership->timed_out_until : null,
+        ];
+    }
+
+    /**
+     * The overrides of the given channels for the user's roles, grouped by
+     * channel id and keyed by role id.
+     *
+     * @param  list<int>  $channelIds
+     * @param  Standing  $standing
+     * @return Collection<int, Collection<int, ChannelPermissionOverride>>
+     */
+    private function overrides(array $channelIds, array $standing): Collection
+    {
+        $roleIds = $standing['roles'];
+        if ($standing['everyone'] !== null) {
+            $roleIds[] = $standing['everyone'];
+        }
+
+        if ($channelIds === [] || $roleIds === []) {
+            return collect();
+        }
+
+        $rows = ChannelPermissionOverride::query()
+            ->whereIn('channel_id', $channelIds)
+            ->whereIn('role_id', $roleIds)
+            ->get(['channel_id', 'role_id', 'allow', 'deny']);
+
+        /** @var array<int, array<int, ChannelPermissionOverride>> $byChannel */
+        $byChannel = [];
+        foreach ($rows as $row) {
+            $byChannel[(int) $row->channel_id][(int) $row->role_id] = $row;
+        }
+
+        return collect($byChannel)->map(fn (array $byRole): Collection => collect($byRole));
+    }
+
+    /**
+     * @param  Standing  $standing
+     * @param  Collection<int, ChannelPermissionOverride>  $overrides  keyed by role id
+     */
+    private function applyOverrides(array $standing, Channel $channel, Collection $overrides): int
+    {
+        $mask = $standing['mask'];
+
+        $everyone = $standing['everyone'] === null ? null : $overrides->get($standing['everyone']);
+        if ($everyone !== null) {
+            $mask = ($mask & ~(int) $everyone->deny) | (int) $everyone->allow;
+        }
+
+        if ($channel->is_private) {
+            $mask &= ~Permission::ViewChannels->value;
+        }
+
+        $allow = 0;
+        $deny = 0;
+        foreach ($standing['roles'] as $roleId) {
+            $override = $overrides->get($roleId);
+            if ($override !== null) {
+                $allow |= (int) $override->allow;
+                $deny |= (int) $override->deny;
+            }
+        }
+
+        $mask = ($mask & ~$deny) | $allow;
+
+        // A timed-out member (ISSUE-29) only keeps reading, whatever the
+        // channel allows.
+        return $standing['timedOutUntil'] === null ? $mask : $mask & self::TIMED_OUT_MASK;
     }
 }

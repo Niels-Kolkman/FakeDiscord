@@ -36,6 +36,7 @@ class Channel extends Model
         'type',
         'topic',
         'position',
+        'is_private',
     ];
 
     /**
@@ -46,6 +47,7 @@ class Channel extends Model
         return [
             'category_id' => 'integer',
             'position' => 'integer',
+            'is_private' => 'boolean',
         ];
     }
 
@@ -91,6 +93,16 @@ class Channel extends Model
     public function messages(): HasMany
     {
         return $this->hasMany(Message::class);
+    }
+
+    /**
+     * Per-role allow/deny overrides in this channel (ISSUE-28).
+     *
+     * @return HasMany<ChannelPermissionOverride, $this>
+     */
+    public function permissionOverrides(): HasMany
+    {
+        return $this->hasMany(ChannelPermissionOverride::class);
     }
 
     /**

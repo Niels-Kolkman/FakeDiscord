@@ -63,6 +63,16 @@ erDiagram
         string type "text|voice|announcement"
         string topic "nullable"
         int position
+        boolean is_private "default false"
+        timestamps timestamps
+    }
+
+    channel_permission_overrides {
+        bigint id PK
+        bigint channel_id FK "cascade"
+        bigint role_id FK "cascade"
+        bigint allow "Permission bitmask"
+        bigint deny "Permission bitmask"
         timestamps timestamps
     }
 
@@ -174,6 +184,8 @@ erDiagram
     servers ||--o{ roles : defines
     roles ||--o{ role_user : "assigned via"
     users ||--o{ role_user : has
+    channels ||--o{ channel_permission_overrides : "overrides in"
+    roles ||--o{ channel_permission_overrides : "overridden by"
     servers ||--o{ invites : has
     channels |o--o{ invites : "lands in"
     users |o--o{ invites : creates
@@ -212,6 +224,7 @@ erDiagram
 | `roles` | `(server_id, position)` | Role hierarchy |
 | `server_members` | unique `(server_id, user_id)`, `user_id` | Member list / "my servers" |
 | `role_user` | PK `(role_id, user_id)`, `user_id` | A user's roles |
+| `channel_permission_overrides` | unique `(channel_id, role_id)`, `role_id` | A channel's role overrides; `ON DELETE` of a role |
 | `conversation_participants` | unique `(conversation_id, user_id)`, `user_id` | DM list |
 | `conversations` | unique `direct_key`, `last_message_at` | One 1:1 DM per pair of users; DM list by latest activity |
 | `reactions` | unique `(message_id, emoji, user_id)`, `user_id` | Reaction counts; one reaction per emoji per user |
@@ -235,6 +248,7 @@ downloaded.
 - **Deleting a server** also deletes its channels, channel categories, roles,
   members, invites, bans and, through channels, its messages with their
   attachments and reactions.
+- **Deleting a channel or a role** deletes its `channel_permission_overrides`.
 - **Deleting a channel category** keeps its channels: `category_id` is set to
   NULL (the app also moves them to the bottom of the uncategorised list).
 - **Deleting a user** deletes their memberships, role assignments, reactions,
@@ -256,6 +270,8 @@ database, so these rules live in the app layer (validation, model events or poli
   group (a category, or the uncategorised channels).
 - `role_user`: the user must be a member of the role's server. Each server has
   exactly one `is_default` role.
+- `channel_permission_overrides`: the role belongs to the channel's server, and
+  a row allows or denies at least one flag (all inherit deletes it).
 - `friendships`: the reverse pair (B→A when A→B already exists) is not allowed.
   `user_id <> friend_id`.
 - `conversations.type = 'direct'` has exactly two participants, and its
