@@ -26,6 +26,7 @@ use App\Http\Controllers\ServerController;
 use App\Http\Controllers\ServerMembershipController;
 use App\Http\Controllers\ServerOwnershipController;
 use App\Http\Controllers\UserProfileController;
+use App\Http\Controllers\UserStatusController;
 use Illuminate\Support\Facades\Route;
 
 // There is no landing page (ISSUE-44): guests go to the login page,
@@ -71,6 +72,11 @@ Route::middleware('auth')->group(function () {
 
     // JSON for the profile popover.
     Route::get('/users/{user:username}/profile', [UserProfileController::class, 'show'])->name('users.profile');
+
+    // The status picker (ISSUE-31): online, idle or dnd.
+    Route::put('/settings/status', [UserStatusController::class, 'update'])
+        ->middleware('throttle:30,1')
+        ->name('status.update');
 });
 
 // Friends (ISSUE-22): the page has ?tab=all|pending|blocked. Like servers,

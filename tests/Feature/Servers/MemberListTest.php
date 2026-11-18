@@ -218,9 +218,12 @@ class MemberListTest extends TestCase
         $mod = $this->role('Moderator', 1, '#123456');
         $mod->users()->attach($this->member('Dave', 'offline'));
 
+        // The role's section carries the colour for presence.js (ISSUE-31),
+        // but Dave's name is not painted with it.
         $this->actingAs($this->owner)
             ->get("/servers/{$this->server->id}")
-            ->assertDontSee('#123456');
+            ->assertDontSee('style="color: #123456"', false)
+            ->assertSee('data-role-color="#123456"', false);
     }
 
     public function test_a_role_color_that_is_not_a_hex_value_is_not_put_in_the_style_attribute(): void

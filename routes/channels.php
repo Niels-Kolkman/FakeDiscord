@@ -2,6 +2,7 @@
 
 use App\Models\Channel;
 use App\Models\Conversation;
+use App\Models\Server;
 use App\Models\User;
 use Illuminate\Support\Facades\Broadcast;
 
@@ -46,6 +47,25 @@ Broadcast::channel('conversation-typing.{conversation}', function (User $user, C
     return [
         'id' => (int) $user->getKey(),
         'name' => $user->name,
+    ];
+});
+
+// Online presence (ISSUE-31): one presence channel per server
+// (App\Support\ServerPresence::channelName), joined by every page of each
+// member (resources/js/presence.js), so Reverb knows who is online;
+// ServerPresence asks it when a member list renders. Members only, like
+// the server page. The member info carries the status the user picked
+// when the tab subscribed; changes after that arrive as
+// App\Events\UserStatusChanged (".user.status") on this channel. Kicked
+// and banned members are refused when pusher-js reconnects.
+Broadcast::channel('server.{server}', function (User $user, Server $server) {
+    if (! $server->hasMember($user)) {
+        return false;
+    }
+
+    return [
+        'id' => (int) $user->getKey(),
+        'status' => $user->chosenStatus(),
     ];
 });
 
