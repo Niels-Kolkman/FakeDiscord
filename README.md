@@ -561,6 +561,46 @@ people join a server.
 - Both invite routes allow 30 requests per minute, and creating invites allows
   20 per minute.
 
+## Friends
+
+The friends page (`/friends`, `FriendController`, in the `['auth', 'verified']`
+group, linked from the dashboard) has three tabs: `?tab=all` (accepted friends,
+by name, with online status), `?tab=pending` (incoming and outgoing requests,
+newest first) and `?tab=blocked` (people you blocked). Every action is a plain
+form, so the page also works without JavaScript.
+
+- **Send** (`POST /friends`, field `username`): `App\Actions\Friends\SendFriendRequest`
+  looks the user up by username. A leading `@`, capitals and surrounding spaces
+  are fine. It refuses yourself, someone you already asked, and an existing
+  friend. If they already sent you a request, sending one back **accepts** it.
+- **Accept / Decline** (`POST /friends/{id}/accept`, `/decline`): only the
+  recipient. **Cancel** (`DELETE /friends/{id}/request`): only the sender.
+  **Remove** (`DELETE /friends/{id}`): either friend, with a confirmation.
+  **Unblock** (`DELETE /friends/{id}/block`): only the one who blocked.
+  Blocking itself comes with ISSUE-25.
+- `App\Policies\FriendshipPolicy` decides. Anyone who is not one of the two
+  users gets a **404**, so friendship ids do not reveal who is friends with
+  whom. A party asking for the wrong thing (accepting their own request) gets
+  a 403.
+- **Blocks stay private.** Sending a request to someone who blocked you gives
+  the same error as an unknown username. The blocked user never sees the block
+  in any tab, and gets a 404 for it. If you blocked them, you are told to
+  unblock them first.
+- Each write only matches the row in the state it was checked in (`UPDATE …
+  WHERE status = 'pending'`), so two clicks at once, or an accept racing a
+  cancel, make one change and one broadcast.
+- **Live updates**: `App\Events\FriendshipChanged` (`.friendship.changed`) goes
+  to the *other* person on their private `App.Models.User.{id}` channel, with
+  `type` = `request`, `accepted` or `removed`. Declining, cancelling and
+  removing all send `removed`, so the sender cannot tell which happened.
+  Unblocking sends nothing. The payload also carries `incoming_count`.
+  `resources/js/friends.js` runs on every signed-in page (the layouts add
+  `<meta name="user-id">`). It shows a toast for requests and accepts, keeps
+  the request badges (`[data-friend-request-badge]`) on the dashboard and the
+  friends page up to date, and on the friends page reloads the tabs and lists.
+  If Reverb is down, the change is still saved.
+- Sending allows 20 requests per minute, and the other actions allow 60.
+
 ## Frontend
 
 - Entry points: `resources/css/app.css` and `resources/js/app.js`, set in `vite.config.js`.
