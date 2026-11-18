@@ -6,7 +6,11 @@ use Database\Factories\ServerMemberFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property Carbon|null $timed_out_until NULL = never timed out (ISSUE-29)
+ */
 class ServerMember extends Model
 {
     /** @use HasFactory<ServerMemberFactory> */
@@ -20,6 +24,7 @@ class ServerMember extends Model
         'user_id',
         'nickname',
         'joined_at',
+        'timed_out_until',
     ];
 
     /**
@@ -49,12 +54,22 @@ class ServerMember extends Model
     }
 
     /**
+     * Is the member timed out right now (ISSUE-29)? A timeout that has run
+     * out counts as none; nothing needs to clear the column.
+     */
+    public function isTimedOut(): bool
+    {
+        return $this->timed_out_until !== null && $this->timed_out_until->isFuture();
+    }
+
+    /**
      * @return array<string, string>
      */
     protected function casts(): array
     {
         return [
             'joined_at' => 'datetime',
+            'timed_out_until' => 'datetime',
         ];
     }
 

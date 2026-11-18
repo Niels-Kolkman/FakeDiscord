@@ -113,6 +113,54 @@ class ServerPolicy
     }
 
     /**
+     * Open the member moderation page (ISSUE-29): any of Kick, Ban or
+     * Timeout Members. Which members they can act on is kick(), ban() and
+     * timeout().
+     */
+    public function moderateMembers(User $user, Server $server): bool
+    {
+        $mask = $this->permissions->permissions($user, $server);
+
+        return Permission::KickMembers->in($mask)
+            || Permission::BanMembers->in($mask)
+            || Permission::TimeoutMembers->in($mask);
+    }
+
+    /**
+     * Kick $target: Kick Members, and $target below the actor in the role
+     * hierarchy (PermissionService::moderationCheck).
+     */
+    public function kick(User $user, Server $server, User $target): Response
+    {
+        return $this->permissions->moderationCheck($user, $target, $server, Permission::KickMembers);
+    }
+
+    /**
+     * Ban $target: Ban Members, and the same hierarchy rules as kick().
+     */
+    public function ban(User $user, Server $server, User $target): Response
+    {
+        return $this->permissions->moderationCheck($user, $target, $server, Permission::BanMembers);
+    }
+
+    /**
+     * Time $target out, or end their timeout: Timeout Members, the same
+     * hierarchy rules, and $target is not an Administrator.
+     */
+    public function timeout(User $user, Server $server, User $target): Response
+    {
+        return $this->permissions->moderationCheck($user, $target, $server, Permission::TimeoutMembers);
+    }
+
+    /**
+     * See the ban list and lift bans: Ban Members.
+     */
+    public function manageBans(User $user, Server $server): bool
+    {
+        return $this->permissions->has($user, $server, Permission::BanMembers);
+    }
+
+    /**
      * Members can leave, except the owner: they must transfer ownership
      * first, so a server is never left without an owner.
      */
