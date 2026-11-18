@@ -184,6 +184,46 @@ test('a timeout change reloads the open server page', () => {
     assert.deepEqual(echo.left, []);
 });
 
+test('a kick on a server page without a message panel still shows the notice', () => {
+    const echo = fakeEcho();
+    const location = fakeLocation();
+    const document = fakeDocument({ serverId: 7 });
+    const handle = initModeration({ echo, userId: '5', document, location, dashboardUrl: '/home' });
+
+    assert.equal(handle(event('kicked')), 'leave');
+
+    assert.deepEqual(echo.left, []);
+    const notice = document.querySelector('[data-moderation-notice]');
+    assert.ok(notice);
+    const [box] = notice.childNodes;
+    assert.equal(box.childNodes[0].textContent, 'You have been kicked from Mod Server.');
+    assert.equal(box.childNodes[1].href, '/home');
+    assert.equal(location.reloads, 0);
+});
+
+test('a server id sent as a string still matches the open page', () => {
+    assert.equal(actionFor({ type: 'banned', server: { id: '7' } }, 7), 'leave');
+    assert.equal(actionFor({ type: 'banned' }, 7), null);
+});
+
+test('a missing or empty server name falls back to "this server"', () => {
+    assert.equal(noticeText({ type: 'banned', server: { name: '' } }), 'You have been banned from this server.');
+    assert.equal(noticeText({ type: 'banned', server: { name: 42 } }), 'You have been banned from this server.');
+    assert.equal(noticeText(null), 'You have been kicked from this server.');
+});
+
+test('a panel with only a broadcast channel leaves just that one', () => {
+    const document = fakeDocument({ serverId: 7, channels: { broadcastChannel: 'channel.3', typingChannel: '' } });
+
+    assert.deepEqual(pageChannels(document), ['channel.3']);
+});
+
+test('the server id must be a positive whole number', () => {
+    assert.equal(currentServerId(fakeDocument({ serverId: 0 })), null);
+    assert.equal(currentServerId(fakeDocument({ serverId: -3 })), null);
+    assert.equal(currentServerId(fakeDocument({ serverId: '1.5' })), null);
+});
+
 test('events for another server leave the page alone', () => {
     const echo = fakeEcho();
     const location = fakeLocation();
