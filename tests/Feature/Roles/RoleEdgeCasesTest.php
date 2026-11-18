@@ -176,7 +176,8 @@ class RoleEdgeCasesTest extends TestCase
             ->patch(route('roles.update', [$this->server, $everyone]), [])
             ->assertSessionHasNoErrors()
             ->assertRedirect(route('roles.edit', [$this->server, $everyone]));
-        $this->assertSame(0, $everyone->fresh()?->permissions);
+        $everyone->refresh();
+        $this->assertSame(0, $everyone->permissions);
     }
 
     public function test_a_move_needs_a_direction(): void
