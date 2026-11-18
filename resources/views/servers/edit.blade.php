@@ -24,6 +24,15 @@
         <button type="submit" class="w-full rounded bg-[#5865f2] py-2 font-medium text-white hover:bg-[#4752c4]">Save changes</button>
     </form>
 
+    @can('manageRoles', $server)
+        <section class="mt-8 border-t border-[#3f4147] pt-6">
+            <h2 class="mb-2 font-semibold text-white">Roles</h2>
+            <p class="mb-4 text-sm text-[#b5bac1]">Create roles with their own colour and permissions, and give them to members.</p>
+            <a href="{{ route('roles.index', $server) }}"
+                class="block w-full rounded bg-[#4e5058] py-2 text-center font-medium text-white hover:bg-[#6d6f78]">Manage roles</a>
+        </section>
+    @endcan
+
     @can('transferOwnership', $server)
         @php($bag = \App\Http\Requests\TransferServerOwnershipRequest::ERROR_BAG)
         <form method="POST" action="{{ route('servers.owner.update', $server) }}" id="transfer-ownership" class="mt-8 border-t border-[#3f4147] pt-6">

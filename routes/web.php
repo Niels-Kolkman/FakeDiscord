@@ -16,6 +16,8 @@ use App\Http\Controllers\MessageSearchController;
 use App\Http\Controllers\PinController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReactionController;
+use App\Http\Controllers\RoleController;
+use App\Http\Controllers\RoleMemberController;
 use App\Http\Controllers\ServerController;
 use App\Http\Controllers\ServerMembershipController;
 use App\Http\Controllers\ServerOwnershipController;
@@ -235,6 +237,33 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::patch('/servers/{server}/categories/{category}', [ChannelCategoryController::class, 'update'])->name('categories.update');
         Route::delete('/servers/{server}/categories/{category}', [ChannelCategoryController::class, 'destroy'])->name('categories.destroy');
     });
+
+    // Roles (ISSUE-26): ServerPolicy::manageRoles (owner only for now) on
+    // every route. Scoped bindings make another server's role a 404, and
+    // {user} on the members route must hold the role. @everyone can only
+    // have its permissions changed.
+    Route::scopeBindings()
+        ->middleware(['can:manageRoles,server', 'throttle:60,1'])
+        ->prefix('/servers/{server}/roles')
+        ->group(function () {
+            Route::get('/', [RoleController::class, 'index'])->name('roles.index');
+            Route::get('/create', [RoleController::class, 'create'])->name('roles.create');
+            Route::post('/', [RoleController::class, 'store'])->name('roles.store');
+
+            Route::whereNumber('role')->group(function () {
+                Route::get('/{role}/settings', [RoleController::class, 'edit'])->name('roles.edit');
+                Route::patch('/{role}', [RoleController::class, 'update'])->name('roles.update');
+                Route::delete('/{role}', [RoleController::class, 'destroy'])->name('roles.destroy');
+                // Field `direction`: up or down.
+                Route::post('/{role}/move', [RoleController::class, 'move'])->name('roles.move');
+
+                // Field `user_id`: a member of the server.
+                Route::post('/{role}/members', [RoleMemberController::class, 'store'])->name('roles.members.store');
+                Route::delete('/{role}/members/{user}', [RoleMemberController::class, 'destroy'])
+                    ->whereNumber('user')
+                    ->name('roles.members.destroy');
+            });
+        });
 
     // Invites (ISSUE-11). Any member can create one; the owner and the
     // inviter can revoke it (App\Policies\InvitePolicy).
