@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Observers\BanObserver;
 use Database\Factories\BanFactory;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+#[ObservedBy(BanObserver::class)]
 class Ban extends Model
 {
     /** @use HasFactory<BanFactory> */

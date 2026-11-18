@@ -7,6 +7,7 @@ use App\Models\Channel;
 use App\Models\Role;
 use App\Models\Server;
 use App\Models\User;
+use App\Support\AuditLog;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -19,7 +20,10 @@ class CreateServer
 {
     public const DEFAULT_CHANNEL = 'general';
 
-    public function __construct(private readonly UpdateServerIcon $icons) {}
+    public function __construct(
+        private readonly UpdateServerIcon $icons,
+        private readonly AuditLog $log,
+    ) {}
 
     /**
      * @throws ValidationException when the icon cannot be decoded
@@ -27,8 +31,10 @@ class CreateServer
     public function create(User $owner, string $name, ?UploadedFile $icon = null): Server
     {
         // The icon is stored inside the transaction so an unreadable image
-        // leaves no half-created server behind.
-        return DB::transaction(function () use ($owner, $name, $icon): Server {
+        // leaves no half-created server behind. The audit log (ISSUE-30)
+        // starts after this: the default role, channel and icon are not
+        // changes anyone made.
+        return $this->log->withoutRecording(fn (): Server => DB::transaction(function () use ($owner, $name, $icon): Server {
             $server = Server::create(['owner_id' => $owner->getKey(), 'name' => $name]);
 
             $server->memberships()->create([
@@ -54,6 +60,6 @@ class CreateServer
             }
 
             return $server;
-        });
+        }));
     }
 }

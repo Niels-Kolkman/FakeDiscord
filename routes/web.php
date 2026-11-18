@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AccountSettingsController;
 use App\Http\Controllers\AttachmentController;
+use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\BanController;
 use App\Http\Controllers\ChannelCategoryController;
 use App\Http\Controllers\ChannelController;
@@ -300,6 +301,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::delete('/bans/{user}', [BanController::class, 'destroy'])->name('bans.destroy');
         });
     });
+
+    // Audit log (ISSUE-30): owner only (ServerPolicy::viewAuditLog).
+    // Filters ?action= (an AuditLogEntry::ACTIONS key) and ?user= (actor id).
+    Route::get('/servers/{server}/audit-log', [AuditLogController::class, 'index'])
+        ->middleware(['can:viewAuditLog,server', 'throttle:60,1'])
+        ->name('audit-log.index');
 
     // Invites (ISSUE-11). Any member can create one; the owner and the
     // inviter can revoke it (App\Policies\InvitePolicy).

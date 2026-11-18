@@ -3,8 +3,10 @@
 namespace App\Models;
 
 use App\Events\MessageSent;
+use App\Observers\MessageObserver;
 use App\Support\Reactions;
 use Database\Factories\MessageFactory;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -32,6 +34,7 @@ use Laravel\Scout\Searchable;
  * @property Carbon|null $edited_at NULL = never edited
  * @property Carbon|null $pinned_at NULL = not pinned
  */
+#[ObservedBy(MessageObserver::class)]
 class Message extends Model
 {
     /** @use HasFactory<MessageFactory> */

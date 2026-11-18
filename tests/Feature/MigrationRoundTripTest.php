@@ -20,7 +20,7 @@ class MigrationRoundTripTest extends TestCase
         'servers', 'server_members', 'channels', 'messages', 'message_attachments',
         'reactions', 'friendships', 'conversations', 'conversation_participants',
         'roles', 'role_user', 'invites', 'bans', 'channel_categories',
-        'channel_permission_overrides',
+        'channel_permission_overrides', 'audit_log_entries',
     ];
 
     private string $databasePath;

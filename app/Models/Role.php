@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use App\Enums\Permission;
+use App\Observers\RoleObserver;
 use Database\Factories\RoleFactory;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -18,6 +20,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * Every member has it implicitly, so it has no role_user rows; its name,
  * colour and position are fixed and it cannot be deleted.
  */
+#[ObservedBy(RoleObserver::class)]
 class Role extends Model
 {
     /** @use HasFactory<RoleFactory> */

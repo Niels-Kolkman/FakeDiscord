@@ -37,7 +37,9 @@ class TimeoutMember
     {
         $until = now()->addSeconds($seconds)->startOfSecond();
 
-        $server->memberships()->where('user_id', $member->getKey())->update(['timed_out_until' => $until]);
+        // Saved through the model so ServerMemberObserver writes the audit
+        // log (ISSUE-30).
+        $server->membershipOf($member)?->update(['timed_out_until' => $until]);
 
         MemberModerated::dispatchFor(MemberModerated::TIMED_OUT, $server, $member, $until);
 
@@ -49,15 +51,19 @@ class TimeoutMember
      */
     public function remove(Server $server, User $member): bool
     {
-        $removed = $server->memberships()
+        $membership = $server->memberships()
             ->where('user_id', $member->getKey())
             ->where('timed_out_until', '>', now())
-            ->update(['timed_out_until' => null]) > 0;
+            ->first();
 
-        if ($removed) {
-            MemberModerated::dispatchFor(MemberModerated::TIMEOUT_REMOVED, $server, $member);
+        if ($membership === null) {
+            return false;
         }
 
-        return $removed;
+        $membership->update(['timed_out_until' => null]);
+
+        MemberModerated::dispatchFor(MemberModerated::TIMEOUT_REMOVED, $server, $member);
+
+        return true;
     }
 }

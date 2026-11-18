@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Support\AuditLog;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -11,7 +12,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // One per request, so AuditLog::withoutRecording() covers every
+        // observer that fires inside it (ISSUE-30).
+        $this->app->scoped(AuditLog::class);
     }
 
     /**

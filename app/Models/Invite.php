@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use App\Observers\InviteObserver;
 use Database\Factories\InviteFactory;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -15,6 +17,7 @@ use Illuminate\Support\Carbon;
  * @property int $uses
  * @property Carbon|null $expires_at NULL = never
  */
+#[ObservedBy(InviteObserver::class)]
 class Invite extends Model
 {
     /** @use HasFactory<InviteFactory> */

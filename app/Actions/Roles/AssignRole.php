@@ -2,8 +2,10 @@
 
 namespace App\Actions\Roles;
 
+use App\Models\AuditLogEntry;
 use App\Models\Role;
 use App\Models\User;
+use App\Support\AuditLog;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -13,6 +15,8 @@ use Illuminate\Validation\ValidationException;
  */
 class AssignRole
 {
+    public function __construct(private readonly AuditLog $log) {}
+
     /**
      * @return bool false when the member already had the role
      *
@@ -44,6 +48,10 @@ class AssignRole
                 'updated_at' => now(),
             ]);
 
+            if ($inserted > 0) {
+                $this->record($role, $user, AuditLogEntry::MEMBER_ROLE_ADD);
+            }
+
             return $inserted > 0;
         });
     }
@@ -57,7 +65,24 @@ class AssignRole
     {
         $this->guardDefault($role);
 
-        return $role->users()->detach($user->getKey()) > 0;
+        $removed = $role->users()->detach($user->getKey()) > 0;
+
+        if ($removed) {
+            $this->record($role, $user, AuditLogEntry::MEMBER_ROLE_REMOVE);
+        }
+
+        return $removed;
+    }
+
+    /**
+     * role_user is a pivot without model events, so the audit log
+     * (ISSUE-30) is written here.
+     */
+    private function record(Role $role, User $user, string $action): void
+    {
+        $this->log->record((int) $role->server_id, $action, $user, $user->name, [
+            'role' => ['new' => $role->name],
+        ]);
     }
 
     private function guardDefault(Role $role): void

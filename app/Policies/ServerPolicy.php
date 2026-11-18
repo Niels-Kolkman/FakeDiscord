@@ -161,6 +161,15 @@ class ServerPolicy
     }
 
     /**
+     * See the audit log (ISSUE-30). Owner only, also for administrators:
+     * it shows what they did too.
+     */
+    public function viewAuditLog(User $user, Server $server): bool
+    {
+        return $server->isOwnedBy($user);
+    }
+
+    /**
      * Members can leave, except the owner: they must transfer ownership
      * first, so a server is never left without an owner.
      */
