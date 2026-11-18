@@ -337,6 +337,69 @@ test('when events arrive quickly only the newest reload is applied', async () =>
     assert.equal(document.querySelector('[data-marker]').textContent, 'second');
 });
 
+test('an accepted request links the toast to All and uses the configured toast time', async () => {
+    const echo = fakeEcho();
+    const timers = fakeTimers();
+    const document = fakeDocument();
+
+    initFriends({
+        echo,
+        userId: '1',
+        friendsUrl: '/friends',
+        document,
+        location: { href: '/dashboard' },
+        toastMs: 1234,
+        setTimer: timers.setTimer,
+    });
+    await echo.subscriptions[0].listeners[FRIENDSHIP_EVENT]({ type: 'accepted', user: alice, incoming_count: 0 });
+
+    const toast = document.querySelector('[data-friend-toast]');
+    assert.equal(toast.childNodes[0].textContent, 'Alice accepted your friend request.');
+    assert.equal(toast.childNodes[1].href, '/friends?tab=all');
+    assert.deepEqual(timers.timers.map(({ ms }) => ms), [1234]);
+
+    timers.runAll();
+    assert.equal(document.querySelector('[data-friend-toast]'), null, 'the toast goes away');
+});
+
+test('a count that is not an integer leaves the badges alone', async () => {
+    const echo = fakeEcho();
+    const counter = badge(2);
+    const document = fakeDocument([counter]);
+
+    initFriends({ echo, userId: '1', document, location: { href: '/dashboard' }, setTimer: () => {} });
+    const listener = echo.subscriptions[0].listeners[FRIENDSHIP_EVENT];
+
+    await listener({ type: 'removed', user: alice, incoming_count: '5' });
+    await listener({ type: 'removed', user: alice, incoming_count: 1.5 });
+    await listener({ type: 'removed', user: alice, incoming_count: null });
+
+    assert.deepEqual([counter.textContent, counter.hidden], ['2', false]);
+});
+
+test('updateRequestBadges treats non-integer counts as zero', () => {
+    const counter = badge(3);
+    const document = fakeDocument([counter]);
+
+    updateRequestBadges(document, '3');
+    assert.deepEqual([counter.textContent, counter.hidden], ['0', true]);
+
+    updateRequestBadges(document, Number.NaN);
+    assert.deepEqual([counter.textContent, counter.hidden], ['0', true]);
+});
+
+test('a malformed event shows no toast and does not throw', async () => {
+    const echo = fakeEcho();
+    const document = fakeDocument();
+
+    initFriends({ echo, userId: '1', friendsUrl: '/friends', document, location: { href: '/dashboard' }, setTimer: () => {} });
+    const listener = echo.subscriptions[0].listeners[FRIENDSHIP_EVENT];
+
+    assert.equal(await listener(null), false);
+    assert.equal(await listener({ type: 'request', user: { name: 42 } }), false);
+    assert.equal(document.querySelector('[data-friend-toast]'), null);
+});
+
 test('an event without a count leaves the badges alone', async () => {
     const echo = fakeEcho();
     const counter = badge(4);
