@@ -2,8 +2,10 @@
 
 namespace App\Actions\Messages;
 
+use App\Events\ConversationActivity;
 use App\Events\MessageSent;
 use App\Models\Channel;
+use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\MessageAttachment;
 use App\Models\User;
@@ -26,30 +28,40 @@ use Throwable;
  * stray files behind.
  *
  * A reply (ISSUE-20) stores reply_to_id; the payload quotes the original.
+ *
+ * Direct messages (ISSUE-23) work the same way with a Conversation as the
+ * target: the message broadcasts on "conversation.{id}", its files go
+ * under attachments/conversations/{id}/, and the conversation's
+ * last_message_at moves, so it rises to the top of the DM list. Every
+ * participant hears about that through ConversationActivity.
  */
 class SendMessage
 {
     /**
      * @param  list<UploadedFile>  $files  already validated (StoreMessageRequest)
      */
-    public function send(User $author, Channel $channel, string $content, array $files = [], ?Message $replyTo = null): Message
+    public function send(User $author, Channel|Conversation $target, string $content, array $files = [], ?Message $replyTo = null): Message
     {
         $disk = MessageAttachment::disk();
         $stored = [];
 
         try {
             foreach ($files as $file) {
-                $stored[] = $this->store($file, $disk, $channel);
+                $stored[] = $this->store($file, $disk, $target);
             }
 
-            $message = DB::transaction(function () use ($author, $channel, $content, $stored, $replyTo): Message {
-                $message = $channel->messages()->create([
+            $message = DB::transaction(function () use ($author, $target, $content, $stored, $replyTo): Message {
+                $message = $target->messages()->create([
                     'user_id' => $author->id,
                     'reply_to_id' => $replyTo?->id,
                     'content' => $content,
                 ]);
 
                 $message->setRelation('attachments', $message->attachments()->createMany($stored));
+
+                if ($target instanceof Conversation) {
+                    $target->forceFill(['last_message_at' => $message->created_at])->save();
+                }
 
                 return $message;
             });
@@ -74,17 +86,27 @@ class SendMessage
             broadcast(new MessageSent($message))->toOthers();
         });
 
+        // Not toOthers(): the sender's other tabs re-order their DM list too.
+        if ($target instanceof Conversation) {
+            rescue(function () use ($target): void {
+                broadcast(new ConversationActivity($target));
+            });
+        }
+
         return $message;
     }
 
     /**
      * @return array{disk: string, path: string, original_name: string, mime_type: string, size: int, metadata: array{width: int, height: int}|null}
      */
-    private function store(UploadedFile $file, string $disk, Channel $channel): array
+    private function store(UploadedFile $file, string $disk, Channel|Conversation $target): array
     {
         // Validated against MessageAttachment::ALLOWED_EXTENSIONS.
         $extension = strtolower($file->getClientOriginalExtension()) ?: ($file->guessExtension() ?? 'bin');
-        $path = $file->storeAs('attachments/'.$channel->id, Str::uuid().'.'.$extension, ['disk' => $disk]);
+        $directory = $target instanceof Conversation
+            ? 'attachments/conversations/'.$target->id
+            : 'attachments/'.$target->id;
+        $path = $file->storeAs($directory, Str::uuid().'.'.$extension, ['disk' => $disk]);
 
         if ($path === false) {
             throw new RuntimeException("Could not store attachment on disk [{$disk}].");

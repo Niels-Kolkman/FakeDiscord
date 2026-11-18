@@ -5,6 +5,9 @@ use App\Http\Controllers\AttachmentController;
 use App\Http\Controllers\ChannelCategoryController;
 use App\Http\Controllers\ChannelController;
 use App\Http\Controllers\ChannelLayoutController;
+use App\Http\Controllers\ConversationMessageController;
+use App\Http\Controllers\ConversationReactionController;
+use App\Http\Controllers\DirectMessageController;
 use App\Http\Controllers\FriendController;
 use App\Http\Controllers\InviteController;
 use App\Http\Controllers\MessageController;
@@ -80,6 +83,44 @@ Route::middleware(['auth', 'verified'])->prefix('friends')->group(function () {
         Route::delete('/{friendship}/request', [FriendController::class, 'cancel'])->name('friends.cancel');
         Route::delete('/{friendship}/block', [FriendController::class, 'unblock'])->name('friends.unblock');
         Route::delete('/{friendship}', [FriendController::class, 'destroy'])->name('friends.destroy');
+    });
+});
+
+// 1:1 direct messages (ISSUE-23). POST /dms opens (or creates) the DM with
+// `user_id`: friends and people you share a server with, never across a
+// block. Only participants see a conversation (ConversationPolicy, a 404
+// for anyone else). The message routes mirror the channel ones, so
+// resources/js/channel-messages.js works the same; events go out on the
+// private "conversation.{id}" channel.
+Route::middleware(['auth', 'verified'])->prefix('dms')->group(function () {
+    Route::post('/', [DirectMessageController::class, 'store'])
+        ->middleware('throttle:30,1')
+        ->name('dms.store');
+
+    // can:view runs before the form requests, so anyone who is not a
+    // participant gets ConversationPolicy's 404 on every route, never a 403.
+    Route::whereNumber('conversation')->scopeBindings()->middleware('can:view,conversation')->group(function () {
+        Route::get('/{conversation}', [DirectMessageController::class, 'show'])->name('dms.show');
+
+        Route::get('/{conversation}/messages', [ConversationMessageController::class, 'index'])
+            ->middleware('throttle:60,1')
+            ->name('dms.messages.index');
+        Route::post('/{conversation}/messages', [ConversationMessageController::class, 'store'])
+            ->middleware('throttle:30,1')
+            ->name('dms.messages.store');
+        Route::patch('/{conversation}/messages/{message}', [ConversationMessageController::class, 'update'])
+            ->middleware('throttle:30,1')
+            ->name('dms.messages.update');
+        Route::delete('/{conversation}/messages/{message}', [ConversationMessageController::class, 'destroy'])
+            ->middleware('throttle:30,1')
+            ->name('dms.messages.destroy');
+
+        Route::post('/{conversation}/messages/{message}/reactions', [ConversationReactionController::class, 'store'])
+            ->middleware('throttle:60,1')
+            ->name('dms.reactions.store');
+        Route::delete('/{conversation}/messages/{message}/reactions', [ConversationReactionController::class, 'destroy'])
+            ->middleware('throttle:60,1')
+            ->name('dms.reactions.destroy');
     });
 });
 

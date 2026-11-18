@@ -55,6 +55,12 @@
                                 <button type="submit" class="{{ $button }} bg-[#4e5058] text-white hover:bg-[#6d6f78]" aria-label="Cancel friend request to {{ $person->name }}">Cancel</button>
                             </form>
                         @elseif ($kind === 'friend')
+                            {{-- Opens (or creates) the 1:1 DM (ISSUE-23). --}}
+                            <form method="POST" action="{{ route('dms.store') }}">
+                                @csrf
+                                <input type="hidden" name="user_id" value="{{ $person->id }}">
+                                <button type="submit" class="{{ $button }} bg-[#4e5058] text-white hover:bg-[#6d6f78]" aria-label="Message {{ $person->name }}" data-message-friend>Message</button>
+                            </form>
                             <form method="POST" action="{{ route('friends.destroy', $friendship) }}" data-confirm="Remove {{ $person->name }} from your friends?">
                                 @csrf
                                 @method('DELETE')

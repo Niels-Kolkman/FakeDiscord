@@ -9,9 +9,10 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 
 /**
- * A new message in a server channel. Goes out on the private
- * "channel.{id}" channel; routes/channels.php only lets server members
- * subscribe. The browser listens for ".message.sent"
+ * A new message in a server channel or a DM. Goes out on the private
+ * "channel.{id}" channel, or "conversation.{id}" for a DM (ISSUE-23,
+ * Message::broadcastChannel()); routes/channels.php only lets server
+ * members / participants subscribe. The browser listens for ".message.sent"
  * (resources/js/channel-messages.js).
  *
  * ShouldBroadcastNow: members see the message right away, without waiting
@@ -33,7 +34,7 @@ class MessageSent implements ShouldBroadcastNow
 
     public function broadcastOn(): PrivateChannel
     {
-        return new PrivateChannel(self::channelName((int) $this->message->channel_id));
+        return new PrivateChannel($this->message->broadcastChannel());
     }
 
     public function broadcastAs(): string

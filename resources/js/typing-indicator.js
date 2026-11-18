@@ -127,9 +127,11 @@ export function formatTyping(names) {
  * for channel-messages.js, or null without Echo.
  *
  * options: { echo, channelId, viewerId, input (textarea or null),
- *            output (element that shows the text) }
+ *            output (element that shows the text),
+ *            channelName (the presence channel; defaults to "typing.{channelId}",
+ *            a DM passes "conversation-typing.{id}", ISSUE-23) }
  */
-export function initTypingIndicator({ echo, channelId, viewerId, input, output }) {
+export function initTypingIndicator({ echo, channelId, viewerId, input, output, channelName = null }) {
     if (!echo || !output) return null;
 
     const members = new Map();
@@ -147,7 +149,7 @@ export function initTypingIndicator({ echo, channelId, viewerId, input, output }
 
     const tracker = new TypingTracker({ onChange: render });
 
-    const presence = echo.join(`typing.${channelId}`)
+    const presence = echo.join(channelName || `typing.${channelId}`)
         .here((list) => {
             members.clear();
             list.forEach((member) => members.set(String(member.id), member));

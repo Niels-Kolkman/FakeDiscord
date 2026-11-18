@@ -1,5 +1,5 @@
 {{--
-    One message in a channel. resources/js/channel-messages.js builds the
+    One message in a channel or DM. resources/js/channel-messages.js builds the
     same markup for messages that arrive live; keep the two in sync.
 
     The Edit / Delete buttons (ISSUE-16) are only a hint: MessagePolicy
@@ -30,17 +30,21 @@
     Pins: 📌 marks a pinned message; moderators ($canManageMessages) get a
     Pin / Unpin form that also works without JavaScript.
 
+    Used for channel messages and DMs (ISSUE-23) alike, from
+    messages/panel.blade.php; every URL is built from $messagesUrl.
+
     @var \App\Models\Message $message
-    @var \App\Models\Server $server
-    @var \App\Models\Channel $channel
+    @var string $messagesUrl  the history URL of the channel or DM
 --}}
 @php
     $isOwn = $message->user_id !== null && (int) $message->user_id === (int) ($viewerId ?? 0);
     $canDelete = $isOwn || ($canManageMessages ?? false);
-    $messageUrl = route('messages.update', [$server, $channel, $message]);
-    $reactionsUrl = route('reactions.store', [$server, $channel, $message]);
+    // {messagesUrl}/{id}, like renderMessage() in channel-messages.js: the
+    // same for a channel (messages.update) and a DM (dms.messages.update).
+    $messageUrl = $messagesUrl.'/'.$message->id;
+    $reactionsUrl = $messageUrl.'/reactions';
     $reactionGroups = \App\Support\Reactions::groups($message, (int) ($viewerId ?? 0));
-    $pinUrl = route('pins.store', [$server, $channel, $message]);
+    $pinUrl = $messageUrl.'/pin';
     $reply = $message->replyPreview();
     $toolButton = 'rounded px-2 py-0.5 text-xs text-[#b5bac1] hover:bg-[#404249] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]';
 @endphp

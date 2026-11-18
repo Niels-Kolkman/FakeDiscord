@@ -233,15 +233,17 @@ class EditDeleteMessageRulesTest extends TestCase
 
     // --- Actions -------------------------------------------------------------
 
-    public function test_deleting_a_message_without_a_channel_broadcasts_nothing(): void
+    public function test_deleting_a_direct_message_broadcasts_on_the_conversation(): void
     {
         Event::fake([MessageDeleted::class]);
-        $dm = Message::factory()->inConversation(Conversation::factory()->create())->create();
+        $conversation = Conversation::factory()->create();
+        $dm = Message::factory()->inConversation($conversation)->create();
 
         app(DeleteMessage::class)->delete($dm);
 
         $this->assertSoftDeleted($dm);
-        Event::assertNotDispatched(MessageDeleted::class);
+        Event::assertDispatched(MessageDeleted::class, fn (MessageDeleted $event): bool => $event->broadcastOn()->name === "private-conversation.{$conversation->id}"
+            && $event->broadcastWith() === ['id' => $dm->id, 'channel_id' => null, 'conversation_id' => $conversation->id]);
     }
 
     public function test_the_edit_action_returns_the_saved_message(): void

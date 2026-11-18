@@ -16,13 +16,13 @@ class DeleteMessage
     {
         $message->delete();
 
-        if ($message->channel_id === null) {
-            return;
-        }
-
         // Deleted either way; if Reverb is down, report it and carry on.
         rescue(function () use ($message): void {
-            broadcast(new MessageDeleted((int) $message->id, (int) $message->channel_id))->toOthers();
+            broadcast(new MessageDeleted(
+                (int) $message->id,
+                $message->channel_id === null ? null : (int) $message->channel_id,
+                $message->conversation_id === null ? null : (int) $message->conversation_id,
+            ))->toOthers();
         });
     }
 }

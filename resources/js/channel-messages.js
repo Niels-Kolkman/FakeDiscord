@@ -52,6 +52,13 @@
  *   first, with Jump (and Unpin for moderators). ".message.pinned" updates
  *   the marker and the open panel.
  *
+ * - Direct messages (ISSUE-23): the same panel (messages/panel.blade.php)
+ *   drives a 1:1 DM. It carries data-conversation-id instead of
+ *   data-channel-id, so payloads are matched on conversation_id
+ *   (belongsToTarget()); it subscribes to data-broadcast-channel
+ *   ("conversation.{id}") and types on data-typing-channel. A DM has no
+ *   data-pins-url and no moderators, so no pins and no Pin buttons.
+ *
  * All user-provided text is inserted with textContent, never parsed as HTML.
  * renderMessage() must match resources/views/messages/item.blade.php.
  */
@@ -614,8 +621,22 @@ function socketHeaders() {
     return socketId ? { 'X-Socket-ID': socketId } : {};
 }
 
+/**
+ * Whether a message payload or event belongs to the panel's channel or DM
+ * (ISSUE-23): a DM panel (conversationId) compares conversation_id, a
+ * channel panel channel_id. Ids are compared as strings.
+ */
+export function belongsToTarget(payload, { channelId = null, conversationId = null } = {}) {
+    if (!payload) return false;
+    if (conversationId) return String(payload.conversation_id) === String(conversationId);
+    return channelId !== null && channelId !== undefined && String(payload.channel_id) === String(channelId);
+}
+
 function initChannel(root) {
     const channelId = root.dataset.channelId;
+    const conversationId = root.dataset.conversationId ?? null;
+    const target = { channelId, conversationId };
+    const belongs = (payload) => belongsToTarget(payload, target);
     const list = root.querySelector('[data-message-list]');
     const scroller = root.querySelector('[data-message-scroller]');
     const form = root.querySelector('[data-message-form]');
@@ -760,13 +781,14 @@ function initChannel(root) {
     const typing = initTypingIndicator({
         echo: window.Echo,
         channelId,
+        channelName: root.dataset.typingChannel || null,
         viewerId: context.viewerId,
         input: form?.querySelector('[data-message-input]') ?? null,
         output: root.querySelector('[data-typing-indicator]'),
     });
 
     const append = (message, own = false) => {
-        if (!message || String(message.channel_id) !== channelId) return;
+        if (!belongs(message)) return;
         if (!own) typing?.messageArrived(message.author?.id);
         const id = String(message.id);
         if (seen.has(id)) return;
@@ -803,7 +825,7 @@ function initChannel(root) {
     const quotesOf = (id) => [...list.querySelectorAll(`[data-reply-preview][data-reply-to-id="${CSS.escape(String(id))}"]`)];
 
     const applyUpdate = (message) => {
-        if (!message || String(message.channel_id) !== channelId) return;
+        if (!belongs(message)) return;
         quotesOf(message.id).forEach((row) => {
             const content = row.querySelector('[data-reply-content]');
             if (content) {
@@ -1137,7 +1159,7 @@ function initChannel(root) {
 
     // Broadcasts have no `me`: keep ours, unless it was us in another tab.
     const applyReactions = (event) => {
-        if (!event || String(event.channel_id) !== channelId) return;
+        if (!belongs(event)) return;
         const item = findItem(event.message_id);
         if (!item) return;
         const mine = myReactions(item);
@@ -1212,15 +1234,16 @@ function initChannel(root) {
             .finally(() => pendingReactions.delete(key));
     });
 
-    window.Echo?.private(`channel.${channelId}`)
+    // "channel.{id}", or "conversation.{id}" for a DM (ISSUE-23).
+    window.Echo?.private(root.dataset.broadcastChannel || `channel.${channelId}`)
         .listen('.message.sent', (message) => append(message))
         .listen('.message.updated', (message) => applyUpdate(message))
         .listen('.message.deleted', (message) => {
-            if (String(message?.channel_id) === channelId) removeItem(message.id);
+            if (belongs(message)) removeItem(message.id);
         })
         .listen('.reactions.updated', (event) => applyReactions(event))
         .listen('.message.pinned', (event) => {
-            if (String(event?.channel_id) !== channelId) return;
+            if (!belongs(event)) return;
             applyPinned(findItem(event.id), event.pinned_at);
             if (pinsOpen()) loadPins();
         });

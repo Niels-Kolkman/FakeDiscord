@@ -433,6 +433,7 @@ class ReactionTest extends TestCase
                 && $event->broadcastWith() === [
                     'message_id' => $this->message->id,
                     'channel_id' => $this->channel->id,
+                    'conversation_id' => null,
                     'user_id' => $this->alice->id,
                     'emoji' => '👍',
                     'added' => true,
