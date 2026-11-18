@@ -370,14 +370,46 @@ role): `allow` and `deny` masks for **View Channels** and **Send Messages**
 
 - **Member sidebar**: server and channel pages show the members on the right
   (`servers/partials/member-list.blade.php`, built by `App\Support\MemberList`
-  through `Server::memberList()`). Online members (status `online`, `idle` or
-  `dnd`) are grouped under their highest role other than `@everyone` (highest
+  through `Server::memberList()`). Online members (see **Online presence**
+  below) are grouped under their highest role other than `@everyone` (highest
   `position`, then lowest id). Online members without such a role go under
   **Online**, and everyone else goes under **Offline**, whatever their roles.
   Empty groups are hidden. Members are sorted by nickname, or by name when there
   is none, ignoring case. Online members' names use their highest role's colour
   (only `#rrggbb` values are used), and the owner has a crown. The list takes
   four queries, however many members there are.
+- **Online presence**: each server has a presence channel `server.{id}`
+  (`routes/channels.php`, members only; member info `{id, status}`).
+  `resources/js/presence.js` joins it for **every** server you are in, on
+  every page (`<meta name="presence-servers">`), so you are online in all your
+  servers whichever page you are on. When a member list renders,
+  `App\Support\ServerPresence` asks Reverb who is in the channel (Pusher's
+  `GET /channels/{channel}/users`). You always count as online on your own
+  page. After that the browser keeps the list live: people who join move up
+  under their role, people who leave move down to **Offline**, and the counts
+  follow.
+  - **Several tabs**: Reverb counts a user once, however many tabs or devices
+    they have open. "Joining" comes with the first connection and "leaving"
+    after the last one closes.
+  - **Grace period**: someone who leaves stays as they are for 10 seconds
+    (`PRESENCE_GRACE_MS`) before they show as offline. Every page load closes
+    the socket for a moment, and this keeps that from making people blink
+    offline and back. A tab that dies without closing is dropped by Reverb's
+    ping timeout.
+  - **Status**: the picker at the bottom of the channel sidebar
+    (`<x-status-picker>`, `PUT /settings/status`, 30 per minute) sets
+    **Online**, **Idle** or **Do Not Disturb** (`users.status`, which is what
+    connected members show). `App\Actions\Profile\UpdateUserStatus` saves it
+    and `App\Events\UserStatusChanged` (`.user.status`) tells the presence
+    channel of each of the user's servers, plus their own channel so their
+    other tabs update. Member info is fixed when a tab subscribes, so for
+    people already on the page the status in the page wins over it. There is
+    no automatic idle and no invisible mode.
+  - **Fallbacks**: with the `null` or `log` broadcaster (tests, no websockets)
+    presence is unknown, and the stored status decides who is online, as
+    before. When Reverb is down, only you show as online.
+  - Kicked and banned members leave the server's presence channel
+    (`moderation.js`) and are refused when pusher-js reconnects.
 - **Leave** ("Leave server" in the channel sidebar, `GET /servers/{id}/leave`
   to confirm, then `DELETE` the same URL): `App\Actions\Servers\LeaveServer`
   deletes the membership and the member's `role_user` rows for that server's
@@ -437,7 +469,8 @@ Members. Every route allows 60 requests a minute.
   user. Channel authorization only runs when a browser subscribes, so this
   makes pusher-js reconnect, and every server channel is checked again, which
   a former member fails. Reverb links a connection to a user through presence
-  channels (the typing channels every open message panel joins). With the
+  channels (the `server.{id}` channels every page joins, and the typing
+  channels of open message panels). With the
   `null` or `log` broadcaster, and when Reverb is down, this does nothing. The
   moderation itself has already happened.
 
