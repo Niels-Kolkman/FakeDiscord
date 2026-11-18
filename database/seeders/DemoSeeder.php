@@ -259,8 +259,7 @@ class DemoSeeder extends Seeder
     {
         $demo = $users->first();
 
-        $direct = Conversation::factory()->create();
-        $direct->users()->attach([$demo->id, $users[1]->id]);
+        $direct = Conversation::factory()->between($demo, $users[1])->create();
         $this->seedConversationMessages($direct, [$demo->id, $users[1]->id], 20);
 
         $group = Conversation::factory()->group()->create([
@@ -284,6 +283,9 @@ class DemoSeeder extends Seeder
                 'updated_at' => $createdAt,
             ]);
         }
+
+        // Orders the DM list in the sidebar (ISSUE-23).
+        $conversation->forceFill(['last_message_at' => $conversation->messages()->max('created_at')])->save();
     }
 
     /**

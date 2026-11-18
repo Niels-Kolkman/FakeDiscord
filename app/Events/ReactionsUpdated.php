@@ -33,7 +33,7 @@ class ReactionsUpdated implements ShouldBroadcastNow
 
     public function broadcastOn(): PrivateChannel
     {
-        return new PrivateChannel(MessageSent::channelName((int) $this->message->channel_id));
+        return new PrivateChannel($this->message->broadcastChannel());
     }
 
     public function broadcastAs(): string
@@ -42,13 +42,14 @@ class ReactionsUpdated implements ShouldBroadcastNow
     }
 
     /**
-     * @return array{message_id: int, channel_id: int, user_id: int, emoji: string, added: bool, reactions: list<array<string, mixed>>}
+     * @return array{message_id: int, channel_id: int|null, conversation_id: int|null, user_id: int, emoji: string, added: bool, reactions: list<array<string, mixed>>}
      */
     public function broadcastWith(): array
     {
         return [
             'message_id' => (int) $this->message->id,
-            'channel_id' => (int) $this->message->channel_id,
+            'channel_id' => $this->message->channel_id === null ? null : (int) $this->message->channel_id,
+            'conversation_id' => $this->message->conversation_id === null ? null : (int) $this->message->conversation_id,
             'user_id' => $this->userId,
             'emoji' => $this->emoji,
             'added' => $this->added,

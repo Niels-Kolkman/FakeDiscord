@@ -146,7 +146,7 @@ class MessageFeedTest extends TestCase
 
         $this->assertSame(['messages', 'next_cursor'], array_keys($payload));
         $this->assertSame(array_slice($ids, 1), array_column($payload['messages'], 'id'));
-        $this->assertSame(['id', 'channel_id', 'content', 'created_at', 'edited_at', 'pinned_at', 'author', 'reply_to', 'reactions', 'attachments'], array_keys($payload['messages'][0]));
+        $this->assertSame(['id', 'channel_id', 'conversation_id', 'content', 'created_at', 'edited_at', 'pinned_at', 'author', 'reply_to', 'reactions', 'attachments'], array_keys($payload['messages'][0]));
         $this->assertIsString($payload['next_cursor']);
         $this->assertSame(['messages' => [], 'next_cursor' => null], MessageFeed::empty()->toPayload());
     }

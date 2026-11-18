@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Events\MessageSent;
 use App\Support\Reactions;
 use Database\Factories\MessageFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -91,6 +92,18 @@ class Message extends Model
     public function author(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    /**
+     * The private broadcast channel (without "private-") its events go out
+     * on: "channel.{id}" for a server channel, "conversation.{id}" for a
+     * DM (ISSUE-23). Both are authorised in routes/channels.php.
+     */
+    public function broadcastChannel(): string
+    {
+        return $this->conversation_id !== null
+            ? Conversation::broadcastChannelName((int) $this->conversation_id)
+            : MessageSent::channelName((int) $this->channel_id);
     }
 
     /**
@@ -234,7 +247,9 @@ class Message extends Model
      * `attachments` (ISSUE-19) carry signed URLs (MessageAttachment::toPayload()).
      * `reply_to` (ISSUE-20) is replyPreview(); `pinned_at` is NULL unless pinned.
      *
-     * @return array{id: int, channel_id: int|null, content: string, created_at: string|null, edited_at: string|null, pinned_at: string|null, author: array{id: int, name: string, username: string, avatar_url: string, profile_url: string}|null, reply_to: array<string, mixed>|null, reactions: list<array<string, mixed>>, attachments: list<array<string, mixed>>}
+     * `conversation_id` (ISSUE-23) is set instead of `channel_id` for a DM.
+     *
+     * @return array{id: int, channel_id: int|null, conversation_id: int|null, content: string, created_at: string|null, edited_at: string|null, pinned_at: string|null, author: array{id: int, name: string, username: string, avatar_url: string, profile_url: string}|null, reply_to: array<string, mixed>|null, reactions: list<array<string, mixed>>, attachments: list<array<string, mixed>>}
      */
     public function toPayload(?User $viewer = null): array
     {
@@ -251,6 +266,7 @@ class Message extends Model
         return [
             'id' => (int) $this->id,
             'channel_id' => $this->channel_id === null ? null : (int) $this->channel_id,
+            'conversation_id' => $this->conversation_id === null ? null : (int) $this->conversation_id,
             'content' => (string) $this->content,
             'created_at' => $this->created_at?->toIso8601String(),
             'edited_at' => $this->edited_at?->toIso8601String(),

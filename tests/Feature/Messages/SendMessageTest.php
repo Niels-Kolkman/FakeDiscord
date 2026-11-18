@@ -121,6 +121,7 @@ class SendMessageTest extends TestCase
         $response->assertExactJson(['message' => [
             'id' => $message->id,
             'channel_id' => $this->channel->id,
+            'conversation_id' => null,
             'content' => 'Hello, world!',
             'created_at' => '2026-03-04T05:06:07+00:00',
             'edited_at' => null,

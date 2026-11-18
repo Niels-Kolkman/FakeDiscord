@@ -334,7 +334,7 @@ class EditDeleteMessageTest extends TestCase
         Event::assertDispatched(MessageDeleted::class, function (MessageDeleted $event): bool {
             return $event->broadcastOn()->name === "private-channel.{$this->channel->id}"
                 && $event->broadcastAs() === 'message.deleted'
-                && $event->broadcastWith() === ['id' => $this->message->id, 'channel_id' => $this->channel->id]
+                && $event->broadcastWith() === ['id' => $this->message->id, 'channel_id' => $this->channel->id, 'conversation_id' => null]
                 && $event->socket === '1234.5678';
         });
     }

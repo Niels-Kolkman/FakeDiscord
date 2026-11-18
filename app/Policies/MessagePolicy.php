@@ -8,9 +8,10 @@ use App\Models\User;
 /**
  * Discovered automatically for App\Models\Message (ISSUE-16).
  *
- * Only channel messages for now; DMs have no routes yet, so anything else
- * is denied. Authors must still be a member of the server: someone who
- * left keeps their messages but can no longer change them.
+ * Channel messages need membership of the server: someone who left keeps
+ * their messages but can no longer change them. Direct messages (ISSUE-23)
+ * need a seat in the conversation instead; there are no moderators there,
+ * so only the author edits and deletes, and nobody pins (yet).
  */
 class MessagePolicy
 {
@@ -64,8 +65,16 @@ class MessagePolicy
         return $message->user_id !== null && (int) $message->user_id === (int) $user->id;
     }
 
+    /**
+     * A member of the channel's server, or a participant of the
+     * conversation the message was sent in.
+     */
     private function isMember(User $user, Message $message): bool
     {
+        if ($message->conversation_id !== null) {
+            return $message->conversation?->hasParticipant($user) ?? false;
+        }
+
         return $message->channel?->server?->hasMember($user) ?? false;
     }
 }

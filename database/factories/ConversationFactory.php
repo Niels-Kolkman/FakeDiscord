@@ -27,6 +27,21 @@ class ConversationFactory extends Factory
     }
 
     /**
+     * The 1:1 DM of two users, with its direct_key and both participants.
+     */
+    public function between(User $a, User $b): static
+    {
+        return $this->state(fn () => [
+            'type' => Conversation::TYPE_DIRECT,
+            'name' => null,
+            'owner_id' => null,
+            'direct_key' => Conversation::directKey($a, $b),
+        ])->afterCreating(function (Conversation $conversation) use ($a, $b): void {
+            $conversation->users()->attach([$a->getKey(), $b->getKey()]);
+        });
+    }
+
+    /**
      * A named group DM with an owner.
      */
     public function group(): static

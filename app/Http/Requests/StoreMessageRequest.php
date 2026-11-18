@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Models\Channel;
+use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\MessageAttachment;
 use App\Models\Server;
@@ -23,6 +24,10 @@ use Illuminate\Validation\Validator;
  *
  * Replies (ISSUE-20): `reply_to_id` is the message being answered. It must
  * be a message of this channel that has not been deleted.
+ *
+ * Direct messages (ISSUE-23) use the same rules, with the route's
+ * conversation as the target (target()) and ConversationPolicy::sendMessage
+ * deciding who may post.
  */
 class StoreMessageRequest extends FormRequest
 {
@@ -31,10 +36,19 @@ class StoreMessageRequest extends FormRequest
 
     public function authorize(): bool
     {
+        $user = $this->user();
+        if ($user === null) {
+            return false;
+        }
+
+        $conversation = $this->route('conversation');
+        if ($conversation instanceof Conversation) {
+            return $user->can('sendMessage', $conversation);
+        }
+
         $server = $this->route('server');
 
-        return $server instanceof Server
-            && ($this->user()?->can('sendMessages', $server) ?? false);
+        return $server instanceof Server && $user->can('sendMessages', $server);
     }
 
     /**
@@ -51,7 +65,7 @@ class StoreMessageRequest extends FormRequest
                 'nullable',
                 'integer',
                 Rule::exists('messages', 'id')
-                    ->where('channel_id', $this->channel()->id)
+                    ->where($this->target() instanceof Conversation ? 'conversation_id' : 'channel_id', $this->target()->getKey())
                     ->whereNull('deleted_at'),
             ],
             'attachments' => ['sometimes', 'array', 'max:'.MessageAttachment::MAX_FILES],
@@ -111,7 +125,8 @@ class StoreMessageRequest extends FormRequest
     {
         return [
             function (Validator $validator): void {
-                if ($this->channel()->isVoice()) {
+                $target = $this->target();
+                if ($target instanceof Channel && $target->isVoice()) {
                     $validator->errors()->add('content', 'You cannot send messages in a voice channel.');
                 }
 
@@ -142,6 +157,17 @@ class StoreMessageRequest extends FormRequest
         return $channel;
     }
 
+    /**
+     * Where the message goes: the route's DM conversation (ISSUE-23), or
+     * else its channel.
+     */
+    public function target(): Channel|Conversation
+    {
+        $conversation = $this->route('conversation');
+
+        return $conversation instanceof Conversation ? $conversation : $this->channel();
+    }
+
     public function content(): string
     {
         return $this->string('content')->value();
@@ -155,7 +181,7 @@ class StoreMessageRequest extends FormRequest
     {
         $id = $this->integer('reply_to_id');
 
-        return $id > 0 ? $this->channel()->messages()->find($id) : null;
+        return $id > 0 ? $this->target()->messages()->find($id) : null;
     }
 
     /**

@@ -87,6 +87,8 @@ erDiagram
         string type "direct|group"
         string name "nullable"
         bigint owner_id FK "nullable, users, set null"
+        string direct_key "nullable, unique, lower:higher user id"
+        timestamp last_message_at "nullable"
         timestamps timestamps
     }
 
@@ -210,6 +212,7 @@ erDiagram
 | `server_members` | unique `(server_id, user_id)`, `user_id` | Member list / "my servers" |
 | `role_user` | PK `(role_id, user_id)`, `user_id` | A user's roles |
 | `conversation_participants` | unique `(conversation_id, user_id)`, `user_id` | DM list |
+| `conversations` | unique `direct_key`, `last_message_at` | One 1:1 DM per pair of users; DM list by latest activity |
 | `reactions` | unique `(message_id, emoji, user_id)`, `user_id` | Reaction counts; one reaction per emoji per user |
 | `friendships` | unique `(user_id, friend_id)`, `(friend_id, status)` | Outgoing and incoming requests |
 | `invites` | unique `code`, `server_id` | Invite lookup by code |
@@ -254,7 +257,9 @@ database, so these rules live in the app layer (validation, model events or poli
   exactly one `is_default` role.
 - `friendships`: the reverse pair (B→A when A→B already exists) is not allowed.
   `user_id <> friend_id`.
-- `conversations.type = 'direct'` has exactly two participants.
+- `conversations.type = 'direct'` has exactly two participants, and its
+  `direct_key` is `"{lower user id}:{higher user id}"` of those two (NULL for
+  group DMs). `last_message_at` is the newest message's time.
 - Values in the `status` and `type` columns. These are plain strings, not
   `enum()`, because Laravel turns `enum()` into a CHECK constraint on SQLite,
   and changing it later would mean rebuilding the whole table.

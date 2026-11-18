@@ -23,7 +23,7 @@ class MessageUpdated implements ShouldBroadcastNow
 
     public function broadcastOn(): PrivateChannel
     {
-        return new PrivateChannel(MessageSent::channelName((int) $this->message->channel_id));
+        return new PrivateChannel($this->message->broadcastChannel());
     }
 
     public function broadcastAs(): string
