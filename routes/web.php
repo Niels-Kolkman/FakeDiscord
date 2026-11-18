@@ -5,6 +5,7 @@ use App\Http\Controllers\AttachmentController;
 use App\Http\Controllers\ChannelCategoryController;
 use App\Http\Controllers\ChannelController;
 use App\Http\Controllers\ChannelLayoutController;
+use App\Http\Controllers\FriendController;
 use App\Http\Controllers\InviteController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\MessageSearchController;
@@ -60,6 +61,26 @@ Route::middleware('auth')->group(function () {
 
     // JSON for the profile popover.
     Route::get('/users/{user:username}/profile', [UserProfileController::class, 'show'])->name('users.profile');
+});
+
+// Friends (ISSUE-22): the page has ?tab=all|pending|blocked. Like servers,
+// this needs a verified email address. App\Policies\FriendshipPolicy
+// decides who may answer, cancel, remove or unblock; anyone who is not one
+// of the two users gets a 404. The other person hears about every change
+// through App\Events\FriendshipChanged on "App.Models.User.{id}".
+Route::middleware(['auth', 'verified'])->prefix('friends')->group(function () {
+    Route::get('/', [FriendController::class, 'index'])->name('friends.index');
+    Route::post('/', [FriendController::class, 'store'])
+        ->middleware('throttle:20,1')
+        ->name('friends.store');
+
+    Route::middleware('throttle:60,1')->whereNumber('friendship')->group(function () {
+        Route::post('/{friendship}/accept', [FriendController::class, 'accept'])->name('friends.accept');
+        Route::post('/{friendship}/decline', [FriendController::class, 'decline'])->name('friends.decline');
+        Route::delete('/{friendship}/request', [FriendController::class, 'cancel'])->name('friends.cancel');
+        Route::delete('/{friendship}/block', [FriendController::class, 'unblock'])->name('friends.unblock');
+        Route::delete('/{friendship}', [FriendController::class, 'destroy'])->name('friends.destroy');
+    });
 });
 
 // Servers need a verified email address. Who may do what is decided by

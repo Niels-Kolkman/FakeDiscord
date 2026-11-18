@@ -10,6 +10,15 @@
 
     <a href="{{ route('profile.edit') }}" class="mb-3 block w-full rounded bg-[#4e5058] py-2 text-center font-medium text-white hover:bg-[#6d6f78]">Edit profile</a>
 
+    {{-- Friends (ISSUE-22). The badge counts requests waiting for an answer; resources/js/friends.js keeps it live. --}}
+    @if (auth()->user()?->hasVerifiedEmail())
+        @php($friendRequests = \App\Models\Friendship::incomingCount(auth()->user()))
+        <a href="{{ route('friends.index', $friendRequests > 0 ? ['tab' => 'pending'] : []) }}" class="mb-3 flex w-full items-center justify-center gap-2 rounded bg-[#4e5058] py-2 font-medium text-white hover:bg-[#6d6f78]">
+            Friends
+            <span data-friend-request-badge @if ($friendRequests === 0) hidden @endif class="rounded-full bg-[#da373c] px-1.5 text-xs font-semibold">{{ $friendRequests }}</span>
+        </a>
+    @endif
+
     @if (request()->query('verified'))
         <div role="status" class="mb-4 rounded bg-green-900/40 px-3 py-2 text-sm text-green-300">
             Your email address is verified.
