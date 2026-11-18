@@ -77,4 +77,14 @@ jobs:
           cp .env.example .env
           php artisan key:generate
 
-      - run: composer test
+      # Same two commands as `composer test`, plus a JUnit log for the step below.
+      - name: Run tests
+        run: |
+          php artisan config:clear --ansi
+          php artisan test --log-junit=junit.xml
+
+      # Only on failure: show each failing test as an annotation on the run page,
+      # so the errors are visible without opening the raw job log.
+      - name: Annotate failing tests
+        if: failure()
+        run: php .github/scripts/annotate-junit.php junit.xml
