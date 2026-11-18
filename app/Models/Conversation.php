@@ -119,7 +119,7 @@ class Conversation extends Model
             return $this->name ?? __('Group DM');
         }
 
-        return $this->otherParticipant($viewer)?->name ?? __('Deleted User');
+        return $this->otherParticipant($viewer)->name ?? __('Deleted User');
     }
 
     /**
@@ -149,7 +149,7 @@ class Conversation extends Model
             ->where(function (Builder $query) use ($active): void {
                 $query->whereNotNull('last_message_at');
                 if ($active !== null) {
-                    $query->orWhereKey($active->getKey());
+                    $query->orWhere($query->qualifyColumn('id'), $active->getKey());
                 }
             })
             ->with('users')

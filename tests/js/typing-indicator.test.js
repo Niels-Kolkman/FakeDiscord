@@ -198,6 +198,12 @@ test('joins the typing presence channel of the channel', () => {
     assert.equal(echo.joined, 'typing.7');
 });
 
+test('a DM joins the presence channel it is given (ISSUE-23)', () => {
+    const { echo } = fakeEcho();
+    initTypingIndicator({ echo, channelId: undefined, channelName: 'conversation-typing.12', viewerId: 1, input: null, output: fakeOutput() });
+    assert.equal(echo.joined, 'conversation-typing.12');
+});
+
 test('does nothing without Echo', () => {
     assert.equal(initTypingIndicator({ echo: undefined, channelId: '7', viewerId: 1, input: null, output: fakeOutput() }), null);
 });

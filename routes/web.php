@@ -97,7 +97,9 @@ Route::middleware(['auth', 'verified'])->prefix('dms')->group(function () {
         ->middleware('throttle:30,1')
         ->name('dms.store');
 
-    Route::whereNumber('conversation')->scopeBindings()->group(function () {
+    // can:view runs before the form requests, so anyone who is not a
+    // participant gets ConversationPolicy's 404 on every route, never a 403.
+    Route::whereNumber('conversation')->scopeBindings()->middleware('can:view,conversation')->group(function () {
         Route::get('/{conversation}', [DirectMessageController::class, 'show'])->name('dms.show');
 
         Route::get('/{conversation}/messages', [ConversationMessageController::class, 'index'])
