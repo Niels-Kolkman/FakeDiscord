@@ -601,6 +601,48 @@ form, so the page also works without JavaScript.
   If Reverb is down, the change is still saved.
 - Sending allows 20 requests per minute, and the other actions allow 60.
 
+## Direct messages
+
+1:1 DMs (ISSUE-23) live under `/dms`, in the `['auth', 'verified']` group.
+Group DMs come with ISSUE-24.
+
+- **Opening a DM**: **Message** on the friends list posts `user_id` to
+  `POST /dms` (`DirectMessageController::store`), which goes to `/dms/{id}`.
+  `App\Actions\Conversations\OpenDirectConversation` allows friends and people
+  who share a server, never yourself, and never across a block in either
+  direction. Someone who blocked you gets the same error as a stranger.
+- **One conversation per pair**: `conversations.direct_key` is
+  `"{lower user id}:{higher user id}"` with a unique index, so both people end
+  up in the same conversation, also when they open it at the same moment
+  (`createOrFirst()`). Existing DMs are backfilled by the migration.
+- **Same messaging components as channels**: the DM page renders the shared
+  `messages/panel.blade.php` (also used by `servers/show.blade.php`), and
+  `resources/js/channel-messages.js` drives it the same way: history paging,
+  sending with attachments and replies, editing, deleting, reactions and typing
+  indicators. The routes mirror the channel ones (`/dms/{id}/messages`,
+  `/dms/{id}/messages/{message}`, `…/reactions`) and reuse the same actions and
+  form requests. A DM has no moderators, so only authors edit and delete, and
+  there are no pins.
+- **Privacy**: only the two participants see a conversation
+  (`App\Policies\ConversationPolicy`). Everyone else gets a **404** on every DM
+  route (`can:view,conversation`), so ids do not tell anyone who talks to whom.
+  After a block, or once the other account is deleted, the history stays
+  readable, but a notice replaces the composer.
+- **Private broadcast channel per conversation**: `MessageSent`,
+  `MessageUpdated`, `MessageDeleted` and `ReactionsUpdated` for DM messages go
+  out on `private-conversation.{id}` (`Message::broadcastChannel()`), and typing
+  goes on the presence channel `conversation-typing.{id}`. `routes/channels.php`
+  lets only the participants subscribe. Payloads carry `conversation_id`
+  (`channel_id` is `null`).
+- **DM list in the sidebar**: the friends page and the DM page list your DMs
+  between Friends and your servers, newest activity first
+  (`conversations.last_message_at`, `Conversation::sidebarFor()`). Like Discord,
+  a DM shows up for the other person only once someone writes in it. Every new
+  message sends `App\Events\ConversationActivity` (`.conversation.activity`,
+  ids and time only) to both participants' `App.Models.User.{id}` channels, and
+  `resources/js/direct-messages.js` reloads `[data-dm-list]`, so the
+  conversation moves to the top live.
+
 ## Frontend
 
 - Entry points: `resources/css/app.css` and `resources/js/app.js`, set in `vite.config.js`.
