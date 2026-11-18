@@ -43,6 +43,14 @@ class Server extends Model
         return $this->memberships()->where('user_id', $user->getKey())->exists();
     }
 
+    /**
+     * The user's membership row, or null when they are not a member.
+     */
+    public function membershipOf(User $user): ?ServerMember
+    {
+        return $this->memberships()->where('user_id', $user->getKey())->first();
+    }
+
     public function hasBanned(User $user): bool
     {
         return $this->bans()->where('user_id', $user->getKey())->exists();

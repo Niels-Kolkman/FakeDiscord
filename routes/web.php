@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AccountSettingsController;
 use App\Http\Controllers\AttachmentController;
+use App\Http\Controllers\BanController;
 use App\Http\Controllers\ChannelCategoryController;
 use App\Http\Controllers\ChannelController;
 use App\Http\Controllers\ChannelLayoutController;
@@ -11,6 +12,7 @@ use App\Http\Controllers\DirectMessageController;
 use App\Http\Controllers\FriendController;
 use App\Http\Controllers\GroupConversationController;
 use App\Http\Controllers\InviteController;
+use App\Http\Controllers\MemberModerationController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\MessageSearchController;
 use App\Http\Controllers\PinController;
@@ -264,6 +266,27 @@ Route::middleware(['auth', 'verified'])->group(function () {
                     ->name('roles.members.destroy');
             });
         });
+
+    // Moderation (ISSUE-29). The members page needs any of Kick, Ban or
+    // Timeout Members (ServerPolicy::moderateMembers); each action checks
+    // ServerPolicy::kick / ban / timeout for that {user}, which must be a
+    // member below the moderator in the role hierarchy (a non-member is a
+    // 404). The ban list and unbanning need Ban Members.
+    Route::prefix('/servers/{server}')->middleware('throttle:60,1')->group(function () {
+        Route::get('/members', [MemberModerationController::class, 'index'])->name('members.index');
+        Route::get('/bans', [BanController::class, 'index'])->name('bans.index');
+
+        Route::whereNumber('user')->group(function () {
+            Route::post('/members/{user}/kick', [MemberModerationController::class, 'kick'])->name('members.kick');
+            // Fields `reason` (optional) and `delete_messages` (seconds).
+            Route::post('/members/{user}/ban', [MemberModerationController::class, 'ban'])->name('members.ban');
+            // Field `duration` (seconds).
+            Route::put('/members/{user}/timeout', [MemberModerationController::class, 'timeout'])->name('members.timeout');
+            Route::delete('/members/{user}/timeout', [MemberModerationController::class, 'removeTimeout'])->name('members.timeout.destroy');
+
+            Route::delete('/bans/{user}', [BanController::class, 'destroy'])->name('bans.destroy');
+        });
+    });
 
     // Invites (ISSUE-11). Any member can create one; the owner and the
     // inviter can revoke it (App\Policies\InvitePolicy).

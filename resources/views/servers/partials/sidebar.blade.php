@@ -83,6 +83,13 @@
         @can('manageRoles', $server)
             <a href="{{ route('roles.index', $server) }}" class="block rounded px-2 py-1 text-[#b5bac1] hover:bg-[#35373c] hover:text-white">Roles</a>
         @endcan
+        {{-- Moderation (ISSUE-29): Kick, Ban or Timeout Members. --}}
+        @can('moderateMembers', $server)
+            <a href="{{ route('members.index', $server) }}" class="block rounded px-2 py-1 text-[#b5bac1] hover:bg-[#35373c] hover:text-white">Members</a>
+        @endcan
+        @can('manageBans', $server)
+            <a href="{{ route('bans.index', $server) }}" class="block rounded px-2 py-1 text-[#b5bac1] hover:bg-[#35373c] hover:text-white">Bans</a>
+        @endcan
         {{-- The owner gets the same link; the page explains the transfer. --}}
         <a href="{{ route('servers.leave.confirm', $server) }}" class="block rounded px-2 py-1 text-[#f23f43] hover:bg-[#35373c]">Leave server</a>
         <a href="{{ route('dashboard') }}" class="block rounded px-2 py-1 text-[#b5bac1] hover:bg-[#35373c] hover:text-white">Back to dashboard</a>

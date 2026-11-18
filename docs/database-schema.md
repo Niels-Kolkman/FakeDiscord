@@ -43,6 +43,7 @@ erDiagram
         bigint user_id FK "cascade"
         string nickname "nullable"
         timestamp joined_at
+        timestamp timed_out_until "nullable"
         timestamps timestamps
     }
 

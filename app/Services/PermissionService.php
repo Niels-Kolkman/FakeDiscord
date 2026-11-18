@@ -7,6 +7,8 @@ use App\Models\Channel;
 use App\Models\Role;
 use App\Models\Server;
 use App\Models\User;
+use Carbon\CarbonInterface;
+use Illuminate\Auth\Access\Response;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 
@@ -21,7 +23,9 @@ use Illuminate\Database\Eloquent\Collection as EloquentCollection;
  * - the owner has every permission (Permission::all()), whatever their roles;
  * - everyone else has the @everyone role's flags OR-ed with the flags of
  *   every role they hold;
- * - Administrator in that mask turns into every permission.
+ * - Administrator in that mask turns into every permission;
+ * - a timed-out member (ISSUE-29) keeps only View Channels until the
+ *   timeout runs out.
  *
  * Channel permissions are the server permissions for now. ISSUE-28 adds
  * per-channel role overrides in channelPermissions(); callers that ask
@@ -42,13 +46,99 @@ class PermissionService
             return Permission::all();
         }
 
-        if (! $server->hasMember($user)) {
+        $membership = $server->membershipOf($user);
+
+        if ($membership === null) {
             return 0;
         }
 
         $mask = $this->roleMask($user, $server);
 
-        return Permission::Administrator->in($mask) ? Permission::all() : $mask;
+        if (Permission::Administrator->in($mask)) {
+            return Permission::all();
+        }
+
+        // A timed-out member (ISSUE-29) keeps only TIMED_OUT_MASK: reading.
+        // Administrators cannot be timed out, like on Discord.
+        return $membership->isTimedOut() ? $mask & self::TIMED_OUT_MASK : $mask;
+    }
+
+    /**
+     * What a timed-out member keeps: reading the channels they could see.
+     */
+    public const TIMED_OUT_MASK = Permission::ViewChannels->value;
+
+    /**
+     * Is the member timed out in the server right now (ISSUE-29)? Never true
+     * for the owner or an Administrator, whose permissions a timeout does not
+     * touch.
+     */
+    public function isTimedOut(User $user, Server $server): bool
+    {
+        return $this->timedOutUntil($user, $server) !== null;
+    }
+
+    /**
+     * When the member's timeout runs out, or null when they are not timed
+     * out (see isTimedOut()).
+     */
+    public function timedOutUntil(User $user, Server $server): ?CarbonInterface
+    {
+        if ($server->isOwnedBy($user)) {
+            return null;
+        }
+
+        $membership = $server->membershipOf($user);
+
+        if ($membership === null || ! $membership->isTimedOut()
+            || Permission::Administrator->in($this->roleMask($user, $server))) {
+            return null;
+        }
+
+        return $membership->timed_out_until;
+    }
+
+    /**
+     * May $actor kick, ban or time out $target in the server (ISSUE-29)?
+     * Like Discord:
+     *
+     * - $actor needs $permission (Kick, Ban or Timeout Members);
+     * - $target must be a member (a 404 otherwise), and not $actor;
+     * - nobody can act on the owner;
+     * - anyone but the owner can only act on members whose highest role is
+     *   below their own (Administrator does not lift this);
+     * - Administrators cannot be timed out.
+     *
+     * The denial message says why.
+     */
+    public function moderationCheck(User $actor, User $target, Server $server, Permission $permission): Response
+    {
+        if (! $this->has($actor, $server, $permission)) {
+            return Response::deny("You need the {$permission->label()} permission.");
+        }
+
+        if (! $server->hasMember($target)) {
+            return Response::denyAsNotFound('This user is not a member of the server.');
+        }
+
+        if ((int) $actor->getKey() === (int) $target->getKey()) {
+            return Response::deny('You cannot do this to yourself.');
+        }
+
+        if ($server->isOwnedBy($target)) {
+            return Response::deny('The server owner cannot be kicked, banned or timed out.');
+        }
+
+        if ($this->highestPosition($target, $server) >= $this->highestPosition($actor, $server)) {
+            return Response::deny('You can only do this to members whose highest role is below yours.');
+        }
+
+        if ($permission === Permission::TimeoutMembers
+            && Permission::Administrator->in($this->roleMask($target, $server))) {
+            return Response::deny('Administrators cannot be timed out.');
+        }
+
+        return Response::allow();
     }
 
     public function has(User $user, Server $server, Permission $permission): bool

@@ -66,6 +66,8 @@
             // People the viewer blocked (ISSUE-25): the history already
             // leaves their messages out; this hides live ones and quotes.
             $blockedUserIds = auth()->user() ? \App\Models\Friendship::blockedIds(auth()->user()) : [];
+            // Timeouts (ISSUE-29): the composer is replaced by when it ends.
+            $timedOutUntil = auth()->user() ? app(\App\Services\PermissionService::class)->timedOutUntil(auth()->user(), $server) : null;
         @endphp
         @include('messages.panel', ['panel' => [
             'target' => 'channel',
@@ -78,6 +80,9 @@
             'broadcastChannel' => \App\Events\MessageSent::channelName((int) $channel->id),
             'typingChannel' => 'typing.'.$channel->id,
             'start' => 'messages.partials.channel-start',
+            'readOnlyNotice' => $timedOutUntil
+                ? 'You are timed out until '.$timedOutUntil->toDayDateTimeString().'. You can read messages but not send or react.'
+                : null,
         ]])
     @else
         <section class="flex flex-1 flex-col items-center justify-center p-8 text-center">

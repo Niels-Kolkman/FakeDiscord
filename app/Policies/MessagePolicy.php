@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\Message;
 use App\Models\User;
+use App\Services\PermissionService;
 
 /**
  * Discovered automatically for App\Models\Message (ISSUE-16).
@@ -19,6 +20,8 @@ use App\Models\User;
  */
 class MessagePolicy
 {
+    public function __construct(private readonly PermissionService $permissions) {}
+
     /**
      * Like Discord, only the author can edit a message; moderators cannot.
      */
@@ -45,7 +48,14 @@ class MessagePolicy
      */
     public function react(User $user, Message $message): bool
     {
-        return $this->canSee($user, $message);
+        if (! $this->canSee($user, $message)) {
+            return false;
+        }
+
+        // Timed-out members (ISSUE-29) can read but not react at all.
+        $channel = $message->channel;
+
+        return $channel === null || ! $this->permissions->isTimedOut($user, $channel->server);
     }
 
     /**
