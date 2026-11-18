@@ -235,17 +235,17 @@ Users with a verified email address manage servers under `/servers`
   on the disk set by `SERVER_ICON_DISK` (default `public`). Servers without an
   icon show their initials (`<x-server-icon :server="$server" />`).
 - **Authorisation** is in `App\Policies\ServerPolicy`: `create` needs a
-  verified email, `view` needs membership, and `update` and `delete` are owner
-  only. Roles and their permission flags exist (see [Roles](#roles)) but are
-  not enforced until ISSUE-27.
+  verified email, `view` needs membership, `update` (name and icon) needs
+  Manage Server, and `delete` is owner only. See [Permissions](#permissions).
 
 ### Roles
 
 Roles (ISSUE-26) have a name (up to 100 characters), an optional `#rrggbb`
 colour, a `position` (higher is higher in the hierarchy) and a permission
-bitmask in `roles.permissions`. Managing them needs `ServerPolicy::manageRoles`,
-owner only for now. The pages are linked from the server settings page and the
-channel sidebar ("Roles").
+bitmask in `roles.permissions`. Managing them needs `ServerPolicy::manageRoles`
+(Manage Roles), and an existing role can only be changed by someone above it
+(see [Permissions](#permissions)). The pages are linked from the server
+settings page and the channel sidebar ("Roles").
 
 - **Permission flags** are the cases of `App\Enums\Permission`, using Discord's
   bit values: Create Invite, Kick Members, Ban Members, Administrator, Manage
@@ -254,9 +254,9 @@ channel sidebar ("Roles").
   `Permission::mask(...)`, `Permission::fromMask($bits)`,
   `$role->hasPermission(Permission::X)` and `$role->permissionList()`. Every
   flag stays within bits 0–62, because SQLite stores the column as a signed
-  64-bit integer. **The flags are only stored for now.** ISSUE-27 works out a
-  member's effective permissions and makes the policies use them; until then the
-  policies below still give these rights to the owner (or to every member).
+  64-bit integer. What each flag allows is in [Permissions](#permissions).
+  Kick Members, Ban Members and Timeout Members are stored but have nothing to
+  allow yet (ISSUE-29).
 - **@everyone**: every server has exactly one default role (`is_default`,
   position 0), created by `CreateServer`. Every member has it implicitly, so it
   has no `role_user` rows. It starts with `Permission::everyoneDefaults()`
@@ -272,8 +272,9 @@ channel sidebar ("Roles").
   `App\Actions\Roles\MoveRole` then renumbers the other roles 1..n.
 - **Create** (`/servers/{id}/roles/create`): name, colour (or "No colour") and
   the permission checkboxes (`permissions[]` holds the flag values). The name
-  `@everyone` is reserved, and repeated whitespace is collapsed. New roles go to
-  the top. A server can have at most 250 roles, `@everyone` included
+  `@everyone` is reserved, and repeated whitespace is collapsed. The owner's new
+  roles go to the top; anyone else's go just below their own highest role. A
+  server can have at most 250 roles, `@everyone` included
   (`App\Actions\Roles\CreateRole`).
 - **Edit** (`/servers/{id}/roles/{role}/settings`): change the same fields, see
   who has the role, give it to members and take it away, or delete it. Deleting
@@ -285,7 +286,45 @@ channel sidebar ("Roles").
   The member sidebar groups and colours members by their highest role (see
   below). Leaving a server removes the member's roles there.
 - A role of another server is a 404 (scoped bindings), and anyone without
-  `manageRoles` gets a 403. Every role route allows 60 requests a minute.
+  `manageRoles` gets a 403, as does opening, changing, moving, deleting, giving
+  or taking a role that is not below your own highest role
+  (`RolePolicy::manage`). Every role route allows 60 requests a minute.
+
+### Permissions
+
+`App\Services\PermissionService` (ISSUE-27) works out what a member may do, and
+the policies ask it; nothing else reads `roles.permissions` to decide.
+
+- **Effective permissions** in a server: none for someone who is not a member;
+  every flag for the owner; for everyone else the `@everyone` flags OR-ed with
+  the flags of every role they hold. **Administrator** turns into every flag.
+  A server without an `@everyone` row counts as having the defaults. Nothing is
+  cached, so a change to a role counts from the next check.
+- **Channel permissions** (`channelPermissions()`) are the server permissions
+  for now; ISSUE-28 adds per-channel overrides there.
+- **What each flag allows**:
+
+  | Flag | Allows | Ability |
+  | --- | --- | --- |
+  | View Channels | open a channel, read its history and pins, find its messages in search, listen to its live and typing events; channels you cannot see are left out of the sidebar | `ChannelPolicy::view` |
+  | Send Messages | post in a channel you can see | `ChannelPolicy::sendMessages` |
+  | Attach Files | upload files with a message (else a 422 on `attachments`, and no attach button) | `ChannelPolicy::attachFiles` |
+  | Add Reactions | react with an emoji nobody used yet on that message; joining an existing reaction and taking yours back needs only View Channels | `MessagePolicy::addReaction` |
+  | Manage Messages | delete and pin anyone's messages (editing stays author only) | `ChannelPolicy::manageMessages`, `MessagePolicy::delete` / `pin` |
+  | Manage Channels | create, edit, reorder and delete channels and categories | `ServerPolicy::manageChannels` |
+  | Manage Server | rename the server and change its icon; see and revoke every invite | `ServerPolicy::update`, `manageInvites` |
+  | Create Invite | create invites | `ServerPolicy::createInvite` |
+  | Manage Roles | the role pages, for roles below your own highest role | `ServerPolicy::manageRoles`, `RolePolicy::manage` |
+
+- **Owner only**, also for administrators: deleting the server and
+  transferring ownership. Viewing a server and leaving it need membership only.
+- **Role hierarchy** (like Discord): a member with Manage Roles manages only the
+  roles below their own highest role, and `@everyone`, which is below everyone.
+  Administrator does not lift this; only the owner manages every role. A move
+  may not take a role past your highest role. You can only turn on or off the
+  flags you have yourself (`StoreRoleRequest`). A member whose only role is
+  `@everyone` cannot create roles.
+- Every channel ability needs View Channels first. DMs have no permissions.
 
 ### Members and leaving
 
@@ -315,11 +354,10 @@ channel sidebar ("Roles").
 ## Channels and categories
 
 A server's sidebar lists its uncategorised channels first, then its
-**categories** (`channel_categories`), each with its own channels. Members can
-open any channel at `/servers/{id}/channels/{channel}`. The header shows the
-channel name and **topic**. Everything else needs
-`ServerPolicy::manageChannels`, which is owner only until the Manage Channels
-permission is enforced (ISSUE-27).
+**categories** (`channel_categories`), each with its own channels. Members with
+View Channels can open a channel at `/servers/{id}/channels/{channel}`. The
+header shows the channel name and **topic**. Everything else needs
+`ServerPolicy::manageChannels` (Manage Channels, see [Permissions](#permissions)).
 
 - **Create channel** (`/servers/{id}/channels/create`, optional `?category={id}`):
   name, optional topic (up to 1024 characters) and optional category. Text
@@ -411,8 +449,7 @@ Voice channels have no messages.
   `DELETE /servers/{id}/channels/{channel}/messages/{message}`, which returns
   `204`. The author can delete their own messages. Moderators can delete anyone's,
   including messages of deleted accounts (`MessagePolicy::delete`,
-  `ServerPolicy::manageMessages`, owner only until the Manage Messages
-  permission is enforced in ISSUE-27). Messages are **soft deleted** (`messages.deleted_at`): they vanish
+  `ChannelPolicy::manageMessages`, the Manage Messages permission). Messages are **soft deleted** (`messages.deleted_at`): they vanish
   from the channel and the history API, but the row stays so replies keep their
   `reply_to_id`. A deleted message is a `404` for further edits and deletes.
   Without JavaScript, Delete is a normal form that redirects back to the
@@ -532,7 +569,7 @@ Members only; limited to 60 requests per minute.
   are loaded until it is (at most 20 pages). Quotes follow live edits and
   deletes of the original.
 - **Pinning**: moderators (`MessagePolicy::pin`, i.e.
-  `ServerPolicy::manageMessages`, the owner until ISSUE-27) get Pin / Unpin
+  `ChannelPolicy::manageMessages`, the Manage Messages permission) get Pin / Unpin
   on every message: `POST` / `DELETE /servers/{id}/channels/{channel}/messages/{message}/pin`.
   Pinned messages show 📌 and have `pinned_at` set (`pinned_by_id` remembers
   who pinned them). A channel holds at most 50 pins (`422` on `message`
