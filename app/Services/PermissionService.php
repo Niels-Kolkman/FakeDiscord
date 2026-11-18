@@ -159,6 +159,7 @@ class PermissionService
      * Where the user stands in the server: their server permission mask,
      * whether channel overrides can still change it ('final' is true for
      * the owner, Administrator and non-members), and the ids of the
+     *
      * @everyone role and the other roles they hold, for the overrides.
      *
      * The mask is the flags of @everyone OR-ed with those of every role the
@@ -222,13 +223,18 @@ class PermissionService
             return collect();
         }
 
-        return ChannelPermissionOverride::query()
+        $rows = ChannelPermissionOverride::query()
             ->whereIn('channel_id', $channelIds)
             ->whereIn('role_id', $roleIds)
-            ->get(['channel_id', 'role_id', 'allow', 'deny'])
-            ->groupBy('channel_id')
-            ->map(fn (Collection $rows): Collection => $rows->keyBy('role_id'))
-            ->toBase();
+            ->get(['channel_id', 'role_id', 'allow', 'deny']);
+
+        /** @var array<int, array<int, ChannelPermissionOverride>> $byChannel */
+        $byChannel = [];
+        foreach ($rows as $row) {
+            $byChannel[(int) $row->channel_id][(int) $row->role_id] = $row;
+        }
+
+        return collect($byChannel)->map(fn (array $byRole): Collection => collect($byRole));
     }
 
     /**

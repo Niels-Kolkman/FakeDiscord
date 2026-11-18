@@ -186,19 +186,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::patch('/servers/{server}/channels/{channel}', [ChannelController::class, 'update'])->name('channels.update');
         Route::delete('/servers/{server}/channels/{channel}', [ChannelController::class, 'destroy'])->name('channels.destroy');
 
-        // Channel permissions (ISSUE-28): private toggle and per-role
-        // overrides. {role} cannot be scoped to {channel}, so the controller
-        // checks that the channel and role belong to {server} (404 if not).
-        Route::withoutScopedBindings()->group(function () {
-            Route::get('/servers/{server}/channels/{channel}/permissions', [ChannelPermissionController::class, 'edit'])
-                ->name('channels.permissions.edit');
-            Route::patch('/servers/{server}/channels/{channel}/privacy', [ChannelPermissionController::class, 'updatePrivacy'])
-                ->name('channels.privacy.update');
-            Route::put('/servers/{server}/channels/{channel}/permissions/{role}', [ChannelPermissionController::class, 'updateRole'])
-                ->whereNumber('role')
-                ->name('channels.permissions.update');
-        });
-
         // Messages (ISSUE-14): any member can post; MessageSent broadcasts
         // the message on the private "channel.{id}" channel. History
         // (ISSUE-15) is cursor paginated: ?before={cursor} for older pages.
@@ -251,6 +238,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::patch('/servers/{server}/categories/{category}', [ChannelCategoryController::class, 'update'])->name('categories.update');
         Route::delete('/servers/{server}/categories/{category}', [ChannelCategoryController::class, 'destroy'])->name('categories.destroy');
     });
+
+    // Channel permissions (ISSUE-28): private toggle and per-role overrides.
+    // Not scope-bound ({role} would be looked up on the channel), so the
+    // controller checks that the channel and role belong to {server}: 404
+    // if not.
+    Route::get('/servers/{server}/channels/{channel}/permissions', [ChannelPermissionController::class, 'edit'])
+        ->name('channels.permissions.edit');
+    Route::patch('/servers/{server}/channels/{channel}/privacy', [ChannelPermissionController::class, 'updatePrivacy'])
+        ->name('channels.privacy.update');
+    Route::put('/servers/{server}/channels/{channel}/permissions/{role}', [ChannelPermissionController::class, 'updateRole'])
+        ->whereNumber('role')
+        ->name('channels.permissions.update');
 
     // Roles (ISSUE-26): ServerPolicy::manageRoles (owner only for now) on
     // every route. Scoped bindings make another server's role a 404, and

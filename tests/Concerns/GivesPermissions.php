@@ -3,6 +3,8 @@
 namespace Tests\Concerns;
 
 use App\Enums\Permission;
+use App\Models\Channel;
+use App\Models\ChannelPermissionOverride;
 use App\Models\Role;
 use App\Models\Server;
 use App\Models\ServerMember;
@@ -52,6 +54,17 @@ trait GivesPermissions
         $this->giveRole($user, $this->makeRole($server, $name, Permission::mask(...$permissions)));
 
         return $user;
+    }
+
+    /**
+     * A channel override (ISSUE-28) for $role, replacing any existing one.
+     */
+    protected function overrideChannel(Channel $channel, Role $role, int $allow = 0, int $deny = 0): ChannelPermissionOverride
+    {
+        return ChannelPermissionOverride::query()->updateOrCreate(
+            ['channel_id' => $channel->id, 'role_id' => $role->id],
+            ['allow' => $allow, 'deny' => $deny],
+        );
     }
 
     /**

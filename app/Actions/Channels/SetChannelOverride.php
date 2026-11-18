@@ -28,8 +28,8 @@ class SetChannelOverride
 
         return DB::transaction(function () use ($channel, $role, $states): ?ChannelPermissionOverride {
             $override = $channel->permissionOverrides()->where('role_id', $role->getKey())->lockForUpdate()->first();
-            $allow = (int) ($override?->allow ?? 0);
-            $deny = (int) ($override?->deny ?? 0);
+            $allow = $override === null ? 0 : (int) $override->allow;
+            $deny = $override === null ? 0 : (int) $override->deny;
 
             foreach (Permission::channelOverridable() as $permission) {
                 $state = $states[$permission->name] ?? null;
