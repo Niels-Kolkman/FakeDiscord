@@ -40,6 +40,10 @@ use Illuminate\Support\Str;
  * Each notification is stored first and then broadcast with the same id
  * (so the inbox can mark that row read); a failed broadcast is reported
  * and the rest carry on, like the message events.
+ *
+ * People who muted the channel or its server (ISSUE-34,
+ * NotificationMutes) still get the notification, with `push: false` in
+ * the broadcast: no browser notification pops up for it.
  */
 class MentionNotifier
 {
@@ -64,9 +68,12 @@ class MentionNotifier
             return;
         }
 
+        // Mute settings (ISSUE-34): stored and counted, but no browser notification.
+        $muted = array_flip(NotificationMutes::mutedUserIds($message->channel, array_keys($new)));
+
         foreach (User::query()->whereKey(array_keys($new))->orderBy('id')->get() as $user) {
             [$reason, $roleName] = $new[(int) $user->id];
-            $notification = new MentionedInMessage($message, $reason, $roleName);
+            $notification = new MentionedInMessage($message, $reason, $roleName, push: ! isset($muted[(int) $user->id]));
             $notification->id = (string) Str::uuid();
 
             Notification::sendNow($user, $notification, ['database']);

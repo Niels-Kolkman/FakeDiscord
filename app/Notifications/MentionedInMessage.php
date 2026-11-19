@@ -36,6 +36,9 @@ class MentionedInMessage extends Notification
         public readonly Message $message,
         public readonly string $reason = self::REASON_USER,
         public readonly ?string $roleName = null,
+        // Browser notifications (ISSUE-34): false when the recipient muted
+        // the channel or its server (App\Support\NotificationMutes).
+        public readonly bool $push = true,
     ) {}
 
     /**
@@ -76,16 +79,22 @@ class MentionedInMessage extends Notification
      * (BroadcastNotificationCreated); the "sync" connection sends it right
      * away, like the app's ShouldBroadcastNow events, whatever
      * QUEUE_CONNECTION is.
+     *
+     * `push` tells resources/js/push-notifications.js whether it may show
+     * a browser notification (ISSUE-34); it is not stored.
      */
     public function toBroadcast(object $notifiable): BroadcastMessage
     {
-        return (new BroadcastMessage(NotificationInbox::present(
-            (string) $this->id,
-            $this->toArray($notifiable),
-            readAt: null,
-            createdAt: $this->message->created_at,
-            author: $this->message->author,
-        )))->onConnection('sync');
+        return (new BroadcastMessage([
+            ...NotificationInbox::present(
+                (string) $this->id,
+                $this->toArray($notifiable),
+                readAt: null,
+                createdAt: $this->message->created_at,
+                author: $this->message->author,
+            ),
+            'push' => $this->push,
+        ]))->onConnection('sync');
     }
 
     public function broadcastType(): string

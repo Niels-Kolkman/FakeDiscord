@@ -9,6 +9,7 @@ use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\MessageAttachment;
 use App\Models\User;
+use App\Support\DirectMessageNotifier;
 use App\Support\MentionNotifier;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -34,7 +35,9 @@ use Throwable;
  * target: the message broadcasts on "conversation.{id}", its files go
  * under attachments/conversations/{id}/, and the conversation's
  * last_message_at moves, so it rises to the top of the DM list. Every
- * participant hears about that through ConversationActivity.
+ * participant hears about that through ConversationActivity, and the
+ * others get DirectMessageReceived for a browser notification (ISSUE-34,
+ * App\Support\DirectMessageNotifier).
  *
  * In a server channel, the message's mentions (ISSUE-33, stored on save by
  * App\Support\Mentions) notify the people mentioned
@@ -42,7 +45,10 @@ use Throwable;
  */
 class SendMessage
 {
-    public function __construct(private readonly MentionNotifier $mentions) {}
+    public function __construct(
+        private readonly MentionNotifier $mentions,
+        private readonly DirectMessageNotifier $directMessages,
+    ) {}
 
     /**
      * @param  list<UploadedFile>  $files  already validated (StoreMessageRequest)
@@ -98,6 +104,9 @@ class SendMessage
             rescue(function () use ($target): void {
                 broadcast(new ConversationActivity($target));
             });
+
+            // Browser notifications (ISSUE-34) for the other participants.
+            $this->directMessages->notify($message, $target);
         } else {
             // Mention notifications (ISSUE-33) for whoever it mentions.
             $this->mentions->sync($message);

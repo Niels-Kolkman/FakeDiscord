@@ -71,6 +71,10 @@
 
     <p class="mb-4 text-center">
         <a href="{{ route('settings.account') }}" class="font-medium text-[#00a8fc] hover:underline">Account settings</a>
+        @if (auth()->user()?->hasVerifiedEmail())
+            <span aria-hidden="true" class="text-[#4e5058]">·</span>
+            <a href="{{ route('settings.notifications') }}" class="font-medium text-[#00a8fc] hover:underline">Notifications</a>
+        @endif
     </p>
 
     <form method="POST" action="{{ route('logout') }}">
