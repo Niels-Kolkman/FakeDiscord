@@ -142,10 +142,10 @@ export function applyEdited(marker, editedAt) {
     }
 }
 
-const TOOL_BUTTON = 'rounded px-2 py-0.5 text-xs text-[#b5bac1] hover:bg-[#404249] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]';
+const TOOL_BUTTON = 'rounded px-2 py-0.5 text-xs text-fg-muted hover:bg-active hover:text-fg-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]';
 const REACTION_BUTTON = 'flex items-center gap-1 rounded-lg border px-1.5 py-0.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]';
 const REACTION_MINE = 'border-[#5865f2] bg-[#5865f2]/25';
-const REACTION_OTHERS = 'border-transparent bg-[#2b2d31] hover:border-[#4e5058]';
+const REACTION_OTHERS = 'border-transparent bg-surface-2 hover:border-[#4e5058]';
 
 /**
  * "Alice, Bob and 3 others reacted with 👍", like App\Support\Reactions::tooltip().
@@ -216,7 +216,7 @@ function fillReactions(row, groups, url, csrfToken) {
         button.dataset.emoji = group.emoji;
         const emoji = el('span', null, group.emoji);
         emoji.setAttribute('aria-hidden', 'true');
-        const count = el('span', 'text-xs font-medium text-[#dbdee1]', String(group.count));
+        const count = el('span', 'text-xs font-medium text-fg', String(group.count));
         count.setAttribute('aria-hidden', 'true');
         count.dataset.reactionCount = '';
         button.append(emoji, count);
@@ -275,7 +275,7 @@ export function renderAttachments(attachments) {
             link.href = attachment.url;
             link.target = '_blank';
             link.rel = 'noopener';
-            const img = el('img', 'h-auto max-h-[300px] max-w-full rounded bg-[#2b2d31] object-contain');
+            const img = el('img', 'h-auto max-h-[300px] max-w-full rounded bg-surface-2 object-contain');
             img.src = attachment.url;
             img.alt = attachment.name ?? '';
             img.loading = 'lazy';
@@ -296,16 +296,16 @@ export function renderAttachments(attachments) {
             return;
         }
 
-        const item = el('li', 'flex w-full max-w-md items-center gap-3 rounded-lg border border-[#1f2023] bg-[#2b2d31] p-3');
+        const item = el('li', 'flex w-full max-w-md items-center gap-3 rounded-lg border border-edge bg-surface-2 p-3');
         item.dataset.attachment = '';
         item.dataset.attachmentFile = '';
         const icon = el('span', 'text-3xl', '📄');
         icon.setAttribute('aria-hidden', 'true');
         const details = el('span', 'min-w-0 flex-1');
-        const download = el('a', 'block truncate text-[#00a8fc] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]', attachment.name);
+        const download = el('a', 'block truncate text-link hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]', attachment.name);
         download.href = attachment.download_url;
         download.dataset.attachmentDownload = '';
-        details.append(download, el('span', 'block text-xs text-[#949ba4]', formatSize(attachment.size)));
+        details.append(download, el('span', 'block text-xs text-fg-subtle', formatSize(attachment.size)));
         item.append(icon, details);
         list.appendChild(item);
     });
@@ -346,28 +346,28 @@ export function isBlockedAuthor(author, blockedUserIds) {
  */
 function fillReplyPreview(row, reply, blockedUserIds = null) {
     row.replaceChildren();
-    const arrow = el('span', 'shrink-0 text-[#80848e]', '↱');
+    const arrow = el('span', 'shrink-0 text-fg-faint', '↱');
     arrow.setAttribute('aria-hidden', 'true');
     row.appendChild(arrow);
 
     if (reply.deleted) {
-        const gone = el('span', 'italic text-[#949ba4]', 'Original message was deleted');
+        const gone = el('span', 'italic text-fg-subtle', 'Original message was deleted');
         gone.dataset.replyDeleted = '';
         row.appendChild(gone);
         return;
     }
 
     if (isBlockedAuthor(reply.author, blockedUserIds)) {
-        const blocked = el('span', 'italic text-[#949ba4]', 'Blocked message');
+        const blocked = el('span', 'italic text-fg-subtle', 'Blocked message');
         blocked.dataset.replyBlocked = '';
         row.appendChild(blocked);
         return;
     }
 
-    const link = el('a', 'flex min-w-0 items-center gap-1 rounded hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]');
+    const link = el('a', 'flex min-w-0 items-center gap-1 rounded hover:text-fg-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]');
     link.href = `#message-${reply.id}`;
     link.dataset.replyJump = '';
-    const author = el('span', 'shrink-0 font-medium text-white', reply.author?.name ?? 'Deleted User');
+    const author = el('span', 'shrink-0 font-medium text-fg-strong', reply.author?.name ?? 'Deleted User');
     author.dataset.replyAuthor = '';
     const content = el('span', 'truncate', previewText(reply));
     content.dataset.replyContent = '';
@@ -381,7 +381,7 @@ function fillReplyPreview(row, reply, blockedUserIds = null) {
  */
 export function renderReplyPreview(reply, context = {}) {
     if (!reply) return null;
-    const row = el('div', 'mb-0.5 flex w-full min-w-0 items-center gap-1 pl-14 text-sm text-[#b5bac1]');
+    const row = el('div', 'mb-0.5 flex w-full min-w-0 items-center gap-1 pl-14 text-sm text-fg-muted');
     row.dataset.replyPreview = '';
     row.dataset.replyToId = String(reply.id);
     fillReplyPreview(row, reply, context.blockedUserIds);
@@ -393,24 +393,24 @@ export function renderReplyPreview(reply, context = {}) {
  * context: { canManageMessages }.
  */
 export function renderPin(pin, context = {}) {
-    const item = el('li', 'border-b border-[#1f2023] px-4 py-3 last:border-b-0');
+    const item = el('li', 'border-b border-edge px-4 py-3 last:border-b-0');
     item.dataset.pin = '';
     item.dataset.messageId = String(pin.id);
 
     const header = el('p', 'flex items-baseline gap-2');
-    header.appendChild(el('span', 'truncate font-medium text-white', pin.author?.name ?? 'Deleted User'));
-    const time = el('time', 'shrink-0 text-xs text-[#949ba4]', formatTime(pin.created_at));
+    header.appendChild(el('span', 'truncate font-medium text-fg-strong', pin.author?.name ?? 'Deleted User'));
+    const time = el('time', 'shrink-0 text-xs text-fg-subtle', formatTime(pin.created_at));
     time.dateTime = pin.created_at ?? '';
     header.appendChild(time);
     item.appendChild(header);
 
-    if (pin.content) item.appendChild(el('p', 'line-clamp-6 whitespace-pre-wrap break-words text-sm text-[#dbdee1]', pin.content));
+    if (pin.content) item.appendChild(el('p', 'line-clamp-6 whitespace-pre-wrap break-words text-sm text-fg', pin.content));
     const files = pin.attachments?.length ?? 0;
-    if (files > 0) item.appendChild(el('p', 'text-xs text-[#949ba4]', files === 1 ? '1 attachment' : `${files} attachments`));
+    if (files > 0) item.appendChild(el('p', 'text-xs text-fg-subtle', files === 1 ? '1 attachment' : `${files} attachments`));
 
-    const footer = el('div', 'mt-1 flex items-center gap-3 text-xs text-[#949ba4]');
+    const footer = el('div', 'mt-1 flex items-center gap-3 text-xs text-fg-subtle');
     footer.appendChild(el('span', 'min-w-0 truncate', pin.pinned_by ? `Pinned by ${pin.pinned_by.name}` : 'Pinned'));
-    const jump = el('button', 'ml-auto shrink-0 rounded text-[#00a8fc] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]', 'Jump');
+    const jump = el('button', 'ml-auto shrink-0 rounded text-link hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]', 'Jump');
     jump.type = 'button';
     jump.dataset.pinJump = '';
     footer.appendChild(jump);
@@ -461,12 +461,12 @@ function renderReactionPicker(url, context) {
     summary.append(icon, el('span', 'sr-only', 'Add reaction'));
     picker.appendChild(summary);
 
-    const choices = el('div', 'absolute right-0 top-full z-20 mt-1 flex gap-0.5 rounded-lg border border-[#1f2023] bg-[#2b2d31] p-1 shadow-lg');
+    const choices = el('div', 'absolute right-0 top-full z-20 mt-1 flex gap-0.5 rounded-lg border border-edge bg-surface-2 p-1 shadow-lg');
     choices.setAttribute('role', 'group');
     choices.setAttribute('aria-label', 'Choose a reaction');
     (context.quickEmoji ?? []).forEach((emoji) => {
         const form = reactionForm(url, emoji, context.csrfToken);
-        const button = el('button', 'rounded p-1 text-lg leading-none hover:bg-[#404249] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]', emoji);
+        const button = el('button', 'rounded p-1 text-lg leading-none hover:bg-active focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]', emoji);
         button.type = 'submit';
         button.setAttribute('aria-label', `React with ${emoji}`);
         button.title = `React with ${emoji}`;
@@ -498,7 +498,7 @@ function hiddenInputs(form, fields) {
 function renderActions(message, url, context) {
     const own = message.author != null && String(message.author.id) === String(context.viewerId);
 
-    const actions = el('div', 'absolute -top-3 right-4 hidden gap-1 rounded border border-[#1f2023] bg-[#313338] p-0.5 shadow group-hover:flex group-focus-within:flex has-[[open]]:flex');
+    const actions = el('div', 'absolute -top-3 right-4 hidden gap-1 rounded border border-edge bg-surface p-0.5 shadow group-hover:flex group-focus-within:flex has-[[open]]:flex');
     actions.dataset.messageActions = '';
 
     actions.appendChild(renderReactionPicker(`${url}/reactions`, context));
@@ -538,7 +538,7 @@ function renderActions(message, url, context) {
         form.action = url;
         form.dataset.messageDeleteForm = '';
         hiddenInputs(form, [['_token', context.csrfToken ?? ''], ['_method', 'DELETE']]);
-        const remove = el('button', 'rounded px-2 py-0.5 text-xs text-red-400 hover:bg-[#404249] hover:text-red-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]', 'Delete');
+        const remove = el('button', 'rounded px-2 py-0.5 text-xs text-red-400 hover:bg-active hover:text-red-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]', 'Delete');
         remove.type = 'submit';
         form.appendChild(remove);
         actions.appendChild(form);
@@ -550,7 +550,7 @@ function renderActions(message, url, context) {
 export function renderMessage(message, context = {}) {
     const url = context.messagesUrl ? `${context.messagesUrl}/${message.id}` : '';
 
-    const item = el('li', 'group relative flex scroll-mt-16 flex-wrap gap-x-4 px-4 py-1 hover:bg-[#2e3035] focus-within:bg-[#2e3035]');
+    const item = el('li', 'group relative flex scroll-mt-16 flex-wrap gap-x-4 px-4 py-1 hover:bg-hover-soft focus-within:bg-hover-soft');
     item.id = `message-${message.id}`;
     item.dataset.message = '';
     item.dataset.messageId = String(message.id);
@@ -573,11 +573,11 @@ export function renderMessage(message, context = {}) {
 
     const body = el('div', 'min-w-0 flex-1');
     const header = el('p', 'flex items-baseline gap-2');
-    const author = el('span', 'truncate font-medium text-white', message.author?.name ?? 'Deleted User');
+    const author = el('span', 'truncate font-medium text-fg-strong', message.author?.name ?? 'Deleted User');
     author.dataset.messageAuthor = '';
     header.appendChild(author);
 
-    const time = el('time', 'shrink-0 text-xs text-[#949ba4]', formatTime(message.created_at));
+    const time = el('time', 'shrink-0 text-xs text-fg-subtle', formatTime(message.created_at));
     time.dateTime = message.created_at ?? '';
     time.dataset.localTime = '';
     header.appendChild(time);
@@ -591,13 +591,13 @@ export function renderMessage(message, context = {}) {
     header.appendChild(pinned);
     body.appendChild(header);
 
-    const text = el('div', 'message-markdown whitespace-pre-wrap break-words text-[#dbdee1]');
+    const text = el('div', 'message-markdown whitespace-pre-wrap break-words text-fg');
     text.dataset.messageBody = '';
     const content = el('span');
     content.dataset.messageContent = '';
     fillMessageContent(content, message.content);
     text.appendChild(content);
-    const edited = el('span', 'ml-1 text-xs text-[#949ba4]', '(edited)');
+    const edited = el('span', 'ml-1 text-xs text-fg-subtle', '(edited)');
     edited.dataset.messageEdited = '';
     applyEdited(edited, message.edited_at);
     text.appendChild(edited);
@@ -1078,7 +1078,7 @@ function initChannel(root) {
 
         const editor = el('div', 'mt-1');
         editor.dataset.messageEditor = '';
-        const input = el('textarea', 'block max-h-60 w-full resize-none rounded-lg bg-[#383a40] px-4 py-2 text-[#dbdee1] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]');
+        const input = el('textarea', 'block max-h-60 w-full resize-none rounded-lg bg-field px-4 py-2 text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]');
         input.id = `message-edit-${item.dataset.messageId}`;
         input.rows = 1;
         input.maxLength = MAX_CONTENT_LENGTH;
@@ -1086,7 +1086,7 @@ function initChannel(root) {
         input.value = source?.dataset.source ?? source?.textContent ?? '';
         input.setAttribute('aria-label', 'Edit message');
         input.setAttribute('aria-describedby', `${input.id}-hint ${input.id}-error`);
-        const hint = el('p', 'mt-1 text-xs text-[#949ba4]', 'Escape to cancel · Enter to save');
+        const hint = el('p', 'mt-1 text-xs text-fg-subtle', 'Escape to cancel · Enter to save');
         hint.id = `${input.id}-hint`;
         const error = el('p', 'mt-1 hidden text-sm text-red-400');
         error.id = `${input.id}-error`;
@@ -1396,13 +1396,13 @@ function initChannel(root) {
     const renderQueue = () => {
         if (!fileList) return;
         fileList.replaceChildren(...files.map((file, index) => {
-            const chip = el('li', 'flex max-w-60 items-center gap-2 rounded bg-[#2b2d31] px-2 py-1 text-sm text-[#dbdee1]');
+            const chip = el('li', 'flex max-w-60 items-center gap-2 rounded bg-surface-2 px-2 py-1 text-sm text-fg');
             chip.dataset.attachmentQueued = '';
             chip.append(
                 el('span', 'truncate', file.name),
-                el('span', 'shrink-0 text-xs text-[#949ba4]', formatSize(file.size)),
+                el('span', 'shrink-0 text-xs text-fg-subtle', formatSize(file.size)),
             );
-            const remove = el('button', 'shrink-0 rounded px-1 text-[#b5bac1] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]', '✕');
+            const remove = el('button', 'shrink-0 rounded px-1 text-fg-muted hover:text-fg-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]', '✕');
             remove.type = 'button';
             remove.setAttribute('aria-label', `Remove ${file.name}`);
             remove.addEventListener('click', () => {

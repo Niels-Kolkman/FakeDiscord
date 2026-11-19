@@ -24,14 +24,14 @@
         @include('friends.partials.sidebar', ['activeConversation' => $conversation])
     </x-slot:sidebar>
 
-    <header class="flex min-h-12 items-center gap-2 border-b border-[#1f2023] px-4 py-2 shadow-sm">
-        <span aria-hidden="true" class="text-xl text-[#80848e]">@</span>
+    <header class="flex min-h-12 items-center gap-2 border-b border-edge px-4 py-2 shadow-sm">
+        <span aria-hidden="true" class="text-xl text-fg-faint">@</span>
         @if ($other)
             <x-user-avatar :user="$other" :size="24" />
         @endif
-        <h1 class="truncate font-semibold text-white">{{ $title }}</h1>
+        <h1 class="truncate font-semibold text-fg-strong">{{ $title }}</h1>
         @if ($other)
-            <span class="truncate text-sm text-[#949ba4]">{{ '@'.$other->username }}</span>
+            <span class="truncate text-sm text-fg-subtle">{{ '@'.$other->username }}</span>
         @endif
         {{-- Mention notifications (ISSUE-33). --}}
         <div class="ml-auto"><x-inbox /></div>

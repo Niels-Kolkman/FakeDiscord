@@ -31,6 +31,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'avatar_path',
         'bio',
         'status',
+        'theme',
         'password',
     ];
 
@@ -43,6 +44,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     protected $attributes = [
         'status' => 'online',
+        'theme' => 'dark',
     ];
 
     /**
@@ -94,6 +96,21 @@ class User extends Authenticatable implements MustVerifyEmail
     public function chosenStatus(): string
     {
         return $this->isOnline() ? (string) $this->status : 'online';
+    }
+
+    /**
+     * The colour themes a user can pick (ISSUE-37), the first one being the
+     * default. The layouts put the choice on <html data-theme>.
+     */
+    public const THEMES = ['dark', 'light'];
+
+    /**
+     * The theme the user picked, the default one when the stored value is
+     * not one of THEMES.
+     */
+    public function preferredTheme(): string
+    {
+        return in_array($this->theme, self::THEMES, true) ? (string) $this->theme : self::THEMES[0];
     }
 
     /**

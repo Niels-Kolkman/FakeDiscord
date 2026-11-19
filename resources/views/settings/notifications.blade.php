@@ -13,30 +13,30 @@
 --}}
 <x-layouts.auth title="Notifications">
     <section aria-labelledby="push-heading" class="mb-8" data-push-settings>
-        <h2 id="push-heading" class="mb-1 text-lg font-semibold text-white">Desktop notifications</h2>
-        <p class="mb-3 text-sm text-[#949ba4]">
+        <h2 id="push-heading" class="mb-1 text-lg font-semibold text-fg-strong">Desktop notifications</h2>
+        <p class="mb-3 text-sm text-fg-subtle">
             Get a notification from your browser when someone mentions you or sends you a DM while this tab is in the background.
             This setting is for this browser only.
         </p>
-        <p role="status" class="mb-3 text-sm text-[#dbdee1]" data-push-status>Desktop notifications need JavaScript.</p>
+        <p role="status" class="mb-3 text-sm text-fg" data-push-status>Desktop notifications need JavaScript.</p>
         <button type="button" class="w-full rounded bg-[#5865f2] py-2 font-medium text-white hover:bg-[#4752c4]" data-push-toggle hidden>Enable desktop notifications</button>
     </section>
 
     <section aria-labelledby="servers-heading" class="mb-8">
-        <h2 id="servers-heading" class="mb-1 text-lg font-semibold text-white">Servers</h2>
-        <p class="mb-3 text-sm text-[#949ba4]">A muted server sends no desktop notifications. Mentions still show in your inbox.</p>
+        <h2 id="servers-heading" class="mb-1 text-lg font-semibold text-fg-strong">Servers</h2>
+        <p class="mb-3 text-sm text-fg-subtle">A muted server sends no desktop notifications. Mentions still show in your inbox.</p>
 
         @if ($servers->isEmpty())
-            <p class="text-sm text-[#949ba4]">You are not in any servers yet.</p>
+            <p class="text-sm text-fg-subtle">You are not in any servers yet.</p>
         @else
             <ul class="space-y-1">
                 @foreach ($servers as $server)
                     @php($serverMuted = in_array((int) $server->id, $mutedServerIds, true))
-                    <li class="flex items-center gap-2 rounded px-2 py-1 hover:bg-[#35373c]" data-mute-server="{{ $server->id }}" @if ($serverMuted) data-muted @endif>
+                    <li class="flex items-center gap-2 rounded px-2 py-1 hover:bg-hover" data-mute-server="{{ $server->id }}" @if ($serverMuted) data-muted @endif>
                         <x-server-icon :server="$server" :size="24" />
                         <span class="min-w-0 flex-1 truncate">{{ $server->name }}</span>
                         @if ($serverMuted)
-                            <span class="text-xs text-[#949ba4]">Muted</span>
+                            <span class="text-xs text-fg-subtle">Muted</span>
                         @endif
                         <form method="POST" action="{{ $serverMuted ? route('servers.unmute', $server) : route('servers.mute', $server) }}">
                             @csrf
@@ -52,16 +52,16 @@
     </section>
 
     <section aria-labelledby="channels-heading" class="mb-8">
-        <h2 id="channels-heading" class="mb-1 text-lg font-semibold text-white">Muted channels</h2>
-        <p class="mb-3 text-sm text-[#949ba4]">Mute a channel with 🔕 next to its name in the channel list.</p>
+        <h2 id="channels-heading" class="mb-1 text-lg font-semibold text-fg-strong">Muted channels</h2>
+        <p class="mb-3 text-sm text-fg-subtle">Mute a channel with 🔕 next to its name in the channel list.</p>
 
         @if ($mutedChannels->isEmpty())
-            <p class="text-sm text-[#949ba4]" data-no-muted-channels>No muted channels.</p>
+            <p class="text-sm text-fg-subtle" data-no-muted-channels>No muted channels.</p>
         @else
             <ul class="space-y-1">
                 @foreach ($mutedChannels as $channel)
-                    <li class="flex items-center gap-2 rounded px-2 py-1 hover:bg-[#35373c]" data-mute-channel="{{ $channel->id }}">
-                        <span class="min-w-0 flex-1 truncate">#{{ $channel->name }} <span class="text-xs text-[#949ba4]">in {{ $channel->server->name }}</span></span>
+                    <li class="flex items-center gap-2 rounded px-2 py-1 hover:bg-hover" data-mute-channel="{{ $channel->id }}">
+                        <span class="min-w-0 flex-1 truncate">#{{ $channel->name }} <span class="text-xs text-fg-subtle">in {{ $channel->server->name }}</span></span>
                         <form method="POST" action="{{ route('channels.unmute', [$channel->server_id, $channel]) }}">
                             @csrf
                             @method('DELETE')
@@ -76,6 +76,6 @@
     </section>
 
     <p class="mt-6 text-center">
-        <a href="{{ route('dashboard') }}" class="text-sm font-medium text-[#00a8fc] hover:underline">Back</a>
+        <a href="{{ route('dashboard') }}" class="text-sm font-medium text-link hover:underline">Back</a>
     </p>
 </x-layouts.auth>

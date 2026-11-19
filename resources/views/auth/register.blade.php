@@ -10,8 +10,8 @@
 
         <button type="submit" class="w-full rounded bg-[#5865f2] py-2 font-medium text-white hover:bg-[#4752c4]">Continue</button>
 
-        <p class="mt-4 text-sm text-[#949ba4]">
-            <a href="{{ route('login') }}" class="text-[#00a8fc] hover:underline">Already have an account?</a>
+        <p class="mt-4 text-sm text-fg-subtle">
+            <a href="{{ route('login') }}" class="text-link hover:underline">Already have an account?</a>
         </p>
     </form>
 </x-layouts.auth>

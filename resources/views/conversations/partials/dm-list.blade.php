@@ -14,9 +14,9 @@
     $directMessages = $viewer ? \App\Models\Conversation::sidebarFor($viewer, $activeConversation ?? null) : collect();
 @endphp
 <section aria-labelledby="dm-list-heading" class="mb-4" data-dm-list>
-    <h2 id="dm-list-heading" class="mb-1 px-2 text-xs font-semibold uppercase tracking-wide text-[#949ba4]">Direct messages</h2>
+    <h2 id="dm-list-heading" class="mb-1 px-2 text-xs font-semibold uppercase tracking-wide text-fg-subtle">Direct messages</h2>
     @if ($directMessages->isEmpty())
-        <p class="px-2 text-sm text-[#949ba4]">No direct messages yet. Message a friend from the Friends page.</p>
+        <p class="px-2 text-sm text-fg-subtle">No direct messages yet. Message a friend from the Friends page.</p>
     @else
         <ul class="space-y-0.5">
             @foreach ($directMessages as $dm)
@@ -28,7 +28,7 @@
                     <a
                         href="{{ route('dms.show', $dm) }}"
                         @if ($isActive) aria-current="page" @endif
-                        class="flex items-center gap-2 rounded px-2 py-1.5 text-[#b5bac1] hover:bg-[#35373c] hover:text-white aria-[current=page]:bg-[#404249] aria-[current=page]:text-white"
+                        class="flex items-center gap-2 rounded px-2 py-1.5 text-fg-muted hover:bg-hover hover:text-fg-strong aria-[current=page]:bg-active aria-[current=page]:text-fg-strong"
                     >
                         @if ($dm->isGroup())
                             <span aria-hidden="true" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#5865f2] text-sm text-white">👥</span>
@@ -40,7 +40,7 @@
                         <span class="min-w-0">
                             <span class="block truncate">{{ $dm->displayName($viewer) }}</span>
                             @if ($dm->isGroup())
-                                <span class="block truncate text-xs text-[#949ba4]">{{ trans_choice('{1} 1 member|[2,*] :count members', $dm->users->count(), ['count' => $dm->users->count()]) }}</span>
+                                <span class="block truncate text-xs text-fg-subtle">{{ trans_choice('{1} 1 member|[2,*] :count members', $dm->users->count(), ['count' => $dm->users->count()]) }}</span>
                             @endif
                         </span>
                     </a>

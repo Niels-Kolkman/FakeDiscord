@@ -1101,7 +1101,29 @@ The chat pages use `components/layouts/app.blade.php`, which has four panes from
 3. **Messages**: the page content.
 4. **Member list**: on server pages only.
 
-Below the `md` breakpoint the panes stack and the rail becomes a row that scrolls sideways.
+### Small screens
+
+Below the `md` breakpoint (768px) the rail and the sidebar become one drawer that slides in from
+the left, and the member list one that slides in from the right (`resources/js/mobile-nav.js`, CSS
+in `resources/css/app.css`). A bar on top of the page has a button for each drawer. You can also
+swipe: right opens the navigation, left opens the member list, and swiping back closes them.
+Swipes that start in a text field, a select or a code block don't count. Escape or a tap on the
+dimmed page also closes a drawer. While a drawer is open the rest of the page is `inert`, and
+closing it puts focus back where it was. Without JavaScript the panes stack instead, rail first.
+
+### Themes
+
+There is a dark theme (the default) and a light theme. The toggle at the bottom of the server
+rail, also on the dashboard (`components/theme-toggle.blade.php`), saves your choice in
+`users.theme` through `PUT /settings/theme`. Your choice follows you to every browser.
+`resources/js/theme.js` switches the page without a reload and keeps your other tabs in step.
+
+The layouts put the theme on `<html data-theme>`. Neutral colours are Tailwind theme tokens
+defined in `resources/css/app.css` (`bg-surface`, `bg-surface-2`, `text-fg`, `text-fg-muted`,
+`border-edge`, `text-link` and so on), and `[data-theme="light"]` overrides them. Use these
+tokens instead of hard-coded greys: `tests/Feature/Layout/MobileLayoutTest.php` fails on a
+hex class for a neutral colour. Accent, danger and status colours (`#5865f2`, `#da373c`, ...)
+stay the same in both themes.
 
 ## Useful commands
 

@@ -63,10 +63,10 @@ export function showRemovedNotice(document, { text, dashboardUrl }) {
     notice.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6';
 
     const box = document.createElement('div');
-    box.className = 'max-w-sm rounded-md bg-[#2b2d31] p-6 text-center shadow-xl';
+    box.className = 'max-w-sm rounded-md bg-surface-2 p-6 text-center shadow-xl';
 
     const message = document.createElement('p');
-    message.className = 'mb-4 text-white';
+    message.className = 'mb-4 text-fg-strong';
     message.textContent = text;
     box.appendChild(message);
 

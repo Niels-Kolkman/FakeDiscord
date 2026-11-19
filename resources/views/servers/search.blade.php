@@ -11,8 +11,8 @@
     @var \Illuminate\Contracts\Pagination\LengthAwarePaginator<int, \App\Models\Message>|null $results
 --}}
 @php
-    $field = 'w-full rounded bg-[#1e1f22] px-3 py-2 text-white outline-none focus:ring-2 focus:ring-[#5865f2]';
-    $label = 'mb-1 block text-xs font-semibold uppercase tracking-wide text-[#b5bac1]';
+    $field = 'w-full rounded bg-surface-3 px-3 py-2 text-fg-strong outline-none focus:ring-2 focus:ring-[#5865f2]';
+    $label = 'mb-1 block text-xs font-semibold uppercase tracking-wide text-fg-muted';
     // Refill the form from the query string, also when it did not validate.
     $value = fn (string $key): string => is_string(request()->query($key)) ? (string) request()->query($key) : '';
 @endphp
@@ -25,9 +25,9 @@
         @include('servers.partials.member-list')
     </x-slot:aside>
 
-    <header class="flex min-h-12 items-center gap-2 border-b border-[#1f2023] px-4 py-2 shadow-sm">
-        <span aria-hidden="true" class="text-xl text-[#80848e]">🔍</span>
-        <h1 class="font-semibold text-white">Search {{ $server->name }}</h1>
+    <header class="flex min-h-12 items-center gap-2 border-b border-edge px-4 py-2 shadow-sm">
+        <span aria-hidden="true" class="text-xl text-fg-faint">🔍</span>
+        <h1 class="font-semibold text-fg-strong">Search {{ $server->name }}</h1>
     </header>
 
     <div class="min-h-0 flex-1 overflow-y-auto p-4">
@@ -97,16 +97,16 @@
 
             <div class="flex gap-2 sm:col-span-2 lg:col-span-4">
                 <button type="submit" class="rounded bg-[#5865f2] px-4 py-2 text-sm font-medium text-white hover:bg-[#4752c4] focus:outline-none focus-visible:ring-2 focus-visible:ring-white">Search</button>
-                <a href="{{ route('servers.search', $server) }}" class="rounded px-4 py-2 text-sm text-[#b5bac1] hover:text-white hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]">Clear</a>
+                <a href="{{ route('servers.search', $server) }}" class="rounded px-4 py-2 text-sm text-fg-muted hover:text-fg-strong hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]">Clear</a>
             </div>
         </form>
 
         @if ($results === null)
             @unless ($errors->any())
-                <p class="text-center text-[#949ba4]" data-search-hint>Type something to search for, or pick a channel, an author or dates.</p>
+                <p class="text-center text-fg-subtle" data-search-hint>Type something to search for, or pick a channel, an author or dates.</p>
             @endunless
         @else
-            <h2 class="mb-2 text-sm font-semibold uppercase tracking-wide text-[#b5bac1]" role="status" data-search-count>
+            <h2 class="mb-2 text-sm font-semibold uppercase tracking-wide text-fg-muted" role="status" data-search-count>
                 {{ trans_choice('{0} No results|{1} :count result|[2,*] :count results', $results->total(), ['count' => number_format($results->total())]) }}
             </h2>
 
@@ -114,7 +114,7 @@
                 <ol class="flex flex-col gap-2" aria-label="Search results" data-search-results>
                     @foreach ($results as $message)
                         @php($messageChannel = $message->channel)
-                        <li class="flex gap-4 rounded-lg bg-[#2b2d31] p-3" data-search-result data-message-id="{{ $message->id }}">
+                        <li class="flex gap-4 rounded-lg bg-surface-2 p-3" data-search-result data-message-id="{{ $message->id }}">
                             @if ($message->author)
                                 <x-user-avatar :user="$message->author" :size="40" class="mt-0.5" />
                             @else
@@ -122,13 +122,13 @@
                             @endif
                             <div class="min-w-0 flex-1">
                                 <p class="flex flex-wrap items-baseline gap-x-2">
-                                    <span class="truncate font-medium text-white">{{ $message->authorName() }}</span>
-                                    <time class="shrink-0 text-xs text-[#949ba4]" datetime="{{ $message->created_at?->toIso8601String() }}" data-local-time>{{ $message->created_at?->format('Y-m-d H:i') }}</time>
+                                    <span class="truncate font-medium text-fg-strong">{{ $message->authorName() }}</span>
+                                    <time class="shrink-0 text-xs text-fg-subtle" datetime="{{ $message->created_at?->toIso8601String() }}" data-local-time>{{ $message->created_at?->format('Y-m-d H:i') }}</time>
                                     @if ($messageChannel)
-                                        <a href="{{ route('channels.show', [$server, $messageChannel]) }}" class="text-xs text-[#00a8fc] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]" data-search-result-channel>#{{ $messageChannel->name }}</a>
+                                        <a href="{{ route('channels.show', [$server, $messageChannel]) }}" class="text-xs text-link hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]" data-search-result-channel>#{{ $messageChannel->name }}</a>
                                     @endif
                                 </p>
-                                <p class="whitespace-pre-wrap break-words text-[#dbdee1]" data-search-result-content>{{ \App\Support\MessageSearch::highlight((string) $message->content, $search->text) }}@if ($message->isEdited())<span class="ml-1 text-xs text-[#949ba4]">(edited)</span>@endif</p>
+                                <p class="whitespace-pre-wrap break-words text-fg" data-search-result-content>{{ \App\Support\MessageSearch::highlight((string) $message->content, $search->text) }}@if ($message->isEdited())<span class="ml-1 text-xs text-fg-subtle">(edited)</span>@endif</p>
                             </div>
                         </li>
                     @endforeach
@@ -137,15 +137,15 @@
                 @if ($results->hasPages())
                     <nav class="mt-4 flex items-center justify-between text-sm" aria-label="Search result pages">
                         @if ($results->onFirstPage())
-                            <span class="text-[#6d6f78]">Newer</span>
+                            <span class="text-fg-dim">Newer</span>
                         @else
-                            <a href="{{ $results->previousPageUrl() }}" rel="prev" class="text-[#00a8fc] hover:underline">Newer</a>
+                            <a href="{{ $results->previousPageUrl() }}" rel="prev" class="text-link hover:underline">Newer</a>
                         @endif
-                        <span class="text-[#949ba4]">Page {{ $results->currentPage() }} of {{ $results->lastPage() }}</span>
+                        <span class="text-fg-subtle">Page {{ $results->currentPage() }} of {{ $results->lastPage() }}</span>
                         @if ($results->hasMorePages())
-                            <a href="{{ $results->nextPageUrl() }}" rel="next" class="text-[#00a8fc] hover:underline">Older</a>
+                            <a href="{{ $results->nextPageUrl() }}" rel="next" class="text-link hover:underline">Older</a>
                         @else
-                            <span class="text-[#6d6f78]">Older</span>
+                            <span class="text-fg-dim">Older</span>
                         @endif
                     </nav>
                 @endif

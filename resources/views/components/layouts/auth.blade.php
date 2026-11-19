@@ -1,7 +1,8 @@
 @props(['title'])
 
+{{-- data-theme: the signed-in user's theme (ISSUE-37), dark for guests. --}}
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="{{ auth()->user()?->preferredTheme() ?? 'dark' }}">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -16,12 +17,12 @@
             @vite(['resources/css/app.css', 'resources/js/app.js'])
         @endif
     </head>
-    <body class="min-h-screen bg-[#313338] text-[#dbdee1] font-sans antialiased flex items-center justify-center p-6">
-        <main class="w-full max-w-md rounded-md bg-[#2b2d31] p-8 shadow-xl">
-            <h1 class="mb-6 text-center text-2xl font-semibold text-white">{{ $title }}</h1>
+    <body class="min-h-screen bg-surface text-fg font-sans antialiased flex items-center justify-center p-6">
+        <main class="w-full max-w-md rounded-md bg-surface-2 p-8 shadow-xl">
+            <h1 class="mb-6 text-center text-2xl font-semibold text-fg-strong">{{ $title }}</h1>
 
             @if (session('status'))
-                <div role="status" class="mb-4 rounded bg-green-900/40 px-3 py-2 text-sm text-green-300">
+                <div role="status" class="mb-4 rounded bg-green-900/40 px-3 py-2 text-sm text-green-300 in-data-[theme=light]:bg-green-100 in-data-[theme=light]:text-green-800">
                     {{-- Fortify and the account settings flash status keys, not sentences. --}}
                     @php($statusMessages = [
                         'verification-link-sent' => 'A new verification link has been sent to your email address.',

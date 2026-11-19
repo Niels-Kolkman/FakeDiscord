@@ -11,7 +11,7 @@
     @var int $maxReasonLength
 --}}
 @php($button = 'rounded px-2 py-1 text-xs font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]')
-@php($select = 'rounded bg-[#1e1f22] px-2 py-1 text-xs text-white outline-none focus:ring-2 focus:ring-[#5865f2]')
+@php($select = 'rounded bg-surface-3 px-2 py-1 text-xs text-fg-strong outline-none focus:ring-2 focus:ring-[#5865f2]')
 
 <x-layouts.auth :title="'Members of '.$server->name">
     @foreach (['reason', 'delete_messages', 'duration'] as $field)
@@ -24,19 +24,19 @@
         @foreach ($members as $row)
             @php($member = $row['member'])
             @php($user = $member->user)
-            <li class="rounded bg-[#1e1f22] px-3 py-2 text-sm" data-moderation-member="{{ $user->id }}">
+            <li class="rounded bg-surface-3 px-3 py-2 text-sm" data-moderation-member="{{ $user->id }}">
                 <div class="flex items-center gap-3">
                     <x-user-avatar :user="$user" :size="32" />
                     <div class="min-w-0 flex-1">
-                        <span class="block truncate font-medium text-white">
+                        <span class="block truncate font-medium text-fg-strong">
                             {{ $member->displayName() }}
                             @if ($server->isOwnedBy($user))
-                                <span class="text-xs text-[#f0b232]" title="Server Owner">👑</span>
+                                <span class="text-xs text-warn-fg" title="Server Owner">👑</span>
                             @endif
                         </span>
-                        <span class="block truncate text-xs text-[#949ba4]">{{ '@'.$user->username }}</span>
+                        <span class="block truncate text-xs text-fg-subtle">{{ '@'.$user->username }}</span>
                         @if ($row['timedOutUntil'])
-                            <span class="block text-xs text-[#f0b232]" data-timed-out>
+                            <span class="block text-xs text-warn-fg" data-timed-out>
                                 Timed out until
                                 <time datetime="{{ $row['timedOutUntil']->toIso8601String() }}">{{ $row['timedOutUntil']->toDayDateTimeString() }}</time>
                             </span>
@@ -45,7 +45,7 @@
                 </div>
 
                 @if ($row['canKick'] || $row['canBan'] || $row['canTimeout'])
-                    <div class="mt-2 space-y-2 border-t border-[#2b2d31] pt-2">
+                    <div class="mt-2 space-y-2 border-t border-surface-2 pt-2">
                         @if ($row['canTimeout'])
                             @if ($row['timedOutUntil'])
                                 <form method="POST" action="{{ route('members.timeout.destroy', [$server, $user]) }}">
@@ -80,10 +80,10 @@
                                 <summary class="cursor-pointer text-xs font-medium text-[#f23f43]">Ban…</summary>
                                 <form method="POST" action="{{ route('members.ban', [$server, $user]) }}" class="mt-2 space-y-2">
                                     @csrf
-                                    <label for="ban-reason-{{ $user->id }}" class="block text-xs text-[#b5bac1]">Reason (only moderators see this)</label>
+                                    <label for="ban-reason-{{ $user->id }}" class="block text-xs text-fg-muted">Reason (only moderators see this)</label>
                                     <input id="ban-reason-{{ $user->id }}" type="text" name="reason" maxlength="{{ $maxReasonLength }}"
-                                        class="w-full rounded bg-[#2b2d31] px-2 py-1 text-xs text-white outline-none focus:ring-2 focus:ring-[#5865f2]">
-                                    <label for="ban-delete-{{ $user->id }}" class="block text-xs text-[#b5bac1]">Delete message history</label>
+                                        class="w-full rounded bg-surface-2 px-2 py-1 text-xs text-fg-strong outline-none focus:ring-2 focus:ring-[#5865f2]">
+                                    <label for="ban-delete-{{ $user->id }}" class="block text-xs text-fg-muted">Delete message history</label>
                                     <select id="ban-delete-{{ $user->id }}" name="delete_messages" class="{{ $select }} w-full">
                                         @foreach ($deleteMessageOptions as $seconds => $label)
                                             <option value="{{ $seconds }}">{{ $label }}</option>
@@ -99,10 +99,10 @@
         @endforeach
     </ul>
 
-    <p class="space-x-3 text-sm text-[#949ba4]">
+    <p class="space-x-3 text-sm text-fg-subtle">
         @can('manageBans', $server)
-            <a href="{{ route('bans.index', $server) }}" class="text-[#00a8fc] hover:underline">Bans</a>
+            <a href="{{ route('bans.index', $server) }}" class="text-link hover:underline">Bans</a>
         @endcan
-        <a href="{{ route('servers.show', $server) }}" class="text-[#00a8fc] hover:underline">Back to server</a>
+        <a href="{{ route('servers.show', $server) }}" class="text-link hover:underline">Back to server</a>
     </p>
 </x-layouts.auth>

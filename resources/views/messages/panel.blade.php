@@ -65,15 +65,15 @@
             id="pins-panel"
             role="dialog"
             aria-labelledby="pins-panel-title"
-            class="absolute right-4 top-2 z-30 flex max-h-[70vh] w-[min(28rem,calc(100%-2rem))] flex-col rounded-lg border border-[#1f2023] bg-[#2b2d31] shadow-xl"
+            class="absolute right-4 top-2 z-30 flex max-h-[70vh] w-[min(28rem,calc(100%-2rem))] flex-col rounded-lg border border-edge bg-surface-2 shadow-xl"
             data-pins-panel
             hidden
         >
-            <div class="flex items-center justify-between border-b border-[#1f2023] px-4 py-2">
-                <h2 id="pins-panel-title" class="font-semibold text-white">Pinned messages</h2>
-                <button type="button" class="rounded px-1 text-[#b5bac1] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]" aria-label="Close pinned messages" data-pins-close>✕</button>
+            <div class="flex items-center justify-between border-b border-edge px-4 py-2">
+                <h2 id="pins-panel-title" class="font-semibold text-fg-strong">Pinned messages</h2>
+                <button type="button" class="rounded px-1 text-fg-muted hover:text-fg-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]" aria-label="Close pinned messages" data-pins-close>✕</button>
             </div>
-            <p role="status" class="px-4 py-3 text-sm text-[#949ba4]" data-pins-status>Loading…</p>
+            <p role="status" class="px-4 py-3 text-sm text-fg-subtle" data-pins-status>Loading…</p>
             <ul class="min-h-0 flex-1 overflow-y-auto" aria-label="Pinned messages in {{ $panel['label'] }}" data-pins-list></ul>
         </div>
     @endif
@@ -89,11 +89,11 @@
             </div>
 
             @if ($messagesEnabled)
-                <div role="status" class="px-4 py-2 text-center text-sm text-[#949ba4]" data-history-status hidden>
+                <div role="status" class="px-4 py-2 text-center text-sm text-fg-subtle" data-history-status hidden>
                     <span data-history-loading>Loading older messages…</span>
                     <span data-history-error hidden>
                         Older messages could not be loaded.
-                        <button type="button" class="text-[#00a8fc] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]" data-history-retry>Try again</button>
+                        <button type="button" class="text-link hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]" data-history-retry>Try again</button>
                     </span>
                 </div>
 
@@ -138,9 +138,9 @@
             @csrf
             {{-- Replies (ISSUE-20): "Reply" on a message fills reply_to_id and shows this bar. --}}
             <input type="hidden" name="reply_to_id" value="" data-reply-input>
-            <div class="flex items-center justify-between gap-2 rounded-t-lg bg-[#2b2d31] px-4 py-1.5 text-sm text-[#b5bac1]" data-reply-bar hidden>
-                <span class="truncate">Replying to <span class="font-semibold text-white" data-reply-bar-author></span></span>
-                <button type="button" class="shrink-0 rounded px-1 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]" aria-label="Cancel reply" data-reply-cancel>✕</button>
+            <div class="flex items-center justify-between gap-2 rounded-t-lg bg-surface-2 px-4 py-1.5 text-sm text-fg-muted" data-reply-bar hidden>
+                <span class="truncate">Replying to <span class="font-semibold text-fg-strong" data-reply-bar-author></span></span>
+                <button type="button" class="shrink-0 rounded px-1 hover:text-fg-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]" aria-label="Cancel reply" data-reply-cancel>✕</button>
             </div>
             <ul class="mb-1 flex flex-wrap gap-2" aria-label="Files to upload" data-attachment-list hidden></ul>
             @if ($panel['mentionsUrl'] ?? null)
@@ -149,17 +149,17 @@
                     id="mention-suggestions"
                     role="listbox"
                     aria-label="Mention suggestions"
-                    class="mb-1 max-h-64 overflow-y-auto rounded-lg border border-[#1f2023] bg-[#2b2d31] py-1 shadow-xl"
+                    class="mb-1 max-h-64 overflow-y-auto rounded-lg border border-edge bg-surface-2 py-1 shadow-xl"
                     data-mention-suggestions
                     hidden
                 ></ul>
             @endif
             <label for="message-content" class="sr-only">Message {{ $panel['label'] }}</label>
-            <div class="flex items-end gap-2 rounded-lg bg-[#383a40] px-4 py-2">
+            <div class="flex items-end gap-2 rounded-lg bg-field px-4 py-2">
                 {{-- Attach Files (ISSUE-27); DM pages do not set it, and every participant may attach there. --}}
                 @if ($canAttachFiles ?? true)
                 <label
-                    class="shrink-0 cursor-pointer rounded-full px-1 py-0.5 text-xl leading-none text-[#b5bac1] hover:text-white has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-[#5865f2]"
+                    class="shrink-0 cursor-pointer rounded-full px-1 py-0.5 text-xl leading-none text-fg-muted hover:text-fg-strong has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-[#5865f2]"
                     title="Attach files (up to {{ \App\Models\MessageAttachment::MAX_FILES }}, {{ \App\Models\MessageAttachment::MAX_KILOBYTES / 1024 }} MB each)"
                 >
                     <span aria-hidden="true">＋</span>
@@ -182,14 +182,14 @@
                     maxlength="{{ \App\Models\Message::MAX_CONTENT_LENGTH }}"
                     placeholder="Message {{ $panel['label'] }}"
                     aria-describedby="message-error"
-                    class="max-h-64 min-h-6 flex-1 resize-none bg-transparent py-1 text-[#dbdee1] placeholder-[#6d6f78] focus:outline-none"
+                    class="max-h-64 min-h-6 flex-1 resize-none bg-transparent py-1 text-fg placeholder-fg-dim focus:outline-none"
                     data-message-input
                 >{{ old('content') }}</textarea>
                 {{-- Emoji picker (ISSUE-36): filled and shown by resources/js/emoji-picker.js. --}}
                 <div class="relative shrink-0">
                     <button
                         type="button"
-                        class="rounded px-1 py-0.5 text-xl leading-none text-[#b5bac1] grayscale hover:text-white hover:grayscale-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2] aria-expanded:grayscale-0"
+                        class="rounded px-1 py-0.5 text-xl leading-none text-fg-muted grayscale hover:text-fg-strong hover:grayscale-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2] aria-expanded:grayscale-0"
                         title="Choose an emoji"
                         aria-controls="emoji-picker"
                         data-emoji-picker-toggle
@@ -199,21 +199,21 @@
                         id="emoji-picker"
                         role="dialog"
                         aria-label="Emoji picker"
-                        class="absolute bottom-full right-0 z-30 mb-3 w-80 max-w-[calc(100vw-2rem)] rounded-lg border border-[#1f2023] bg-[#2b2d31] p-2 shadow-xl"
+                        class="absolute bottom-full right-0 z-30 mb-3 w-80 max-w-[calc(100vw-2rem)] rounded-lg border border-edge bg-surface-2 p-2 shadow-xl"
                         data-emoji-picker
                         hidden
                     ></div>
                 </div>
-                <button type="submit" class="shrink-0 rounded px-2 py-1 text-sm font-medium text-[#b5bac1] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]">Send</button>
+                <button type="submit" class="shrink-0 rounded px-2 py-1 text-sm font-medium text-fg-muted hover:text-fg-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]">Send</button>
             </div>
             <p id="message-error" role="alert" class="mt-1 text-sm text-red-400 @unless ($messageError) hidden @endunless" data-message-error>{{ $messageError }}</p>
         </form>
     @elseif ($messagesEnabled && ($panel['readOnlyNotice'] ?? null))
-        <p class="mx-4 mb-1 rounded-lg bg-[#2b2d31] px-4 py-3 text-sm text-[#949ba4]" data-read-only-notice>{{ $panel['readOnlyNotice'] }}</p>
+        <p class="mx-4 mb-1 rounded-lg bg-surface-2 px-4 py-3 text-sm text-fg-subtle" data-read-only-notice>{{ $panel['readOnlyNotice'] }}</p>
     @endif
 
     @if ($messagesEnabled)
         {{-- Filled by typing-indicator.js; empty (but keeping its height) while nobody types. --}}
-        <p class="h-6 truncate px-4 pb-1 text-xs leading-5 text-[#b5bac1]" aria-live="polite" data-typing-indicator></p>
+        <p class="h-6 truncate px-4 pb-1 text-xs leading-5 text-fg-muted" aria-live="polite" data-typing-indicator></p>
     @endif
 </section>

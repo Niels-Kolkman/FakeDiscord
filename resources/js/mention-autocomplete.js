@@ -93,7 +93,7 @@ function renderOption(suggestion, id, doc) {
     option.id = id;
     option.setAttribute('role', 'option');
     option.setAttribute('aria-selected', 'false');
-    option.className = 'flex cursor-pointer items-center gap-2 px-3 py-1.5 text-sm text-[#dbdee1] aria-selected:bg-[#404249] aria-selected:text-white';
+    option.className = 'flex cursor-pointer items-center gap-2 px-3 py-1.5 text-sm text-fg aria-selected:bg-active aria-selected:text-fg-strong';
     option.dataset.mentionOption = '';
     option.dataset.mentionType = suggestion.type;
 
@@ -122,7 +122,7 @@ function renderOption(suggestion, id, doc) {
     option.appendChild(label);
 
     const detail = doc.createElement('span');
-    detail.className = 'ml-auto shrink-0 truncate text-xs text-[#949ba4]';
+    detail.className = 'ml-auto shrink-0 truncate text-xs text-fg-subtle';
     detail.textContent = suggestion.detail;
     option.appendChild(detail);
 

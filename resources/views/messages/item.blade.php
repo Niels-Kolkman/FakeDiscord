@@ -51,14 +51,14 @@
     $reactionGroups = \App\Support\Reactions::groups($message, (int) ($viewerId ?? 0));
     $pinUrl = $messageUrl.'/pin';
     $reply = $message->replyPreview();
-    $toolButton = 'rounded px-2 py-0.5 text-xs text-[#b5bac1] hover:bg-[#404249] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]';
+    $toolButton = 'rounded px-2 py-0.5 text-xs text-fg-muted hover:bg-active hover:text-fg-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]';
     // Mentions (ISSUE-33): by name, a role the viewer holds or @everyone.
     $mentionsViewer = ! $isOwn && $message->mentionsUser((int) ($viewerId ?? 0), $viewerRoleIds ?? []);
 @endphp
 <li
     id="message-{{ $message->id }}"
     @class([
-        'group relative flex scroll-mt-16 flex-wrap gap-x-4 px-4 py-1 hover:bg-[#2e3035] focus-within:bg-[#2e3035]',
+        'group relative flex scroll-mt-16 flex-wrap gap-x-4 px-4 py-1 hover:bg-hover-soft focus-within:bg-hover-soft',
         'border-l-2 border-[#f0b232] bg-[#f0b232]/10' => $mentionsViewer,
     ])
     @if ($mentionsViewer) data-mentions-viewer @endif
@@ -69,21 +69,21 @@
     data-pin-url="{{ $pinUrl }}"
 >
     @if ($reply)
-        <div class="mb-0.5 flex w-full min-w-0 items-center gap-1 pl-14 text-sm text-[#b5bac1]" data-reply-preview data-reply-to-id="{{ $reply['id'] }}">
-            <span aria-hidden="true" class="shrink-0 text-[#80848e]">↱</span>
+        <div class="mb-0.5 flex w-full min-w-0 items-center gap-1 pl-14 text-sm text-fg-muted" data-reply-preview data-reply-to-id="{{ $reply['id'] }}">
+            <span aria-hidden="true" class="shrink-0 text-fg-faint">↱</span>
             @if ($reply['deleted'])
-                <span class="italic text-[#949ba4]" data-reply-deleted>Original message was deleted</span>
+                <span class="italic text-fg-subtle" data-reply-deleted>Original message was deleted</span>
             @elseif (in_array($reply['author']['id'] ?? null, $blockedUserIds ?? [], true))
                 {{-- The original is by someone the viewer blocked (ISSUE-25). --}}
-                <span class="italic text-[#949ba4]" data-reply-blocked>Blocked message</span>
+                <span class="italic text-fg-subtle" data-reply-blocked>Blocked message</span>
             @else
                 <a
                     href="#message-{{ $reply['id'] }}"
-                    class="flex min-w-0 items-center gap-1 rounded hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]"
+                    class="flex min-w-0 items-center gap-1 rounded hover:text-fg-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]"
                     data-reply-jump
                 >
                     <span class="sr-only">Replying to</span>
-                    <span class="shrink-0 font-medium text-white" data-reply-author>{{ $reply['author']['name'] ?? __('Deleted User') }}</span>
+                    <span class="shrink-0 font-medium text-fg-strong" data-reply-author>{{ $reply['author']['name'] ?? __('Deleted User') }}</span>
                     <span class="truncate" data-reply-content>{{ \App\Models\Message::previewText($reply) }}</span>
                 </a>
             @endif
@@ -98,17 +98,17 @@
 
     <div class="min-w-0 flex-1">
         <p class="flex items-baseline gap-2">
-            <span class="truncate font-medium text-white" data-message-author>{{ $message->authorName() }}</span>
+            <span class="truncate font-medium text-fg-strong" data-message-author>{{ $message->authorName() }}</span>
             <time
-                class="shrink-0 text-xs text-[#949ba4]"
+                class="shrink-0 text-xs text-fg-subtle"
                 datetime="{{ $message->created_at?->toIso8601String() }}"
                 data-local-time
             >{{ $message->created_at?->format('Y-m-d H:i') }}</time>
             <span class="shrink-0 text-xs" title="Pinned" data-message-pinned @unless ($message->isPinned()) hidden @endunless><span aria-hidden="true">📌</span><span class="sr-only">Pinned</span></span>
         </p>
         {{-- Markdown (ISSUE-36): a <div>, since a code block or quote cannot sit in a <p>. --}}
-        <div class="message-markdown whitespace-pre-wrap break-words text-[#dbdee1]" data-message-body><span data-message-content data-source="{{ $message->content }}">{{ \App\Support\Markdown::toHtml($message->content) }}</span><span
-            class="ml-1 text-xs text-[#949ba4]"
+        <div class="message-markdown whitespace-pre-wrap break-words text-fg" data-message-body><span data-message-content data-source="{{ $message->content }}">{{ \App\Support\Markdown::toHtml($message->content) }}</span><span
+            class="ml-1 text-xs text-fg-subtle"
             data-message-edited
             @if ($message->isEdited()) title="Edited {{ $message->edited_at?->toIso8601String() }}" @else hidden @endif
         >(edited)</span></div>
@@ -125,7 +125,7 @@
                                     alt="{{ $attachment->original_name }}"
                                     loading="lazy"
                                     @if ($preview) width="{{ $preview[0] }}" height="{{ $preview[1] }}" @endif
-                                    class="h-auto max-h-[300px] max-w-full rounded bg-[#2b2d31] object-contain"
+                                    class="h-auto max-h-[300px] max-w-full rounded bg-surface-2 object-contain"
                                 >
                             </a>
                             <a
@@ -135,11 +135,11 @@
                             >Download<span class="sr-only"> {{ $attachment->original_name }}</span></a>
                         </li>
                     @else
-                        <li class="flex w-full max-w-md items-center gap-3 rounded-lg border border-[#1f2023] bg-[#2b2d31] p-3" data-attachment data-attachment-file>
+                        <li class="flex w-full max-w-md items-center gap-3 rounded-lg border border-edge bg-surface-2 p-3" data-attachment data-attachment-file>
                             <span aria-hidden="true" class="text-3xl">📄</span>
                             <span class="min-w-0 flex-1">
-                                <a href="{{ $attachment->downloadUrl() }}" class="block truncate text-[#00a8fc] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]" data-attachment-download>{{ $attachment->original_name }}</a>
-                                <span class="block text-xs text-[#949ba4]">{{ $attachment->humanSize() }}</span>
+                                <a href="{{ $attachment->downloadUrl() }}" class="block truncate text-link hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]" data-attachment-download>{{ $attachment->original_name }}</a>
+                                <span class="block text-xs text-fg-subtle">{{ $attachment->humanSize() }}</span>
                             </span>
                         </li>
                     @endif
@@ -159,35 +159,35 @@
                         @class([
                             'flex items-center gap-1 rounded-lg border px-1.5 py-0.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]',
                             'border-[#5865f2] bg-[#5865f2]/25' => $me,
-                            'border-transparent bg-[#2b2d31] hover:border-[#4e5058]' => ! $me,
+                            'border-transparent bg-surface-2 hover:border-[#4e5058]' => ! $me,
                         ])
                         aria-pressed="{{ $me ? 'true' : 'false' }}"
                         aria-label="{{ \App\Support\Reactions::label($group) }}"
                         title="{{ \App\Support\Reactions::tooltip($group) }}"
                         data-reaction
                         data-emoji="{{ $group['emoji'] }}"
-                    ><span aria-hidden="true">{{ $group['emoji'] }}</span><span class="text-xs font-medium text-[#dbdee1]" aria-hidden="true" data-reaction-count>{{ $group['count'] }}</span></button>
+                    ><span aria-hidden="true">{{ $group['emoji'] }}</span><span class="text-xs font-medium text-fg" aria-hidden="true" data-reaction-count>{{ $group['count'] }}</span></button>
                 </form>
             @endforeach
         </div>
     </div>
 
     <div
-        class="absolute -top-3 right-4 hidden gap-1 rounded border border-[#1f2023] bg-[#313338] p-0.5 shadow group-hover:flex group-focus-within:flex has-[[open]]:flex"
+        class="absolute -top-3 right-4 hidden gap-1 rounded border border-edge bg-surface p-0.5 shadow group-hover:flex group-focus-within:flex has-[[open]]:flex"
         data-message-actions
     >
         <details class="relative" data-reaction-picker>
             <summary class="{{ $toolButton }} cursor-pointer list-none [&::-webkit-details-marker]:hidden" title="Add reaction">
                 <span aria-hidden="true">🙂</span><span class="sr-only">Add reaction</span>
             </summary>
-            <div class="absolute right-0 top-full z-20 mt-1 flex gap-0.5 rounded-lg border border-[#1f2023] bg-[#2b2d31] p-1 shadow-lg" role="group" aria-label="Choose a reaction">
+            <div class="absolute right-0 top-full z-20 mt-1 flex gap-0.5 rounded-lg border border-edge bg-surface-2 p-1 shadow-lg" role="group" aria-label="Choose a reaction">
                 @foreach (\App\Support\Reactions::QUICK as $emoji)
                     <form method="POST" action="{{ $reactionsUrl }}" data-reaction-form>
                         @csrf
                         <input type="hidden" name="emoji" value="{{ $emoji }}">
                         <button
                             type="submit"
-                            class="rounded p-1 text-lg leading-none hover:bg-[#404249] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]"
+                            class="rounded p-1 text-lg leading-none hover:bg-active focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]"
                             aria-label="React with {{ $emoji }}"
                             title="React with {{ $emoji }}"
                             data-reaction-choice
@@ -227,7 +227,7 @@
                 @method('DELETE')
                 <button
                     type="submit"
-                    class="rounded px-2 py-0.5 text-xs text-red-400 hover:bg-[#404249] hover:text-red-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]"
+                    class="rounded px-2 py-0.5 text-xs text-red-400 hover:bg-active hover:text-red-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]"
                 >Delete</button>
             </form>
         @endif

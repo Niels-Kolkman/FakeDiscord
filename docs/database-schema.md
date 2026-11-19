@@ -23,6 +23,7 @@ erDiagram
         string avatar_path "nullable"
         string bio "nullable, max 190"
         string status "online|idle|dnd|offline"
+        string theme "dark|light, default dark"
         timestamp email_verified_at "nullable"
         string password
         timestamps timestamps
@@ -359,6 +360,10 @@ database, so these rules live in the app layer (validation, model events or poli
   the server's Reverb presence channel, not from this column. The database
   default is still `offline`, from before presence. New users get `online`
   from the model, and a stored `offline` reads as `online` once connected.
+- `users.theme` is the colour theme a user picked: `dark` (the default) or
+  `light` (`User::THEMES`, ISSUE-37). The layouts put it on
+  `<html data-theme>`; an unknown value reads as `dark`
+  (`User::preferredTheme()`).
 - Values in the `status` and `type` columns. These are plain strings, not
   `enum()`, because Laravel turns `enum()` into a CHECK constraint on SQLite,
   and changing it later would mean rebuilding the whole table.

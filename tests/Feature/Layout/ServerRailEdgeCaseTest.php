@@ -217,14 +217,18 @@ class ServerRailEdgeCaseTest extends TestCase
         $this->assertStringNotContainsString('data-channel-sidebar', $html);
     }
 
-    public function test_the_rail_is_a_row_on_small_screens_and_a_column_from_md(): void
+    /** ISSUE-37: on small screens the rail is in the navigation drawer, still a column. */
+    public function test_the_rail_is_a_72px_column_on_every_screen_size(): void
     {
         $rail = $this->rail($this->page($this->alice, route('friends.index')));
 
         $this->assertSame(1, preg_match('#<nav\s[^>]*class="([^"]*)"#', $rail, $m));
         $classes = explode(' ', $m[1]);
-        foreach (['flex-row', 'overflow-x-auto', 'md:flex-col', 'md:w-[72px]', 'md:overflow-y-auto'] as $class) {
+        foreach (['flex-col', 'w-[72px]', 'overflow-y-auto'] as $class) {
             $this->assertContains($class, $classes, $class);
+        }
+        foreach (['flex-row', 'overflow-x-auto', 'md:flex-col'] as $class) {
+            $this->assertNotContains($class, $classes, $class);
         }
     }
 

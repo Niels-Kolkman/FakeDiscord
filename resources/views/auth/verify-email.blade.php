@@ -1,6 +1,6 @@
 <x-layouts.auth title="Verify your email">
-    <p class="mb-4 text-sm text-[#b5bac1]">
-        We sent a verification link to <strong class="text-white">{{ auth()->user()?->email }}</strong>.
+    <p class="mb-4 text-sm text-fg-muted">
+        We sent a verification link to <strong class="text-fg-strong">{{ auth()->user()?->email }}</strong>.
         Click the link in that email to verify your address. You need a verified email to join servers.
     </p>
 
@@ -11,6 +11,6 @@
 
     <form method="POST" action="{{ route('logout') }}" class="mt-4 text-center">
         @csrf
-        <button type="submit" class="text-sm text-[#00a8fc] hover:underline">Log out</button>
+        <button type="submit" class="text-sm text-link hover:underline">Log out</button>
     </form>
 </x-layouts.auth>

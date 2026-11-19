@@ -86,7 +86,7 @@ export function showToast(document, { text, href = null, ms = TOAST_MS, setTimer
 
     const toast = document.createElement('div');
     toast.dataset.friendToast = '';
-    toast.className = 'pointer-events-auto flex max-w-sm items-center gap-3 rounded-lg bg-[#111214] px-4 py-3 text-sm text-[#dbdee1] shadow-2xl';
+    toast.className = 'pointer-events-auto flex max-w-sm items-center gap-3 rounded-lg bg-surface-float px-4 py-3 text-sm text-fg shadow-2xl';
 
     const message = document.createElement('p');
     message.textContent = text;
@@ -95,7 +95,7 @@ export function showToast(document, { text, href = null, ms = TOAST_MS, setTimer
     if (href) {
         const link = document.createElement('a');
         link.href = href;
-        link.className = 'shrink-0 font-medium text-[#00a8fc] hover:underline';
+        link.className = 'shrink-0 font-medium text-link hover:underline';
         link.textContent = 'View';
         toast.appendChild(link);
     }

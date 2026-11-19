@@ -11,8 +11,8 @@
     </div>
 
     @if ($decision->allowed())
-        <p class="mb-6 text-sm text-[#b5bac1]">
-            Are you sure you want to leave <strong class="text-white">{{ $server->name }}</strong>?
+        <p class="mb-6 text-sm text-fg-muted">
+            Are you sure you want to leave <strong class="text-fg-strong">{{ $server->name }}</strong>?
             You won't be able to rejoin unless you are re-invited.
         </p>
 
@@ -31,7 +31,7 @@
         @endcan
     @endif
 
-    <p class="mt-4 text-sm text-[#949ba4]">
-        <a href="{{ route('servers.show', $server) }}" class="text-[#00a8fc] hover:underline">Cancel</a>
+    <p class="mt-4 text-sm text-fg-subtle">
+        <a href="{{ route('servers.show', $server) }}" class="text-link hover:underline">Cancel</a>
     </p>
 </x-layouts.auth>
