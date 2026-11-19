@@ -1,0 +1,542 @@
+[
+    {
+        "name": "plain text",
+        "input": "Hello, world!",
+        "html": "Hello, world!"
+    },
+    {
+        "name": "empty",
+        "input": "",
+        "html": ""
+    },
+    {
+        "name": "new lines are kept",
+        "input": "line one\nline two\n\nline four",
+        "html": "line one\nline two\n\nline four"
+    },
+    {
+        "name": "bold",
+        "input": "this is **bold** text",
+        "html": "this is <strong>bold</strong> text"
+    },
+    {
+        "name": "italic with stars",
+        "input": "this is *italic* text",
+        "html": "this is <em>italic</em> text"
+    },
+    {
+        "name": "italic with underscores",
+        "input": "this is _italic_ text",
+        "html": "this is <em>italic</em> text"
+    },
+    {
+        "name": "underline",
+        "input": "__underlined__",
+        "html": "<u>underlined</u>"
+    },
+    {
+        "name": "strikethrough",
+        "input": "~~gone~~",
+        "html": "<s>gone</s>"
+    },
+    {
+        "name": "bold italic",
+        "input": "***both***",
+        "html": "<strong><em>both</em></strong>"
+    },
+    {
+        "name": "nested",
+        "input": "**bold _and italic_ and ~~struck~~**",
+        "html": "<strong>bold <em>and italic</em> and <s>struck</s></strong>"
+    },
+    {
+        "name": "italic around bold",
+        "input": "*a **b** c*",
+        "html": "<em>a <strong>b</strong> c</em>"
+    },
+    {
+        "name": "snake_case stays text",
+        "input": "call some_function_name now",
+        "html": "call some_function_name now"
+    },
+    {
+        "name": "underscore inside a word",
+        "input": "_not_italic",
+        "html": "_not_italic"
+    },
+    {
+        "name": "lone stars",
+        "input": "2 * 3 * 4 = 24",
+        "html": "2 * 3 * 4 = 24"
+    },
+    {
+        "name": "unclosed bold",
+        "input": "**not closed",
+        "html": "**not closed"
+    },
+    {
+        "name": "escaped stars",
+        "input": "\\*not italic\\*",
+        "html": "*not italic*"
+    },
+    {
+        "name": "backslash before a letter is kept",
+        "input": "C:\\temp\\new",
+        "html": "C:\\temp\\new"
+    },
+    {
+        "name": "inline code",
+        "input": "run `npm test` please",
+        "html": "run <code>npm test</code> please"
+    },
+    {
+        "name": "inline code is not formatted",
+        "input": "`**not bold** <b>`",
+        "html": "<code>**not bold** &lt;b&gt;</code>"
+    },
+    {
+        "name": "double backtick code",
+        "input": "``a ` b``",
+        "html": "<code>a ` b</code>"
+    },
+    {
+        "name": "code block",
+        "input": "```\nconst a = 1;\n```",
+        "html": "<pre><code>const a = 1;</code></pre>"
+    },
+    {
+        "name": "code block with a language",
+        "input": "```js\nconsole.log('<hi>');\n```",
+        "html": "<pre><code data-language=\"js\">console.log(&#039;&lt;hi&gt;&#039;);</code></pre>"
+    },
+    {
+        "name": "one line code block",
+        "input": "```hello world```",
+        "html": "<pre><code>hello world</code></pre>"
+    },
+    {
+        "name": "code block between text",
+        "input": "before\n```\ncode\n```\nafter",
+        "html": "before<pre><code>code</code></pre>after"
+    },
+    {
+        "name": "code block keeps markdown",
+        "input": "```\n**x** _y_ https://example.com\n```",
+        "html": "<pre><code>**x** _y_ https://example.com</code></pre>"
+    },
+    {
+        "name": "quote",
+        "input": "> quoted",
+        "html": "<blockquote>quoted</blockquote>"
+    },
+    {
+        "name": "quote lines",
+        "input": "> one\n> two\nnot quoted",
+        "html": "<blockquote>one\ntwo</blockquote>not quoted"
+    },
+    {
+        "name": "quote with formatting",
+        "input": "> **bold** in a quote",
+        "html": "<blockquote><strong>bold</strong> in a quote</blockquote>"
+    },
+    {
+        "name": "text then quote",
+        "input": "intro\n> quoted",
+        "html": "intro<blockquote>quoted</blockquote>"
+    },
+    {
+        "name": "quote rest",
+        "input": ">>> everything\nafter this\n> too",
+        "html": "<blockquote>everything\nafter this\n&gt; too</blockquote>"
+    },
+    {
+        "name": "quote needs a space",
+        "input": ">not a quote",
+        "html": "&gt;not a quote"
+    },
+    {
+        "name": "quote only at the start of a line",
+        "input": "a > b",
+        "html": "a &gt; b"
+    },
+    {
+        "name": "no nested quotes",
+        "input": "> > inner",
+        "html": "<blockquote>&gt; inner</blockquote>"
+    },
+    {
+        "name": "url",
+        "input": "see https://example.com/path?q=1&r=2 now",
+        "html": "see <a href=\"https://example.com/path?q=1&amp;r=2\" target=\"_blank\" rel=\"noopener noreferrer nofollow ugc\">https://example.com/path?q=1&amp;r=2</a> now"
+    },
+    {
+        "name": "url trailing punctuation",
+        "input": "Visit https://example.com.",
+        "html": "Visit <a href=\"https://example.com\" target=\"_blank\" rel=\"noopener noreferrer nofollow ugc\">https://example.com</a>."
+    },
+    {
+        "name": "url in brackets",
+        "input": "(https://example.com/a)",
+        "html": "(<a href=\"https://example.com/a\" target=\"_blank\" rel=\"noopener noreferrer nofollow ugc\">https://example.com/a</a>)"
+    },
+    {
+        "name": "url in bold",
+        "input": "**https://example.com**",
+        "html": "<strong><a href=\"https://example.com\" target=\"_blank\" rel=\"noopener noreferrer nofollow ugc\">https://example.com</a></strong>"
+    },
+    {
+        "name": "autolink",
+        "input": "<https://example.com/x>",
+        "html": "<a href=\"https://example.com/x\" target=\"_blank\" rel=\"noopener noreferrer nofollow ugc\">https://example.com/x</a>"
+    },
+    {
+        "name": "http url",
+        "input": "http://example.com",
+        "html": "<a href=\"http://example.com\" target=\"_blank\" rel=\"noopener noreferrer nofollow ugc\">http://example.com</a>"
+    },
+    {
+        "name": "url with a quote",
+        "input": "https://example.com/\"onmouseover=\"alert(1)",
+        "html": "<a href=\"https://example.com/&quot;onmouseover=&quot;alert(1\" target=\"_blank\" rel=\"noopener noreferrer nofollow ugc\">https://example.com/&quot;onmouseover=&quot;alert(1</a>)"
+    },
+    {
+        "name": "javascript url is text",
+        "input": "javascript:alert(1)",
+        "html": "javascript:alert(1)"
+    },
+    {
+        "name": "masked link is text",
+        "input": "[click](https://example.com)",
+        "html": "[click](<a href=\"https://example.com\" target=\"_blank\" rel=\"noopener noreferrer nofollow ugc\">https://example.com</a>)"
+    },
+    {
+        "name": "masked javascript link is text",
+        "input": "[click](javascript:alert(1))",
+        "html": "[click](javascript:alert(1))"
+    },
+    {
+        "name": "data url is text",
+        "input": "data:text/html;base64,PHNjcmlwdD4=",
+        "html": "data:text/html;base64,PHNjcmlwdD4="
+    },
+    {
+        "name": "html is escaped",
+        "input": "<script>alert('x')</script>",
+        "html": "&lt;script&gt;alert(&#039;x&#039;)&lt;/script&gt;"
+    },
+    {
+        "name": "html in bold is escaped",
+        "input": "**<img src=x onerror=alert(1)>**",
+        "html": "<strong>&lt;img src=x onerror=alert(1)&gt;</strong>"
+    },
+    {
+        "name": "html entities are escaped",
+        "input": "&lt;b&gt; & \"quotes\"",
+        "html": "&amp;lt;b&amp;gt; &amp; &quot;quotes&quot;"
+    },
+    {
+        "name": "headings are text",
+        "input": "# Not a heading",
+        "html": "# Not a heading"
+    },
+    {
+        "name": "lists are text",
+        "input": "- one\n- two",
+        "html": "- one\n- two"
+    },
+    {
+        "name": "emoji",
+        "input": "nice 🎉 **party** 👍🏽",
+        "html": "nice 🎉 <strong>party</strong> 👍🏽"
+    },
+    {
+        "name": "unicode words",
+        "input": "_héllo_ wörld",
+        "html": "<em>héllo</em> wörld"
+    },
+    {
+        "name": "mentions are text",
+        "input": "@alice **@everyone**",
+        "html": "@alice <strong>@everyone</strong>"
+    },
+    {
+        "name": "repeated delimiters do not nest",
+        "input": "**__**__**__**__**__x__**__**__**__**__**",
+        "html": "<strong>__</strong><u>**</u><strong>__</strong><u>x</u><strong>__</strong><u>**</u><strong>__</strong>"
+    },
+    {
+        "name": "windows line endings are kept",
+        "input": "a\r\nb",
+        "html": "a\r\nb"
+    },
+    {
+        "name": "quote lines with windows line endings",
+        "input": "> a\r\n> b",
+        "html": "<blockquote>a\r\nb</blockquote>"
+    },
+    {
+        "name": "a quote ends at the first line without a marker",
+        "input": "> quoted\nnot quoted",
+        "html": "<blockquote>quoted</blockquote>not quoted"
+    },
+    {
+        "name": "quotes split by a blank line",
+        "input": "> one\n\n> two",
+        "html": "<blockquote>one</blockquote><blockquote>two</blockquote>"
+    },
+    {
+        "name": "quote rest after text",
+        "input": "text\n>>> rest\nmore",
+        "html": "text<blockquote>rest\nmore</blockquote>"
+    },
+    {
+        "name": "quote rest needs a space",
+        "input": ">>>",
+        "html": "&gt;&gt;&gt;"
+    },
+    {
+        "name": "code block inside a quote",
+        "input": "> ```\n> code\n> ```",
+        "html": "<blockquote><pre><code>code</code></pre></blockquote>"
+    },
+    {
+        "name": "quote marker inside a code block stays text",
+        "input": "```\n> not quote\n```",
+        "html": "<pre><code>&gt; not quote</code></pre>"
+    },
+    {
+        "name": "code block language with symbols",
+        "input": "```c++\nint x;\n```",
+        "html": "<pre><code data-language=\"c++\">int x;</code></pre>"
+    },
+    {
+        "name": "a first line with a space is code, not a language",
+        "input": "```bad lang\nx\n```",
+        "html": "<pre><code>bad lang\nx</code></pre>"
+    },
+    {
+        "name": "blank lines around a code block are dropped",
+        "input": "```\n\n\ncode\n\n\n```",
+        "html": "<pre><code>code</code></pre>"
+    },
+    {
+        "name": "text right after a code block",
+        "input": "```js\nx```after",
+        "html": "<pre><code data-language=\"js\">x</code></pre>after"
+    },
+    {
+        "name": "code block in the middle of a word",
+        "input": "a```b```c",
+        "html": "a<pre><code>b</code></pre>c"
+    },
+    {
+        "name": "six backticks stay text",
+        "input": "``````",
+        "html": "``````"
+    },
+    {
+        "name": "inline code is trimmed",
+        "input": "`  padded  `",
+        "html": "<code>padded</code>"
+    },
+    {
+        "name": "a backtick inside double backticks",
+        "input": "`` ` ``",
+        "html": "<code>`</code>"
+    },
+    {
+        "name": "unbalanced backticks stay text",
+        "input": "`a``",
+        "html": "`a``"
+    },
+    {
+        "name": "escaped backticks",
+        "input": "\\`not code\\`",
+        "html": "`not code`"
+    },
+    {
+        "name": "an escaped backslash does not escape the star",
+        "input": "\\\\*a*",
+        "html": "\\<em>a</em>"
+    },
+    {
+        "name": "a lone backslash",
+        "input": "\\",
+        "html": "\\"
+    },
+    {
+        "name": "escaped underscore",
+        "input": "\\_x_",
+        "html": "_x_"
+    },
+    {
+        "name": "bold needs a closing pair",
+        "input": "**a**b**",
+        "html": "<strong>a</strong>b**"
+    },
+    {
+        "name": "italic star needs no space after the opener",
+        "input": "* a *",
+        "html": "* a *"
+    },
+    {
+        "name": "italic star needs no space before the closer",
+        "input": "*a *",
+        "html": "*a *"
+    },
+    {
+        "name": "escaped star inside italic",
+        "input": "*a\\*b*",
+        "html": "<em>a*b</em>"
+    },
+    {
+        "name": "bold inside italic without spaces",
+        "input": "*a**b**c*",
+        "html": "<em>a<strong>b</strong>c</em>"
+    },
+    {
+        "name": "underline italic",
+        "input": "___x___",
+        "html": "<u><em>x</em></u>"
+    },
+    {
+        "name": "single tildes are text",
+        "input": "~x~",
+        "html": "~x~"
+    },
+    {
+        "name": "bold across lines",
+        "input": "**a\nb**",
+        "html": "<strong>a\nb</strong>"
+    },
+    {
+        "name": "strike across lines",
+        "input": "~~a\nb~~",
+        "html": "<s>a\nb</s>"
+    },
+    {
+        "name": "code inside bold",
+        "input": "**`code`**",
+        "html": "<strong><code>code</code></strong>"
+    },
+    {
+        "name": "underscores inside a non-latin word",
+        "input": "café_au_lait 日本_語_",
+        "html": "café_au_lait 日本_語_"
+    },
+    {
+        "name": "italic after an emoji",
+        "input": "😀_a_",
+        "html": "😀<em>a</em>"
+    },
+    {
+        "name": "emoji in italic and bold",
+        "input": "_😀_ **😀**",
+        "html": "<em>😀</em> <strong>😀</strong>"
+    },
+    {
+        "name": "tabs are kept",
+        "input": "a\tb",
+        "html": "a\tb"
+    },
+    {
+        "name": "spoilers are text",
+        "input": "||spoiler||",
+        "html": "||spoiler||"
+    },
+    {
+        "name": "discord mentions are escaped text",
+        "input": "<@123> <#456> @everyone",
+        "html": "&lt;@123&gt; &lt;#456&gt; @everyone"
+    },
+    {
+        "name": "url in parentheses",
+        "input": "see (https://example.com)",
+        "html": "see (<a href=\"https://example.com\" target=\"_blank\" rel=\"noopener noreferrer nofollow ugc\">https://example.com</a>)"
+    },
+    {
+        "name": "url before a question mark",
+        "input": "https://example.com?",
+        "html": "<a href=\"https://example.com\" target=\"_blank\" rel=\"noopener noreferrer nofollow ugc\">https://example.com</a>?"
+    },
+    {
+        "name": "url ending in an underscore",
+        "input": "https://example.com/a_b_",
+        "html": "<a href=\"https://example.com/a_b\" target=\"_blank\" rel=\"noopener noreferrer nofollow ugc\">https://example.com/a_b</a>_"
+    },
+    {
+        "name": "uppercase url",
+        "input": "HTTPS://EXAMPLE.COM/Path",
+        "html": "<a href=\"HTTPS://EXAMPLE.COM/Path\" target=\"_blank\" rel=\"noopener noreferrer nofollow ugc\">HTTPS://EXAMPLE.COM/Path</a>"
+    },
+    {
+        "name": "url with a query and a fragment",
+        "input": "http://localhost:8000/x?y=1&z=2#frag",
+        "html": "<a href=\"http://localhost:8000/x?y=1&amp;z=2#frag\" target=\"_blank\" rel=\"noopener noreferrer nofollow ugc\">http://localhost:8000/x?y=1&amp;z=2#frag</a>"
+    },
+    {
+        "name": "a url stops at a less-than sign",
+        "input": "https://example.com/<b>",
+        "html": "<a href=\"https://example.com/\" target=\"_blank\" rel=\"noopener noreferrer nofollow ugc\">https://example.com/</a>&lt;b&gt;"
+    },
+    {
+        "name": "a quote in a url is escaped",
+        "input": "https://example.com\"onmouseover=\"x",
+        "html": "<a href=\"https://example.com&quot;onmouseover=&quot;x\" target=\"_blank\" rel=\"noopener noreferrer nofollow ugc\">https://example.com&quot;onmouseover=&quot;x</a>"
+    },
+    {
+        "name": "url in quotes",
+        "input": "\"https://example.com\"",
+        "html": "&quot;<a href=\"https://example.com\" target=\"_blank\" rel=\"noopener noreferrer nofollow ugc\">https://example.com</a>&quot;"
+    },
+    {
+        "name": "url with a pipe, tilde and percent",
+        "input": "https://a.b/c|d https://a.b/~user https://a.b/%E2%9C%93",
+        "html": "<a href=\"https://a.b/c|d\" target=\"_blank\" rel=\"noopener noreferrer nofollow ugc\">https://a.b/c|d</a> <a href=\"https://a.b/~user\" target=\"_blank\" rel=\"noopener noreferrer nofollow ugc\">https://a.b/~user</a> <a href=\"https://a.b/%E2%9C%93\" target=\"_blank\" rel=\"noopener noreferrer nofollow ugc\">https://a.b/%E2%9C%93</a>"
+    },
+    {
+        "name": "international url",
+        "input": "https://例え.jp/パス",
+        "html": "<a href=\"https://例え.jp/パス\" target=\"_blank\" rel=\"noopener noreferrer nofollow ugc\">https://例え.jp/パス</a>"
+    },
+    {
+        "name": "scheme only is text",
+        "input": "https://",
+        "html": "https://"
+    },
+    {
+        "name": "ftp and mailto are text",
+        "input": "ftp://example.com mailto:a@b.c",
+        "html": "ftp://example.com mailto:a@b.c"
+    },
+    {
+        "name": "autolink keeps parentheses",
+        "input": "<http://x.y/(z)>",
+        "html": "<a href=\"http://x.y/(z)\" target=\"_blank\" rel=\"noopener noreferrer nofollow ugc\">http://x.y/(z)</a>"
+    },
+    {
+        "name": "autolink cannot hold a space",
+        "input": "<https://example.com/a b>",
+        "html": "&lt;<a href=\"https://example.com/a\" target=\"_blank\" rel=\"noopener noreferrer nofollow ugc\">https://example.com/a</a> b&gt;"
+    },
+    {
+        "name": "url in strike",
+        "input": "~~https://example.com~~",
+        "html": "<s><a href=\"https://example.com\" target=\"_blank\" rel=\"noopener noreferrer nofollow ugc\">https://example.com</a></s>"
+    },
+    {
+        "name": "image syntax is text with a link",
+        "input": "![img](https://example.com/x.png)",
+        "html": "![img](<a href=\"https://example.com/x.png\" target=\"_blank\" rel=\"noopener noreferrer nofollow ugc\">https://example.com/x.png</a>)"
+    },
+    {
+        "name": "quotes and apostrophes are escaped",
+        "input": "&amp; ' \"",
+        "html": "&amp;amp; &#039; &quot;"
+    },
+    {
+        "name": "the deepest nesting is rendered in full",
+        "input": "> _~~*____****x****____*~~_",
+        "html": "<blockquote><em><s><em><u><u><strong><strong>x</strong></strong></u></u></em></s></em></blockquote>"
+    }
+]

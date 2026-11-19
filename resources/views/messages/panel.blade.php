@@ -185,6 +185,25 @@
                     class="max-h-64 min-h-6 flex-1 resize-none bg-transparent py-1 text-[#dbdee1] placeholder-[#6d6f78] focus:outline-none"
                     data-message-input
                 >{{ old('content') }}</textarea>
+                {{-- Emoji picker (ISSUE-36): filled and shown by resources/js/emoji-picker.js. --}}
+                <div class="relative shrink-0">
+                    <button
+                        type="button"
+                        class="rounded px-1 py-0.5 text-xl leading-none text-[#b5bac1] grayscale hover:text-white hover:grayscale-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2] aria-expanded:grayscale-0"
+                        title="Choose an emoji"
+                        aria-controls="emoji-picker"
+                        data-emoji-picker-toggle
+                        hidden
+                    ><span aria-hidden="true">😀</span><span class="sr-only">Choose an emoji</span></button>
+                    <div
+                        id="emoji-picker"
+                        role="dialog"
+                        aria-label="Emoji picker"
+                        class="absolute bottom-full right-0 z-30 mb-3 w-80 max-w-[calc(100vw-2rem)] rounded-lg border border-[#1f2023] bg-[#2b2d31] p-2 shadow-xl"
+                        data-emoji-picker
+                        hidden
+                    ></div>
+                </div>
                 <button type="submit" class="shrink-0 rounded px-2 py-1 text-sm font-medium text-[#b5bac1] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]">Send</button>
             </div>
             <p id="message-error" role="alert" class="mt-1 text-sm text-red-400 @unless ($messageError) hidden @endunless" data-message-error>{{ $messageError }}</p>
