@@ -1,6 +1,6 @@
 {{--
     A server's unread dot and mention badge in a server list (ISSUE-32):
-    the dashboard and the friends / DM sidebar. Expects $state, the
+    the dashboard (the server rail has its own, ISSUE-35). Expects $state, the
     server's App\Support\UnreadState (or NULL). Not live: these lists are
     worked out when the page loads.
 --}}
