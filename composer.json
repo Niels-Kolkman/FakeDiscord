@@ -58,6 +58,10 @@
             "@php artisan config:clear --ansi",
             "@php artisan test"
         ],
+        "test:coverage": [
+            "@php artisan config:clear --ansi",
+            "@php artisan test --coverage --min=80"
+        ],
         "format": "pint",
         "lint": "pint --test",
         "analyse": "phpstan analyse --memory-limit=1G",
