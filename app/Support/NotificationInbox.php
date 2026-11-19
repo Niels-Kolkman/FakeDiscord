@@ -7,10 +7,10 @@ use App\Models\Message;
 use App\Models\User;
 use App\Notifications\MentionedInMessage;
 use App\Services\PermissionService;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Notifications\DatabaseNotification;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
 /**
@@ -117,7 +117,7 @@ final class NotificationInbox
      * @param  array<string, mixed>  $data
      * @return array{id: string, read: bool, created_at: string|null, reason: string, label: string, author_name: string, avatar_url: string|null, server_name: string, channel_name: string, excerpt: string, channel_id: int, message_id: int, url: string, open_url: string}
      */
-    public static function present(string $id, array $data, ?Carbon $readAt, ?Carbon $createdAt, ?User $author): array
+    public static function present(string $id, array $data, ?CarbonInterface $readAt, ?CarbonInterface $createdAt, ?User $author): array
     {
         $reason = (string) ($data['reason'] ?? MentionedInMessage::REASON_USER);
         $serverId = (int) ($data['server_id'] ?? 0);
@@ -131,7 +131,7 @@ final class NotificationInbox
             'created_at' => $createdAt?->toIso8601String(),
             'reason' => $reason,
             'label' => self::label($reason, $data['role_name'] ?? null),
-            'author_name' => $author?->name ?? ($storedAuthor !== '' ? $storedAuthor : __('Deleted User')),
+            'author_name' => $author !== null ? (string) $author->name : ($storedAuthor !== '' ? $storedAuthor : __('Deleted User')),
             'avatar_url' => $author?->avatarUrl(),
             'server_name' => (string) ($data['server_name'] ?? ''),
             'channel_name' => (string) ($data['channel_name'] ?? ''),

@@ -312,6 +312,7 @@ the policies ask it; nothing else reads `roles.permissions` to decide.
   | View Channels | open a channel, read its history and pins, find its messages in search, listen to its live and typing events; channels you cannot see are left out of the sidebar | `ChannelPolicy::view` |
   | Send Messages | post in a channel you can see | `ChannelPolicy::sendMessages` |
   | Attach Files | upload files with a message (else a 422 on `attachments`, and no attach button) | `ChannelPolicy::attachFiles` |
+  | Mention @everyone | make `@everyone` notify every member who can see the channel (else it is plain text) | `App\Support\Mentions::resolve()` |
   | Add Reactions | react with an emoji nobody used yet on that message; joining an existing reaction and taking yours back needs only View Channels | `MessagePolicy::addReaction` |
   | Manage Messages | delete and pin anyone's messages (editing stays author only) | `ChannelPolicy::manageMessages`, `MessagePolicy::delete` / `pin` |
   | Manage Channels | create, edit, reorder and delete channels and categories | `ServerPolicy::manageChannels` |
@@ -784,10 +785,10 @@ never past the channel's newest message.
   Without a marker, only messages sent after you joined the server count. Your
   own messages, deleted ones and those of people you blocked never count, and
   neither do channels you cannot see. `App\Support\UnreadState` works this out
-  in one query for all channels, plus one for mentions when anything is unread.
-- **Mentions**: `@username` (`App\Support\Mentions`), case-insensitive. It does
-  not match inside a word or an e-mail address, and `@bobby` does not mention
-  bob. `@role` and `@everyone` come with ISSUE-33.
+  in one query for all channels, plus one for mentions when anything is unread
+  (and one for your roles when a role was mentioned).
+- **Mentions**: see [Mentions and notifications](#mentions-and-notifications).
+  A mention counts when it names you, a role you hold, or `@everyone`.
 - **Where it shows**: in the channel sidebar, an unread channel gets a white dot
   and a bold name, and unread mentions show as a red badge. The open channel is
   never unread. In the server lists (dashboard, friends and DM sidebar), a
@@ -795,6 +796,49 @@ never past the channel's newest message.
 - **Live**: the channel sidebar subscribes to `channel.{id}` for every text
   channel in it and updates dots and badges as `.message.sent` arrives. The
   server lists are worked out when the page loads.
+
+### Mentions and notifications
+
+ISSUE-33 adds `@user`, `@role` and `@everyone` mentions in server channels,
+with notifications for the people mentioned.
+
+- **Syntax** (`App\Support\Mentions`): `@username`, `@Role Name` (spaces are
+  fine, any case) or `@everyone`. They are case-insensitive and don't match inside a word or an e-mail
+  address (`me@bob`). `@bobby` does not mention bob, and a trailing period
+  ends the sentence, not the name. `everyone` and `here` can't be usernames.
+- **Who is mentioned** is worked out whenever a channel message's content is
+  saved and stored in `messages.mentions` (`{users, roles, everyone}`). Only
+  members of the server count as users. `@everyone` only counts when the author
+  has the **Mention @everyone** permission in the channel (owner and
+  Administrator have it, `@everyone` does not by default); otherwise it is plain
+  text. Any member may mention any role. DMs have no mentions.
+- **Autocomplete**: typing `@` in a channel's composer lists matching members
+  (username, nickname or name, only those who can see the channel), roles,
+  and `@everyone` if you may use it
+  (`GET /servers/{id}/channels/{channel}/mentions?q=`,
+  `MentionSuggestionController`, `resources/js/mention-autocomplete.js`). ↑/↓
+  move, Enter or Tab inserts, Escape closes. While the list is open, Enter does not send.
+- **Notifications** (`App\Notifications\MentionedInMessage`, sent by
+  `App\Support\MentionNotifier`): a Laravel database notification for every
+  member mentioned who can see the channel, except the author and anyone who
+  blocked them. Each person gets one per message, with the most direct reason (by name, by
+  role, `@everyone`). Each one is also broadcast on the user's private
+  `App.Models.User.{id}` channel straight away, on the `sync` queue
+  connection, so no worker is needed. If Reverb is down, the failure is reported and the notification is still stored.
+  Editing a message notifies people newly mentioned and takes the notification
+  back from people no longer mentioned. Deleting the message, or leaving the
+  server (or being kicked or banned), deletes its notifications.
+- **Inbox**: the 🔔 in the page header shows the unread count (`99+` at most),
+  and `resources/js/notifications.js` opens a panel with the latest 50
+  (`GET /notifications`, JSON). Without JavaScript it is the inbox page.
+  An entry links to `GET /notifications/{id}`, which marks it read and jumps to the
+  message. `POST /notifications/{id}/read` and `POST /notifications/read` (all)
+  mark read. Opening a channel marks its mentions read up to your read marker,
+  and a mention arriving in the channel you're looking at doesn't count up.
+  Entries that no longer lead anywhere (message gone, author blocked, channel
+  hidden) are dropped and deleted when the inbox is shown.
+- **Highlight**: messages that mention you get a yellow bar, both server
+  rendered and live.
 
 `npm test` runs the JavaScript tests in `tests/js` with Node's built-in test runner.
 

@@ -129,10 +129,10 @@ class MentionsTest extends TestCase
         $message = $this->say('hi all');
 
         app(EditMessage::class)->edit($message, 'hi @bob');
-        $this->assertSame([$this->bob->id], $message->fresh()?->mentions['users']);
+        $this->assertSame([$this->bob->id], $message->refresh()->mentions['users'] ?? null);
 
         app(EditMessage::class)->edit($message, 'hi nobody');
-        $this->assertNull($message->fresh()?->mentions);
+        $this->assertNull($message->refresh()->mentions);
     }
 
     public function test_mentions_cannot_be_mass_assigned(): void

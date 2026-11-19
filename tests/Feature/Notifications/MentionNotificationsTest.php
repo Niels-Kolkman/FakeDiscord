@@ -79,19 +79,31 @@ class MentionNotificationsTest extends TestCase
         return DatabaseNotification::query()->orderBy('notifiable_id')->pluck('notifiable_id')->map(fn ($id): int => (int) $id)->all();
     }
 
-    private function notificationOf(User $user): ?DatabaseNotification
+    private function notificationOf(User $user): DatabaseNotification
     {
-        return DatabaseNotification::query()->where('notifiable_id', $user->id)->first();
+        return DatabaseNotification::query()->where('notifiable_id', $user->id)->firstOrFail();
     }
 
-    private function spyBroadcaster(bool $fail = false): object
-    {
-        $spy = new class($fail) extends BaseBroadcaster
-        {
-            /** @var list<array{list<string>, string, array<string, mixed>}> */
-            public array $sent = [];
+    /**
+     * What reached the broadcaster: [channels, event name, payload].
+     *
+     * @var list<array{list<string>, string, array<string, mixed>}>
+     */
+    private array $sent = [];
 
-            public function __construct(private bool $fail) {}
+    /**
+     * Records what reaches the broadcaster in $sent, like the real Reverb
+     * driver would get it, or fails like Reverb being down.
+     */
+    private function spyBroadcaster(bool $fail = false): void
+    {
+        $record = function (array $channels, string $event, array $payload): void {
+            $this->sent[] = [array_values(array_map(fn ($c): string => (string) $c, $channels)), $event, $payload];
+        };
+
+        $spy = new class($fail, $record) extends BaseBroadcaster
+        {
+            public function __construct(private bool $fail, private \Closure $record) {}
 
             public function auth($request) {}
 
@@ -106,14 +118,12 @@ class MentionNotificationsTest extends TestCase
                 if ($this->fail) {
                     throw new BroadcastException('Reverb is not running');
                 }
-                $this->sent[] = [array_map(fn ($c) => (string) $c, $channels), $event, $payload];
+                ($this->record)($channels, (string) $event, $payload);
             }
         };
 
         Broadcast::extend('spy', fn () => $spy);
         config(['broadcasting.connections.spy' => ['driver' => 'spy'], 'broadcasting.default' => 'spy']);
-
-        return $spy;
     }
 
     // --- Who is notified ---------------------------------------------------------
@@ -124,7 +134,6 @@ class MentionNotificationsTest extends TestCase
         $message = Message::sole();
 
         $notification = $this->notificationOf($this->bob);
-        $this->assertNotNull($notification);
         $this->assertSame(MentionedInMessage::class, $notification->type);
         $this->assertNull($notification->read_at);
         $this->assertSame([
@@ -184,8 +193,8 @@ class MentionNotificationsTest extends TestCase
         $this->say($this->carol, 'paging @Mods')->assertCreated();
 
         $this->assertSame([$this->bob->id], $this->notified());
-        $this->assertSame('role', $this->notificationOf($this->bob)?->data['reason']);
-        $this->assertSame('Mods', $this->notificationOf($this->bob)?->data['role_name']);
+        $this->assertSame('role', $this->notificationOf($this->bob)->data['reason']);
+        $this->assertSame('Mods', $this->notificationOf($this->bob)->data['role_name']);
     }
 
     public function test_everyone_notifies_every_member_who_can_see_the_channel(): void
@@ -193,7 +202,7 @@ class MentionNotificationsTest extends TestCase
         $this->say($this->owner, '@everyone meeting at 8')->assertCreated();
 
         $this->assertSame([$this->bob->id, $this->carol->id], $this->notified());
-        $this->assertSame('everyone', $this->notificationOf($this->bob)?->data['reason']);
+        $this->assertSame('everyone', $this->notificationOf($this->bob)->data['reason']);
     }
 
     public function test_everyone_without_the_permission_notifies_nobody(): void
@@ -215,8 +224,8 @@ class MentionNotificationsTest extends TestCase
         $this->say($this->owner, '@everyone @mods and especially @bob @bob')->assertCreated();
 
         $this->assertSame([$this->bob->id, $this->carol->id], $this->notified());
-        $this->assertSame('user', $this->notificationOf($this->bob)?->data['reason']);
-        $this->assertSame('role', $this->notificationOf($this->carol)?->data['reason']);
+        $this->assertSame('user', $this->notificationOf($this->bob)->data['reason']);
+        $this->assertSame('role', $this->notificationOf($this->carol)->data['reason']);
     }
 
     public function test_dms_send_no_mention_notifications(): void
@@ -234,17 +243,20 @@ class MentionNotificationsTest extends TestCase
     {
         // A database queue without a worker must not hold it back.
         config(['queue.default' => 'database']);
-        $spy = $this->spyBroadcaster();
+        $this->spyBroadcaster();
 
         $this->say($this->owner, 'hey @bob')->assertCreated();
 
-        $sent = collect($spy->sent)->firstWhere(1, 'Illuminate\\Notifications\\Events\\BroadcastNotificationCreated');
-        $this->assertNotNull($sent);
+        $notifications = array_values(array_filter(
+            $this->sent,
+            fn (array $sent): bool => $sent[1] === 'Illuminate\\Notifications\\Events\\BroadcastNotificationCreated',
+        ));
+        $this->assertCount(1, $notifications);
+        $sent = $notifications[0];
         $this->assertSame(['private-App.Models.User.'.$this->bob->id], $sent[0]);
 
         $payload = $sent[2];
         $notification = $this->notificationOf($this->bob);
-        $this->assertNotNull($notification);
         $this->assertSame($notification->id, $payload['id']);
         $this->assertSame('mention.created', $payload['type']);
         $this->assertSame('mentioned you', $payload['label']);
@@ -273,7 +285,7 @@ class MentionNotificationsTest extends TestCase
     {
         $this->say($this->owner, 'hi @bob')->assertCreated();
         $message = Message::sole();
-        $bobs = $this->notificationOf($this->bob)?->id;
+        $bobs = $this->notificationOf($this->bob)->id;
 
         $this->actingAs($this->owner)
             ->patchJson(route('messages.update', [$this->server, $this->general, $message]), ['content' => 'hi @bob and @carol'])
@@ -281,7 +293,7 @@ class MentionNotificationsTest extends TestCase
 
         $this->assertSame([$this->bob->id, $this->carol->id], $this->notified());
         // bob keeps the one he had: no second ping.
-        $this->assertSame($bobs, $this->notificationOf($this->bob)?->id);
+        $this->assertSame($bobs, $this->notificationOf($this->bob)->id);
 
         $this->actingAs($this->owner)
             ->patchJson(route('messages.update', [$this->server, $this->general, $message]), ['content' => 'hi @carol'])

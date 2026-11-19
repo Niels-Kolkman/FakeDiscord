@@ -554,7 +554,7 @@ export function renderMessage(message, context = {}) {
     // Only from the payload's `mentions`: no guessing from the content here.
     const own = message.author && String(message.author.id) === String(context.viewerId ?? '');
     if (!own && message.mentions !== undefined && mentionsViewer(message, { userId: context.viewerId ?? null, roleIds: context.viewerRoleIds ?? new Set() })) {
-        item.classList.add('border-l-2', 'border-[#f0b232]', 'bg-[#f0b232]/10');
+        item.className += ' border-l-2 border-[#f0b232] bg-[#f0b232]/10';
         item.dataset.mentionsViewer = '';
     }
 

@@ -11,6 +11,7 @@ use App\Services\PermissionService;
 
 /**
  * Who a message mentions (ISSUE-32 for @username, ISSUE-33 for @role and
+ *
  * @everyone).
  *
  * A mention is "@" followed by a username (usernames are [a-z0-9_.], see

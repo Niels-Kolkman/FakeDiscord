@@ -34,6 +34,7 @@ use Laravel\Scout\Searchable;
  *
  * @property Carbon|null $edited_at NULL = never edited
  * @property Carbon|null $pinned_at NULL = not pinned
+ * @property array{users: list<int>, roles: list<int>, everyone: bool}|null $mentions who it mentions (ISSUE-33), NULL = nobody
  */
 #[ObservedBy(MessageObserver::class)]
 class Message extends Model
