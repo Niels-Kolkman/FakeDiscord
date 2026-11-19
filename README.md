@@ -840,6 +840,41 @@ with notifications for the people mentioned.
 - **Highlight**: messages that mention you get a yellow bar, both server
   rendered and live.
 
+### Desktop notifications and muting
+
+ISSUE-34 adds browser notifications (the Web Notifications API) and per-user
+mute settings.
+
+- **What pops up** (`resources/js/push-notifications.js`): a mention (the
+  `MentionedInMessage` broadcast) and every DM or group DM message
+  (`App\Events\DirectMessageReceived`, `.dm.received`, sent by
+  `App\Support\DirectMessageNotifier` to each other participant's
+  `App.Models.User.{id}` channel with the author, a short excerpt and, for
+  group DMs, the group's name as that person sees it; people who blocked the
+  author get nothing). Clicking one focuses the window and opens the message
+  (a mention goes through `GET /notifications/{id}`, so it is marked read).
+- **When**: only while the tab is hidden or another window has the focus,
+  only after you allowed notifications for the site, and never while your
+  status is **Do Not Disturb**. Each notification has a tag per mention or
+  message, so several open tabs show it once.
+- **Turning them on**: browsers only ask for permission after a click, so
+  this is done on **Notifications** settings (`GET /settings/notifications`,
+  linked from the dashboard). The same switch turns them off again for this
+  browser (a `localStorage` flag); a site you blocked has to be unblocked in
+  the browser's own settings.
+- **Muting** (`notification_mutes`, `App\Support\NotificationMutes`): 🔔 next
+  to the server name in the channel sidebar mutes the whole server, and 🔕 on
+  a channel row mutes that channel
+  (`PUT`/`DELETE /servers/{id}/mute`,
+  `PUT`/`DELETE /servers/{id}/channels/{channel}/mute`,
+  `NotificationSettingsController`; JSON `{muted}` or a redirect back). You
+  must be a member who can see the channel. The settings page lists your
+  servers and muted channels to unmute them. A muted server or channel sends
+  no desktop notifications. Its mentions are still stored and counted (the
+  broadcast carries `push: false`), so the inbox, unread dots and mention
+  badges work as before. DMs cannot be muted. Leaving a server (or being
+  kicked or banned) clears your mutes for it.
+
 `npm test` runs the JavaScript tests in `tests/js` with Node's built-in test runner.
 
 ## Invites
