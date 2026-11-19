@@ -26,7 +26,7 @@
 
     <section class="flex-1 overflow-y-auto p-4">
         @if ($errors->has('message'))
-            <p role="alert" class="mb-3 rounded bg-red-500/10 px-3 py-2 text-sm text-red-300">{{ $errors->first('message') }}</p>
+            <p role="alert" class="mb-3 rounded bg-red-500/10 px-3 py-2 text-sm text-red-300 in-data-[theme=light]:bg-red-100 in-data-[theme=light]:text-red-800">{{ $errors->first('message') }}</p>
         @endif
 
         @if ($pins->isEmpty())
@@ -52,7 +52,7 @@
                                 <form method="POST" action="{{ route('pins.destroy', [$server, $channel, $pin]) }}">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="text-red-400 hover:underline">Unpin</button>
+                                    <button type="submit" class="text-danger-fg hover:underline">Unpin</button>
                                 </form>
                             @endif
                         </div>

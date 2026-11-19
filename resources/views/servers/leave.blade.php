@@ -22,7 +22,7 @@
             <button type="submit" class="w-full rounded bg-[#da373c] py-2 font-medium text-white hover:bg-[#a12828]">Leave server</button>
         </form>
     @else
-        <p class="mb-6 rounded bg-yellow-900/40 px-3 py-2 text-sm text-yellow-200" role="alert">
+        <p class="mb-6 rounded bg-yellow-900/40 px-3 py-2 text-sm text-yellow-200 in-data-[theme=light]:bg-yellow-100 in-data-[theme=light]:text-yellow-900" role="alert">
             {{ $decision->message() }}
         </p>
 

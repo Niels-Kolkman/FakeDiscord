@@ -156,7 +156,7 @@ export function initEmojiPicker({ toggle, panel, input, storage = defaultStorage
     // Built on first open: a few hundred buttons nobody may need.
     const build = () => {
         if (search) return;
-        search = el('input', 'mb-2 w-full rounded bg-surface-3 px-2 py-1.5 text-sm text-fg placeholder-fg-dim focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]');
+        search = el('input', 'mb-2 w-full rounded bg-surface-3 px-2 py-1.5 text-sm text-fg placeholder-fg-subtle focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]');
         search.type = 'search';
         search.value = '';
         search.placeholder = 'Find the perfect emoji';

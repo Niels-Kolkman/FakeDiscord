@@ -41,7 +41,7 @@
                     @endforeach
                 </select>
                 @error('user')
-                    <p id="audit-user-error" class="mt-1 text-sm text-red-400">{{ $message }}</p>
+                    <p id="audit-user-error" class="mt-1 text-sm text-danger-fg">{{ $message }}</p>
                 @enderror
             </div>
 
@@ -56,7 +56,7 @@
                     @endforeach
                 </select>
                 @error('action')
-                    <p id="audit-action-error" class="mt-1 text-sm text-red-400">{{ $message }}</p>
+                    <p id="audit-action-error" class="mt-1 text-sm text-danger-fg">{{ $message }}</p>
                 @enderror
             </div>
 

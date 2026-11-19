@@ -38,7 +38,7 @@
                 </form>
             @endif
             @error('user_id')
-                <p id="user_id-error" class="mb-4 text-sm text-red-400">{{ $message }}</p>
+                <p id="user_id-error" class="mb-4 text-sm text-danger-fg">{{ $message }}</p>
             @enderror
 
             @if ($holders->isEmpty())

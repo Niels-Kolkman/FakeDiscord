@@ -10,10 +10,10 @@
     </p>
 
     @error('direction')
-        <p class="mb-4 text-sm text-red-400">{{ $message }}</p>
+        <p class="mb-4 text-sm text-danger-fg">{{ $message }}</p>
     @enderror
     @error('role')
-        <p class="mb-4 text-sm text-red-400">{{ $message }}</p>
+        <p class="mb-4 text-sm text-danger-fg">{{ $message }}</p>
     @enderror
 
     <a href="{{ route('roles.create', $server) }}"

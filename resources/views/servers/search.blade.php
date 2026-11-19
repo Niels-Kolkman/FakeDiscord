@@ -41,7 +41,7 @@
                     @error('q') aria-invalid="true" aria-describedby="search-q-error" @enderror
                     class="{{ $field }}">
                 @error('q')
-                    <p id="search-q-error" class="mt-1 text-sm text-red-400">{{ $message }}</p>
+                    <p id="search-q-error" class="mt-1 text-sm text-danger-fg">{{ $message }}</p>
                 @enderror
             </div>
 
@@ -56,7 +56,7 @@
                     @endforeach
                 </select>
                 @error('channel')
-                    <p id="search-channel-error" class="mt-1 text-sm text-red-400">{{ $message }}</p>
+                    <p id="search-channel-error" class="mt-1 text-sm text-danger-fg">{{ $message }}</p>
                 @enderror
             </div>
 
@@ -71,7 +71,7 @@
                     @endforeach
                 </select>
                 @error('author')
-                    <p id="search-author-error" class="mt-1 text-sm text-red-400">{{ $message }}</p>
+                    <p id="search-author-error" class="mt-1 text-sm text-danger-fg">{{ $message }}</p>
                 @enderror
             </div>
 
@@ -81,7 +81,7 @@
                     @error('from') aria-invalid="true" aria-describedby="search-from-error" @enderror
                     class="{{ $field }} [color-scheme:dark]">
                 @error('from')
-                    <p id="search-from-error" class="mt-1 text-sm text-red-400">{{ $message }}</p>
+                    <p id="search-from-error" class="mt-1 text-sm text-danger-fg">{{ $message }}</p>
                 @enderror
             </div>
 
@@ -91,7 +91,7 @@
                     @error('to') aria-invalid="true" aria-describedby="search-to-error" @enderror
                     class="{{ $field }} [color-scheme:dark]">
                 @error('to')
-                    <p id="search-to-error" class="mt-1 text-sm text-red-400">{{ $message }}</p>
+                    <p id="search-to-error" class="mt-1 text-sm text-danger-fg">{{ $message }}</p>
                 @enderror
             </div>
 

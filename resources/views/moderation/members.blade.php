@@ -16,7 +16,7 @@
 <x-layouts.auth :title="'Members of '.$server->name">
     @foreach (['reason', 'delete_messages', 'duration'] as $field)
         @error($field)
-            <p class="mb-4 text-sm text-red-400" role="alert">{{ $message }}</p>
+            <p class="mb-4 text-sm text-danger-fg" role="alert">{{ $message }}</p>
         @enderror
     @endforeach
 
@@ -77,7 +77,7 @@
 
                         @if ($row['canBan'])
                             <details>
-                                <summary class="cursor-pointer text-xs font-medium text-[#f23f43]">Ban…</summary>
+                                <summary class="cursor-pointer text-xs font-medium text-danger-fg">Ban…</summary>
                                 <form method="POST" action="{{ route('members.ban', [$server, $user]) }}" class="mt-2 space-y-2">
                                     @csrf
                                     <label for="ban-reason-{{ $user->id }}" class="block text-xs text-fg-muted">Reason (only moderators see this)</label>

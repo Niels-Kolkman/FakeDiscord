@@ -11,6 +11,6 @@
     >
     <p class="mt-1 text-xs text-fg-subtle">PNG, JPG, GIF or WebP, up to 4 MB. It is cropped to a square and resized to 256×256.</p>
     @error('icon')
-        <p id="icon-error" class="mt-1 text-sm text-red-400">{{ $message }}</p>
+        <p id="icon-error" class="mt-1 text-sm text-danger-fg">{{ $message }}</p>
     @enderror
 </div>

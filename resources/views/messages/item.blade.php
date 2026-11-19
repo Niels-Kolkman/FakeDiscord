@@ -227,7 +227,7 @@
                 @method('DELETE')
                 <button
                     type="submit"
-                    class="rounded px-2 py-0.5 text-xs text-red-400 hover:bg-active hover:text-red-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]"
+                    class="rounded px-2 py-0.5 text-xs text-danger-fg hover:bg-active focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]"
                 >Delete</button>
             </form>
         @endif

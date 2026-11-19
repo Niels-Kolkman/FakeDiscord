@@ -33,7 +33,7 @@
             </span>
         </label>
         @error('is_private')
-            <p class="mb-2 text-sm text-red-400">{{ $message }}</p>
+            <p class="mb-2 text-sm text-danger-fg">{{ $message }}</p>
         @enderror
         <button type="submit" class="mb-8 w-full rounded bg-[#5865f2] py-2 font-medium text-white hover:bg-[#4752c4]">Save privacy</button>
     </form>
@@ -77,7 +77,7 @@
                                 @endforeach
                             </fieldset>
                             @if ($failed && $errors->has('permissions.'.$flag->name))
-                                <p class="mb-2 text-sm text-red-400">{{ $errors->first('permissions.'.$flag->name) }}</p>
+                                <p class="mb-2 text-sm text-danger-fg">{{ $errors->first('permissions.'.$flag->name) }}</p>
                             @endif
                         @endforeach
 

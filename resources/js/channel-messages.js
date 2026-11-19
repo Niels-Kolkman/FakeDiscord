@@ -415,7 +415,7 @@ export function renderPin(pin, context = {}) {
     jump.dataset.pinJump = '';
     footer.appendChild(jump);
     if (context.canManageMessages) {
-        const unpin = el('button', 'shrink-0 rounded text-red-400 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]', 'Unpin');
+        const unpin = el('button', 'shrink-0 rounded text-danger-fg hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]', 'Unpin');
         unpin.type = 'button';
         unpin.dataset.pinUnpin = '';
         footer.appendChild(unpin);
@@ -538,7 +538,7 @@ function renderActions(message, url, context) {
         form.action = url;
         form.dataset.messageDeleteForm = '';
         hiddenInputs(form, [['_token', context.csrfToken ?? ''], ['_method', 'DELETE']]);
-        const remove = el('button', 'rounded px-2 py-0.5 text-xs text-red-400 hover:bg-active hover:text-red-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]', 'Delete');
+        const remove = el('button', 'rounded px-2 py-0.5 text-xs text-danger-fg hover:bg-active focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]', 'Delete');
         remove.type = 'submit';
         form.appendChild(remove);
         actions.appendChild(form);
@@ -1088,7 +1088,7 @@ function initChannel(root) {
         input.setAttribute('aria-describedby', `${input.id}-hint ${input.id}-error`);
         const hint = el('p', 'mt-1 text-xs text-fg-subtle', 'Escape to cancel · Enter to save');
         hint.id = `${input.id}-hint`;
-        const error = el('p', 'mt-1 hidden text-sm text-red-400');
+        const error = el('p', 'mt-1 hidden text-sm text-danger-fg');
         error.id = `${input.id}-error`;
         error.setAttribute('role', 'alert');
         editor.append(input, hint, error);

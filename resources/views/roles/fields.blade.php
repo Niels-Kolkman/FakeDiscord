@@ -35,7 +35,7 @@
             </label>
         </div>
         @error('color')
-            <p id="color-error" class="mt-1 text-sm text-red-400">{{ $message }}</p>
+            <p id="color-error" class="mt-1 text-sm text-danger-fg">{{ $message }}</p>
         @enderror
     </div>
 @endunless
@@ -46,10 +46,10 @@
         <p class="mb-3 text-sm text-fg-muted">Every member of the server has these permissions.</p>
     @endif
     @error('permissions')
-        <p class="mb-2 text-sm text-red-400">{{ $message }}</p>
+        <p class="mb-2 text-sm text-danger-fg">{{ $message }}</p>
     @enderror
     @error('permissions.*')
-        <p class="mb-2 text-sm text-red-400">{{ $message }}</p>
+        <p class="mb-2 text-sm text-danger-fg">{{ $message }}</p>
     @enderror
 
     <ul class="divide-y divide-line">

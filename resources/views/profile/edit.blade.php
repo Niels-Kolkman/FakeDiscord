@@ -24,7 +24,7 @@
                 >
                 <p class="mt-1 text-xs text-fg-subtle">PNG, JPG, GIF or WebP, up to 4 MB. It is cropped to a square and resized to 256×256.</p>
                 @error('avatar')
-                    <p id="avatar-error" class="mt-1 text-sm text-red-400">{{ $message }}</p>
+                    <p id="avatar-error" class="mt-1 text-sm text-danger-fg">{{ $message }}</p>
                 @enderror
 
                 @if ($user->avatar_path)
@@ -49,7 +49,7 @@
                 class="w-full resize-none rounded bg-surface-3 px-3 py-2 text-fg-strong outline-none focus:ring-2 focus:ring-[#5865f2]"
             >{{ old('bio', $user->bio) }}</textarea>
             @error('bio')
-                <p id="bio-error" class="mt-1 text-sm text-red-400">{{ $message }}</p>
+                <p id="bio-error" class="mt-1 text-sm text-danger-fg">{{ $message }}</p>
             @enderror
         </div>
 

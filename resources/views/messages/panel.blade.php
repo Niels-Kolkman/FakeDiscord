@@ -79,7 +79,7 @@
     @endif
 
     @if ($errors->has('message'))
-        <p role="alert" class="mx-4 mt-2 rounded bg-red-500/10 px-3 py-2 text-sm text-red-300">{{ $errors->first('message') }}</p>
+        <p role="alert" class="mx-4 mt-2 rounded bg-red-500/10 px-3 py-2 text-sm text-red-300 in-data-[theme=light]:bg-red-100 in-data-[theme=light]:text-red-800">{{ $errors->first('message') }}</p>
     @endif
     {{-- overflow-anchor: none, the script keeps the scroll position itself when it prepends a page. --}}
     <div class="min-h-0 flex-1 overflow-y-auto [overflow-anchor:none]" data-message-scroller>
@@ -182,7 +182,7 @@
                     maxlength="{{ \App\Models\Message::MAX_CONTENT_LENGTH }}"
                     placeholder="Message {{ $panel['label'] }}"
                     aria-describedby="message-error"
-                    class="max-h-64 min-h-6 flex-1 resize-none bg-transparent py-1 text-fg placeholder-fg-dim focus:outline-none"
+                    class="max-h-64 min-h-6 flex-1 resize-none bg-transparent py-1 text-fg placeholder-fg-subtle focus:outline-none"
                     data-message-input
                 >{{ old('content') }}</textarea>
                 {{-- Emoji picker (ISSUE-36): filled and shown by resources/js/emoji-picker.js. --}}
@@ -206,7 +206,7 @@
                 </div>
                 <button type="submit" class="shrink-0 rounded px-2 py-1 text-sm font-medium text-fg-muted hover:text-fg-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]">Send</button>
             </div>
-            <p id="message-error" role="alert" class="mt-1 text-sm text-red-400 @unless ($messageError) hidden @endunless" data-message-error>{{ $messageError }}</p>
+            <p id="message-error" role="alert" class="mt-1 text-sm text-danger-fg @unless ($messageError) hidden @endunless" data-message-error>{{ $messageError }}</p>
         </form>
     @elseif ($messagesEnabled && ($panel['readOnlyNotice'] ?? null))
         <p class="mx-4 mb-1 rounded-lg bg-surface-2 px-4 py-3 text-sm text-fg-subtle" data-read-only-notice>{{ $panel['readOnlyNotice'] }}</p>
