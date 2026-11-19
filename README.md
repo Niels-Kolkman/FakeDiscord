@@ -1052,6 +1052,22 @@ form, so the page also works without JavaScript.
   The `@source` and `@theme` directives in `resources/css/app.css` configure it.
 - `npm run build` writes production assets to `public/build/`. Git ignores this folder.
 
+### App layout
+
+The chat pages use `components/layouts/app.blade.php`, which has four panes from left to right:
+
+1. **Server rail** (`components/server-rail.blade.php`). It holds Home (friends and DMs, with the
+   app's own logo from `components/brand-mark.blade.php`), every server you are in by name, and
+   "Create a server". The open server, or Home on the friends, DM and notification pages, gets a
+   tall pill and `aria-current="page"`. Unread servers get a short pill and mentions get a red
+   badge. These are worked out when the page loads, like the dashboard list. Only users with a
+   verified email address see the rail.
+2. **Sidebar**: a server's channels, or friends and direct messages.
+3. **Messages**: the page content.
+4. **Member list**: on server pages only.
+
+Below the `md` breakpoint the panes stack and the rail becomes a row that scrolls sideways.
+
 ## Useful commands
 
 ```bash

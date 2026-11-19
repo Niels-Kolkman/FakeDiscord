@@ -1,15 +1,14 @@
 {{--
     Left column of the friends page and of a DM (ISSUE-23): Friends, the
     direct messages (conversations/partials/dm-list.blade.php, latest
-    activity first), the user's servers and a way back to the dashboard.
+    activity first) and a way back to the dashboard. Your servers, with
+    their unread dots and mention badges, are in the server rail left of
+    it (components/server-rail.blade.php, ISSUE-35).
 
     @var int $incomingCount
     @var \App\Models\Conversation|null $activeConversation  the open DM, or NULL on the friends page
 --}}
 @php
-    $servers = auth()->user()?->servers()->orderBy('name')->get() ?? collect();
-    // Unread dots and mention badges (ISSUE-32).
-    $serverUnread = auth()->user() ? \App\Support\UnreadState::forServers(auth()->user(), $servers) : [];
     $onFriendsPage = ($activeConversation ?? null) === null;
 @endphp
 
@@ -29,22 +28,5 @@
         </a>
 
         @include('conversations.partials.dm-list', ['activeConversation' => $activeConversation ?? null])
-
-        <h2 class="mb-1 px-2 text-xs font-semibold uppercase tracking-wide text-[#949ba4]">Your servers</h2>
-        @if ($servers->isEmpty())
-            <p class="px-2 text-sm text-[#949ba4]">You are not in any servers yet.</p>
-        @else
-            <ul class="space-y-0.5">
-                @foreach ($servers as $server)
-                    <li>
-                        <a href="{{ route('servers.show', $server) }}" class="flex items-center gap-2 rounded px-2 py-1.5 text-[#b5bac1] hover:bg-[#35373c] hover:text-white">
-                            <x-server-icon :server="$server" :size="24" />
-                            <span class="truncate">{{ $server->name }}</span>
-                            @include('servers.partials.server-unread', ['state' => $serverUnread[$server->id] ?? null])
-                        </a>
-                    </li>
-                @endforeach
-            </ul>
-        @endif
     </div>
 </nav>

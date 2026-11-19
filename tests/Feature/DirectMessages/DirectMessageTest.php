@@ -347,7 +347,7 @@ class DirectMessageTest extends TestCase
 
         $this->actingAs($this->alice)->get(route('friends.index'))
             ->assertOk()
-            ->assertSeeInOrder(['Direct messages', 'Carol', 'Bob', 'Dave', 'Your servers']);
+            ->assertSeeInOrder(['Direct messages', 'Carol', 'Bob', 'Dave']);
     }
 
     public function test_sending_moves_a_dm_to_the_top(): void

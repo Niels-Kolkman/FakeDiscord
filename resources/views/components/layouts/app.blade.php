@@ -1,4 +1,11 @@
-{{-- Full-screen app shell: a sidebar slot on the left, the page content, and an optional aside slot on the right. --}}
+{{--
+    Full-screen app shell (ISSUE-35), four panes from left to right:
+    the server rail (components/server-rail.blade.php, for verified users,
+    who are the only ones who can open servers), the sidebar slot (a
+    server's channels, or friends and DMs), the page content, and the
+    optional aside slot (a server's member list). On small screens they
+    stack, the rail becoming a row on top.
+--}}
 @props(['title'])
 
 <!DOCTYPE html>
@@ -19,6 +26,10 @@
         @endif
     </head>
     <body class="flex min-h-screen flex-col bg-[#313338] font-sans text-[#dbdee1] antialiased md:h-screen md:flex-row md:overflow-hidden">
+        @if (auth()->user()?->hasVerifiedEmail())
+            <x-server-rail />
+        @endif
+
         @isset($sidebar)
             {{ $sidebar }}
         @endisset
