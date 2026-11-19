@@ -6,14 +6,21 @@
     @var \App\Models\Server $server
     @var \App\Support\ChannelLayout $layout
     @var \App\Models\Channel|null $activeChannel
+
+    Unread channels (ISSUE-32, App\Support\UnreadState) get a dot and a
+    mention badge; resources/js/unread.js keeps them live.
 --}}
-@php($canManage = auth()->user()?->can('manageChannels', $server) ?? false)
+@php
+    $canManage = auth()->user()?->can('manageChannels', $server) ?? false;
+    $unread ??= auth()->user() ? \App\Support\UnreadState::forChannels(auth()->user(), $layout->channels()) : new \App\Support\UnreadState;
+@endphp
 
 <nav
     aria-label="{{ $server->name }} channels"
     class="flex w-full shrink-0 flex-col bg-[#2b2d31] md:w-60"
     data-channel-sidebar
     data-server-id="{{ $server->id }}"
+    @auth data-blocked-user-ids="{{ json_encode(array_values(\App\Models\Friendship::blockedIds(auth()->user()))) }}" @endauth
     @if ($canManage) data-layout-url="{{ route('channels.layout', $server) }}" @endif
 >
     <div class="flex min-h-12 items-center gap-2 border-b border-[#1f2023] px-4 py-2 shadow-sm">

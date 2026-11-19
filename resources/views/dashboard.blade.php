@@ -40,12 +40,15 @@
         @if ($servers->isEmpty())
             <p class="mb-3 text-sm text-[#b5bac1]">You are not in any servers yet.</p>
         @else
+            {{-- Unread dots and mention badges (ISSUE-32). --}}
+            @php($serverUnread = \App\Support\UnreadState::forServers(auth()->user(), $servers))
             <ul class="mb-3 space-y-1">
                 @foreach ($servers as $server)
                     <li>
                         <a href="{{ route('servers.show', $server) }}" class="flex items-center gap-3 rounded px-2 py-1.5 hover:bg-[#35373c]">
                             <x-server-icon :server="$server" :size="32" />
                             <span class="truncate text-white">{{ $server->name }}</span>
+                            @include('servers.partials.server-unread', ['state' => $serverUnread[$server->id] ?? null])
                         </a>
                     </li>
                 @endforeach

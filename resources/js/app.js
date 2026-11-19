@@ -5,3 +5,4 @@ import './channel-messages';
 import './friends';
 import './direct-messages';
 import './moderation';
+import './unread';

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Channels\MarkChannelRead;
 use App\Actions\Servers\CreateServer;
 use App\Actions\Servers\UpdateServerIcon;
 use App\Http\Requests\StoreServerRequest;
@@ -48,15 +49,22 @@ class ServerController extends Controller
         return redirect()->route('servers.show', $server)->with('status', 'Your server has been created.');
     }
 
-    public function show(Server $server): View
+    public function show(Request $request, Server $server, MarkChannelRead $reads): View
     {
         Gate::authorize('view', $server);
 
+        /** @var User $user */
+        $user = $request->user();
+
         // Opens on the first text channel the member can see, like Discord.
         // The URL stays /servers/{id} so links and redirects to the server
-        // keep working.
-        $layout = $server->channelLayout(auth()->user());
+        // keep working. That channel is now read (ISSUE-32).
+        $layout = $server->channelLayout($user);
         $channel = $layout->defaultChannel();
+
+        if ($channel !== null) {
+            $reads->markRead($user, $channel);
+        }
 
         return view('servers.show', [
             'server' => $server,

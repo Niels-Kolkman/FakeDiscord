@@ -8,6 +8,7 @@ use App\Http\Controllers\ChannelCategoryController;
 use App\Http\Controllers\ChannelController;
 use App\Http\Controllers\ChannelLayoutController;
 use App\Http\Controllers\ChannelPermissionController;
+use App\Http\Controllers\ChannelReadController;
 use App\Http\Controllers\ConversationMessageController;
 use App\Http\Controllers\ConversationReactionController;
 use App\Http\Controllers\DirectMessageController;
@@ -198,6 +199,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/servers/{server}/channels/{channel}/messages', [MessageController::class, 'store'])
             ->middleware('throttle:30,1')
             ->name('messages.store');
+
+        // Unread tracking (ISSUE-32): opening a channel marks it read; this
+        // moves the marker for messages that arrive while it is open.
+        // Optional field `message_id`.
+        Route::post('/servers/{server}/channels/{channel}/read', [ChannelReadController::class, 'store'])
+            ->middleware('throttle:120,1')
+            ->name('channels.read');
 
         // Editing and deleting (ISSUE-16): MessagePolicy decides; the
         // MessageUpdated / MessageDeleted events go out on "channel.{id}".

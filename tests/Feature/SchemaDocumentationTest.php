@@ -19,6 +19,7 @@ class SchemaDocumentationTest extends TestCase
         'message_attachments', 'reactions', 'friendships', 'conversations',
         'conversation_participants', 'roles', 'role_user', 'invites', 'bans',
         'channel_categories', 'channel_permission_overrides', 'audit_log_entries',
+        'channel_reads',
     ];
 
     /** Columns the ERD deliberately leaves out. */

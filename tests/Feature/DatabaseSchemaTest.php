@@ -21,6 +21,7 @@ class DatabaseSchemaTest extends TestCase
         'message_attachments', 'reactions', 'friendships', 'conversations',
         'conversation_participants', 'roles', 'role_user', 'invites', 'bans',
         'channel_categories', 'channel_permission_overrides', 'audit_log_entries',
+        'channel_reads',
     ];
 
     public function test_all_domain_tables_exist(): void
@@ -57,6 +58,8 @@ class DatabaseSchemaTest extends TestCase
         $this->assertHasIndex('channel_permission_overrides', ['role_id']);
         $this->assertHasIndex('audit_log_entries', ['server_id', 'action']);
         $this->assertHasIndex('audit_log_entries', ['actor_id', 'server_id']);
+        $this->assertHasIndex('channel_reads', ['user_id', 'channel_id'], unique: true);
+        $this->assertHasIndex('channel_reads', ['channel_id']);
     }
 
     public function test_every_foreign_key_column_leads_an_index(): void
@@ -99,6 +102,7 @@ class DatabaseSchemaTest extends TestCase
             'invites' => ['server_id' => ['servers', 'cascade'], 'channel_id' => ['channels', 'set null'], 'inviter_id' => ['users', 'set null']],
             'bans' => ['server_id' => ['servers', 'cascade'], 'user_id' => ['users', 'cascade'], 'banned_by_id' => ['users', 'set null']],
             'audit_log_entries' => ['server_id' => ['servers', 'cascade'], 'actor_id' => ['users', 'set null']],
+            'channel_reads' => ['user_id' => ['users', 'cascade'], 'channel_id' => ['channels', 'cascade']],
         ];
 
         foreach ($expected as $table => $columns) {
