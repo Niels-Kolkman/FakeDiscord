@@ -5,6 +5,7 @@ namespace App\Actions\Channels;
 use App\Models\Channel;
 use App\Models\ChannelRead;
 use App\Models\User;
+use App\Support\NotificationInbox;
 
 /**
  * Moves a user's read marker in a channel forward (ISSUE-32). Opening a
@@ -15,6 +16,9 @@ use App\Models\User;
  * The marker never moves back, and never past the newest message of the
  * channel, so a made-up id cannot hide messages that are still to come.
  * Authorisation is the caller's job (ChannelPolicy::view).
+ *
+ * Mention notifications (ISSUE-33) of the channel up to the marker are
+ * marked read with it: the user has seen those messages.
  */
 class MarkChannelRead
 {
@@ -37,6 +41,11 @@ class MarkChannelRead
                 ->update(['last_read_message_id' => $target, 'updated_at' => now()]);
         }
 
-        return max($target, $read->last_read_message_id);
+        $marker = max($target, $read->last_read_message_id);
+
+        // Seen in the channel, so read in the inbox too (ISSUE-33).
+        NotificationInbox::markChannelRead($user, $channel, $marker);
+
+        return $marker;
     }
 }

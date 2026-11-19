@@ -51,6 +51,8 @@
                         class="w-36 rounded bg-[#1e1f22] px-2 py-1 text-sm text-white placeholder-[#949ba4] outline-none transition-[width] focus:w-56 focus:ring-2 focus:ring-[#5865f2]"
                     >
                 </form>
+                {{-- Mention notifications (ISSUE-33). --}}
+                <x-inbox />
             </div>
         </header>
 
@@ -68,6 +70,9 @@
             $blockedUserIds = auth()->user() ? \App\Models\Friendship::blockedIds(auth()->user()) : [];
             // Timeouts (ISSUE-29): the composer is replaced by when it ends.
             $timedOutUntil = auth()->user() ? app(\App\Services\PermissionService::class)->timedOutUntil(auth()->user(), $server) : null;
+            // Mentions (ISSUE-33): messages that mention the viewer (by
+            // name, a role they hold, or @everyone) are highlighted.
+            $viewerRoleIds = auth()->user() ? \App\Support\Mentions::roleIdsOf(auth()->user(), $server) : [];
         @endphp
         @include('messages.panel', ['panel' => [
             'target' => 'channel',
@@ -78,6 +83,7 @@
             'storeUrl' => route('messages.store', [$server, $channel]),
             'pinsUrl' => route('pins.index', [$server, $channel]),
             'readUrl' => $channel->isVoice() ? null : route('channels.read', [$server, $channel]),
+            'mentionsUrl' => $channel->isVoice() ? null : route('mentions.index', [$server, $channel]),
             'broadcastChannel' => \App\Events\MessageSent::channelName((int) $channel->id),
             'typingChannel' => 'typing.'.$channel->id,
             'start' => 'messages.partials.channel-start',

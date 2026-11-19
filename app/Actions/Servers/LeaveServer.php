@@ -4,6 +4,7 @@ namespace App\Actions\Servers;
 
 use App\Models\Server;
 use App\Models\User;
+use App\Support\MentionNotifier;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 
@@ -12,7 +13,8 @@ use Illuminate\Support\Facades\DB;
  *
  * role_user rows are keyed by user, not by membership, so they do not
  * cascade when the server_members row goes and are deleted here. Invites the
- * member created stay usable, like on Discord.
+ * member created stay usable, like on Discord. Their mention notifications
+ * from the server (ISSUE-33) go too: they could no longer open them.
  */
 class LeaveServer
 {
@@ -36,6 +38,8 @@ class LeaveServer
                 ->where('user_id', $user->getKey())
                 ->whereIn('role_id', $server->roles()->select('id'))
                 ->delete();
+
+            MentionNotifier::forgetServer($user, $server);
         });
     }
 }

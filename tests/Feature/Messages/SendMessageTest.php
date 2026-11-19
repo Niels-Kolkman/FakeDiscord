@@ -123,6 +123,7 @@ class SendMessageTest extends TestCase
             'channel_id' => $this->channel->id,
             'conversation_id' => null,
             'content' => 'Hello, world!',
+            'mentions' => null,
             'created_at' => '2026-03-04T05:06:07+00:00',
             'edited_at' => null,
             'pinned_at' => null,

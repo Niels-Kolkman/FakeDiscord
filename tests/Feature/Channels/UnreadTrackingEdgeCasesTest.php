@@ -244,7 +244,7 @@ class UnreadTrackingEdgeCasesTest extends TestCase
         $this->assertSame(0, $state->totalMentions());
     }
 
-    public function test_a_viewer_without_a_username_gets_dots_but_no_mention_query(): void
+    public function test_a_viewer_without_a_username_gets_dots_but_no_mentions(): void
     {
         $nameless = User::factory()->create();
         $nameless->forceFill(['username' => ''])->save();
@@ -257,7 +257,9 @@ class UnreadTrackingEdgeCasesTest extends TestCase
 
         $this->assertTrue($state->isUnread($this->random));
         $this->assertSame(0, $state->mentions($this->random));
-        $this->assertSame(1, $queries);
+        // ISSUE-33: roles and @everyone can mention anyone, so the mention
+        // query always runs once something is unread; no role lookup.
+        $this->assertSame(2, $queries);
     }
 
     // --- Query counts ---------------------------------------------------------
@@ -387,11 +389,10 @@ class UnreadTrackingEdgeCasesTest extends TestCase
         $this->assertFalse(Mentions::mentionsUser('@', $nameless));
     }
 
-    public function test_the_like_pattern_escapes_wildcards_and_lowercases(): void
+    public function test_usernames_are_picked_out_lower_case_once_each(): void
     {
-        $this->assertSame('%@bob%', Mentions::likePattern('Bob'));
-        $this->assertSame('%@a\\_b%', Mentions::likePattern('a_b'));
-        $this->assertSame('%@a\\%b\\\\c%', Mentions::likePattern('a%b\\c'));
+        $this->assertSame(['bob', 'a_b', 'bob.smith'], Mentions::usernames('@Bob @a_b, @BOB and thanks @bob.smith.'));
+        $this->assertSame([], Mentions::usernames('mail me@bob, @@bob, @everyone and @here'));
     }
 
     // --- forServers ------------------------------------------------------------

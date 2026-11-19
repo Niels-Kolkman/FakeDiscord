@@ -21,6 +21,8 @@
     data-channel-sidebar
     data-server-id="{{ $server->id }}"
     @auth data-blocked-user-ids="{{ json_encode(array_values(\App\Models\Friendship::blockedIds(auth()->user()))) }}" @endauth
+    {{-- Role mentions (ISSUE-33) count for the roles the viewer holds here. --}}
+    @auth data-viewer-role-ids="{{ json_encode(\App\Support\Mentions::roleIdsOf(auth()->user(), $server)) }}" @endauth
     @if ($canManage) data-layout-url="{{ route('channels.layout', $server) }}" @endif
 >
     <div class="flex min-h-12 items-center gap-2 border-b border-[#1f2023] px-4 py-2 shadow-sm">

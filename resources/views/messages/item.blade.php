@@ -47,10 +47,16 @@
     $pinUrl = $messageUrl.'/pin';
     $reply = $message->replyPreview();
     $toolButton = 'rounded px-2 py-0.5 text-xs text-[#b5bac1] hover:bg-[#404249] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]';
+    // Mentions (ISSUE-33): by name, a role the viewer holds or @everyone.
+    $mentionsViewer = ! $isOwn && $message->mentionsUser((int) ($viewerId ?? 0), $viewerRoleIds ?? []);
 @endphp
 <li
     id="message-{{ $message->id }}"
-    class="group relative flex scroll-mt-16 flex-wrap gap-x-4 px-4 py-1 hover:bg-[#2e3035] focus-within:bg-[#2e3035]"
+    @class([
+        'group relative flex scroll-mt-16 flex-wrap gap-x-4 px-4 py-1 hover:bg-[#2e3035] focus-within:bg-[#2e3035]',
+        'border-l-2 border-[#f0b232] bg-[#f0b232]/10' => $mentionsViewer,
+    ])
+    @if ($mentionsViewer) data-mentions-viewer @endif
     data-message
     data-message-id="{{ $message->id }}"
     data-message-url="{{ $messageUrl }}"

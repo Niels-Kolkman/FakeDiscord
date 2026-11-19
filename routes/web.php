@@ -16,8 +16,10 @@ use App\Http\Controllers\FriendController;
 use App\Http\Controllers\GroupConversationController;
 use App\Http\Controllers\InviteController;
 use App\Http\Controllers\MemberModerationController;
+use App\Http\Controllers\MentionSuggestionController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\MessageSearchController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PinController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReactionController;
@@ -102,6 +104,20 @@ Route::middleware(['auth', 'verified'])->prefix('friends')->group(function () {
         Route::delete('/{friendship}/request', [FriendController::class, 'cancel'])->name('friends.cancel');
         Route::delete('/{friendship}/block', [FriendController::class, 'unblock'])->name('friends.unblock');
         Route::delete('/{friendship}', [FriendController::class, 'destroy'])->name('friends.destroy');
+    });
+});
+
+// The notification inbox (ISSUE-33): your mention notifications. JSON for
+// the bell's panel, a page without JavaScript. open marks one read and
+// goes to the message. {notification} is a uuid of your own (a 404 for
+// anyone else's), looked up by NotificationController.
+Route::middleware(['auth', 'verified', 'throttle:60,1'])->prefix('notifications')->group(function () {
+    Route::get('/', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/read', [NotificationController::class, 'readAll'])->name('notifications.read-all');
+
+    Route::whereUuid('notification')->group(function () {
+        Route::get('/{notification}', [NotificationController::class, 'open'])->name('notifications.open');
+        Route::post('/{notification}/read', [NotificationController::class, 'read'])->name('notifications.read');
     });
 });
 
@@ -205,6 +221,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/servers/{server}/channels/{channel}/messages', [MessageController::class, 'store'])
             ->middleware('throttle:30,1')
             ->name('messages.store');
+
+        // Mention autocomplete (ISSUE-33): ?q= after "@" in the composer.
+        // Members who can send in the channel.
+        Route::get('/servers/{server}/channels/{channel}/mentions', [MentionSuggestionController::class, 'index'])
+            ->middleware('throttle:120,1')
+            ->name('mentions.index');
 
         // Unread tracking (ISSUE-32): opening a channel marks it read; this
         // moves the marker for messages that arrive while it is open.

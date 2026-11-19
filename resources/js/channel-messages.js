@@ -69,6 +69,8 @@
  */
 
 import { initTypingIndicator } from './typing-indicator.js';
+import { initMentionAutocomplete } from './mention-autocomplete.js';
+import { mentionsViewer } from './unread.js';
 
 const NEAR_BOTTOM_PX = 120;
 const LOAD_OLDER_PX = 400;
@@ -548,6 +550,14 @@ export function renderMessage(message, context = {}) {
     item.dataset.reactionsUrl = url ? `${url}/reactions` : '';
     item.dataset.pinUrl = url ? `${url}/pin` : '';
 
+    // Mentions (ISSUE-33), like $mentionsViewer in messages/item.blade.php.
+    // Only from the payload's `mentions`: no guessing from the content here.
+    const own = message.author && String(message.author.id) === String(context.viewerId ?? '');
+    if (!own && message.mentions !== undefined && mentionsViewer(message, { userId: context.viewerId ?? null, roleIds: context.viewerRoleIds ?? new Set() })) {
+        item.className += ' border-l-2 border-[#f0b232] bg-[#f0b232]/10';
+        item.dataset.mentionsViewer = '';
+    }
+
     const reply = renderReplyPreview(message.reply_to, context);
     if (reply) item.appendChild(reply);
 
@@ -673,6 +683,8 @@ function initChannel(root) {
         quickEmoji: parseJson(root.dataset.reactionEmoji, []),
         // People the viewer blocked (ISSUE-25), only on server channels.
         blockedUserIds: new Set(parseJson(root.dataset.blockedUserIds, []).map(String)),
+        // Roles the viewer holds (ISSUE-33), for highlighting role mentions.
+        viewerRoleIds: new Set(parseJson(root.dataset.viewerRoleIds, []).map(String)),
     };
     const blockedAuthor = (message) => isBlockedAuthor(message?.author, context.blockedUserIds);
 
@@ -1295,6 +1307,16 @@ function initChannel(root) {
     };
 
     input.addEventListener('input', resize);
+
+    // --- Mention autocomplete (ISSUE-33) ---------------------------------
+    // Set up before the Enter / Escape handler below: while the list is
+    // open it takes those keys (choose / close) and stops them there.
+    initMentionAutocomplete({
+        input,
+        box: form.querySelector('[data-mention-suggestions]'),
+        url: form.dataset.mentionsUrl ?? null,
+        fetchSuggestions: (url, query) => window.axios.get(url, { params: { q: query } }).then((response) => response.data),
+    });
 
     // --- Replying (ISSUE-20) ---------------------------------------------
     const replyInput = form.querySelector('[data-reply-input]');

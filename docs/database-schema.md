@@ -76,6 +76,16 @@ erDiagram
         timestamps timestamps
     }
 
+    notifications {
+        uuid id PK
+        string type "App\Notifications\MentionedInMessage"
+        string notifiable_type "morph: users"
+        bigint notifiable_id "morph, no FK"
+        text data "JSON snapshot"
+        timestamp read_at "nullable, NULL = unread"
+        timestamps timestamps
+    }
+
     channel_reads {
         bigint id PK
         bigint user_id FK "cascade"
@@ -130,6 +140,7 @@ erDiagram
         timestamp deleted_at "nullable, soft delete"
         timestamp pinned_at "nullable, NULL = not pinned"
         bigint pinned_by_id FK "nullable, users, set null"
+        json mentions "nullable, {users, roles, everyone}"
         timestamps timestamps
     }
 
@@ -312,6 +323,22 @@ database, so these rules live in the app layer (validation, model events or poli
   `ManageGroupConversation`). Its `owner_id` is one of them. When the owner
   leaves, ownership passes to the longest-standing participant, and a group
   whose last participant leaves is deleted.
+- `messages.mentions` (ISSUE-33) is who a server channel message mentions,
+  worked out by `App\Support\Mentions::resolve()` whenever its content is
+  saved: `{"users": [ids], "roles": [ids], "everyone": bool}`, or NULL for
+  nobody and for DMs. Users are members of the server; `everyone` is only
+  true when the author had Mention @everyone in the channel. Unread mention
+  badges and mention notifications read it, so renames and permission
+  changes do not change who an old message mentioned. Messages from before
+  the column have NULL: they mention nobody.
+- `notifications` is Laravel's database notifications table (ISSUE-33,
+  `App\Notifications\MentionedInMessage` for now). `notifiable` is a
+  polymorphic pair with no foreign key. The app removes a message's
+  notifications when it is deleted and a server's when someone leaves it;
+  the inbox drops (and deletes) the ones that no longer lead anywhere
+  (`App\Support\NotificationInbox`). `data` holds `message_id`,
+  `channel_id`, `server_id`, `reason` (`user`|`role`|`everyone`),
+  `role_name`, `author`, `server_name`, `channel_name` and `excerpt`.
 - `users.status` is the status a user picked: `online`, `idle` or `dnd`
   (`User::ONLINE_STATUSES`, ISSUE-31). Whether they are connected comes from
   the server's Reverb presence channel, not from this column. The database

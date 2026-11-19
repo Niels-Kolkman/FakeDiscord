@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Events\MessageSent;
 use App\Observers\MessageObserver;
+use App\Support\Mentions;
 use App\Support\Reactions;
 use Database\Factories\MessageFactory;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
@@ -33,6 +34,7 @@ use Laravel\Scout\Searchable;
  *
  * @property Carbon|null $edited_at NULL = never edited
  * @property Carbon|null $pinned_at NULL = not pinned
+ * @property array{users: list<int>, roles: list<int>, everyone: bool}|null $mentions who it mentions (ISSUE-33), NULL = nobody
  */
 #[ObservedBy(MessageObserver::class)]
 class Message extends Model
@@ -69,7 +71,36 @@ class Message extends Model
         return [
             'edited_at' => 'datetime',
             'pinned_at' => 'datetime',
+            'mentions' => 'array',
         ];
+    }
+
+    /**
+     * Mentions (ISSUE-33): whenever the content of a channel message is
+     * written, who it mentions is worked out again (Mentions::resolve())
+     * and stored in `mentions`. Not fillable: nobody can make a message
+     * mention someone it does not name.
+     */
+    protected static function booted(): void
+    {
+        static::saving(function (Message $message): void {
+            if (! $message->exists || $message->isDirty(['content', 'channel_id', 'user_id'])) {
+                $message->mentions = Mentions::resolve($message);
+            }
+        });
+    }
+
+    /**
+     * Whether this message mentions the user (Mentions::includes()), given
+     * the ids of the roles they hold in the message's server.
+     *
+     * @param  list<int>  $roleIds
+     */
+    public function mentionsUser(User|int $user, array $roleIds = []): bool
+    {
+        $mentions = $this->mentions;
+
+        return Mentions::includes(is_array($mentions) ? $mentions : null, $user instanceof User ? (int) $user->id : $user, $roleIds);
     }
 
     /**
@@ -267,8 +298,10 @@ class Message extends Model
      * `reply_to` (ISSUE-20) is replyPreview(); `pinned_at` is NULL unless pinned.
      *
      * `conversation_id` (ISSUE-23) is set instead of `channel_id` for a DM.
+     * `mentions` (ISSUE-33) is who it mentions (Mentions::resolve()), NULL
+     * for nobody; resources/js/unread.js counts the badges from it.
      *
-     * @return array{id: int, channel_id: int|null, conversation_id: int|null, content: string, created_at: string|null, edited_at: string|null, pinned_at: string|null, author: array{id: int, name: string, username: string, avatar_url: string, profile_url: string}|null, reply_to: array<string, mixed>|null, reactions: list<array<string, mixed>>, attachments: list<array<string, mixed>>}
+     * @return array{id: int, channel_id: int|null, conversation_id: int|null, content: string, mentions: array<string, mixed>|null, created_at: string|null, edited_at: string|null, pinned_at: string|null, author: array{id: int, name: string, username: string, avatar_url: string, profile_url: string}|null, reply_to: array<string, mixed>|null, reactions: list<array<string, mixed>>, attachments: list<array<string, mixed>>}
      */
     public function toPayload(?User $viewer = null): array
     {
@@ -287,6 +320,7 @@ class Message extends Model
             'channel_id' => $this->channel_id === null ? null : (int) $this->channel_id,
             'conversation_id' => $this->conversation_id === null ? null : (int) $this->conversation_id,
             'content' => (string) $this->content,
+            'mentions' => is_array($this->mentions) ? $this->mentions : null,
             'created_at' => $this->created_at?->toIso8601String(),
             'edited_at' => $this->edited_at?->toIso8601String(),
             'pinned_at' => $this->pinned_at?->toIso8601String(),
