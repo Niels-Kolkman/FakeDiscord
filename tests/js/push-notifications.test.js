@@ -439,3 +439,125 @@ test('storage that throws does not break the switch', async () => {
 test('pages without the section are left alone', () => {
     assert.equal(initPushSettings({ document: fakeDocument(), Notification: fakeNotificationApi(), storage: fakeStorage() }), null);
 });
+
+// --- Edge cases ----------------------------------------------------------------------
+
+test('only an opt-out of exactly "1" turns notifications off', () => {
+    for (const value of ['0', '', 'true', 'off']) {
+        assert.equal(pushState(fakeNotificationApi('granted'), fakeStorage({ [OPT_OUT_KEY]: value })), 'on', value);
+    }
+    // The opt-out does not matter before permission is given.
+    assert.equal(pushState(fakeNotificationApi('default'), fakeStorage({ [OPT_OUT_KEY]: '1' })), 'default');
+});
+
+test('tabUnfocused: a visible page without hasFocus counts as focused', () => {
+    const doc = fakeDocument();
+    doc.visibilityState = 'visible';
+    delete doc.hasFocus;
+    assert.equal(tabUnfocused(doc), false);
+});
+
+test('bodies collapse spaces and tabs but keep the line break, and stop at 140', () => {
+    const spec = mentionNotification(mention({ server_name: 'Pings', channel_name: '', excerpt: '  a \t\t b  ' }));
+    assert.equal(spec.options.body, 'Pings\n a b');
+
+    const exact = mentionNotification(mention({ server_name: '', channel_name: '', excerpt: 'y'.repeat(140) }));
+    assert.equal(exact.options.body, 'y'.repeat(140));
+
+    const over = dmNotification(dm({ excerpt: 'z'.repeat(141) }));
+    assert.equal(over.options.body, `${'z'.repeat(139)}…`);
+});
+
+test('mentionNotification with only a channel or only a server', () => {
+    assert.equal(mentionNotification(mention({ server_name: '' })).options.body, '#general\nhey @bob');
+    assert.equal(mentionNotification(mention({ channel_name: null })).options.body, 'Pings\nhey @bob');
+});
+
+test('dmNotification accepts message id 0 and the same message keeps its tag', () => {
+    assert.equal(dmNotification(dm({ message_id: 0 })).options.tag, 'dm-0');
+    assert.equal(dmNotification(dm()).options.tag, dmNotification(dm({ excerpt: 'edited' })).options.tag);
+    assert.equal(dmNotification(dm({ avatar_url: null })).options.icon, undefined);
+    assert.equal(dmNotification(dm({ url: '' })).url, null);
+});
+
+test('the status is read for every event, not once', () => {
+    let status = 'dnd';
+    const Notification = fakeNotificationApi('granted');
+    const echo = fakeEcho();
+    initPushNotifications({
+        echo, userId: '7', document: unfocusedDocument(), Notification, storage: fakeStorage(), getStatus: () => status,
+    });
+    const channel = echo.channels['App.Models.User.7'];
+
+    channel.notification(mention());
+    status = 'online';
+    channel.listeners[DM_EVENT](dm());
+
+    assert.deepEqual(Notification.shown.map((n) => n.options.tag), ['dm-12']);
+});
+
+test('opting out in another tab takes effect without a reload', () => {
+    const { channel, Notification, storage } = setup();
+    channel.notification(mention());
+
+    storage.setItem(OPT_OUT_KEY, '1');
+    channel.notification(mention({ id: 'n-2' }));
+    channel.listeners[DM_EVENT](dm());
+
+    assert.equal(Notification.shown.length, 1);
+});
+
+test('focusing the tab between events stops the next one', () => {
+    const doc = unfocusedDocument();
+    const { channel, Notification } = setup({ doc });
+
+    channel.listeners[DM_EVENT](dm());
+    doc.visibilityState = 'visible';
+    doc.hasFocus = () => true;
+    channel.listeners[DM_EVENT](dm({ message_id: 13 }));
+
+    assert.deepEqual(Notification.shown.map((n) => n.options.tag), ['dm-12']);
+});
+
+test('broadcasts that are not mentions or are malformed show nothing', () => {
+    const { channel, Notification } = setup();
+    channel.notification({ type: 'friend.request', id: 'x' });
+    channel.notification(undefined);
+    channel.listeners[DM_EVENT]({ conversation_id: 3 });
+    channel.listeners[DM_EVENT](undefined);
+    assert.equal(Notification.shown.length, 0);
+});
+
+test('clicking the switch when blocked or unsupported does nothing', async () => {
+    const page = settingsPage();
+    const Notification = fakeNotificationApi('denied');
+    const storage = fakeStorage();
+    const handle = initPushSettings({ document: page.doc, Notification, storage });
+
+    assert.equal(await handle.click(), 'denied');
+    assert.equal(Notification.asked, 0);
+    assert.deepEqual(storage.data, {});
+
+    const other = settingsPage();
+    const otherHandle = initPushSettings({ document: other.doc, Notification: null, storage });
+    assert.equal(await otherHandle.click(), 'unsupported');
+});
+
+test('enabling clears an old opt-out so it ends up on', async () => {
+    const page = settingsPage();
+    const storage = fakeStorage({ [OPT_OUT_KEY]: '1' });
+    const Notification = fakeNotificationApi('default');
+    const handle = initPushSettings({ document: page.doc, Notification, storage });
+
+    assert.equal(await handle.click(), 'on');
+    assert.equal(OPT_OUT_KEY in storage.data, false);
+});
+
+test('a section without status or button still renders its state', () => {
+    const root = make('section', { pushSettings: '' });
+    const doc = fakeDocument(make('body', {}, [root]));
+    const handle = initPushSettings({ document: doc, Notification: fakeNotificationApi('granted'), storage: fakeStorage() });
+
+    assert.equal(handle.render(), 'on');
+    assert.equal(root.dataset.pushState, 'on');
+});
