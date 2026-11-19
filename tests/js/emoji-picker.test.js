@@ -294,6 +294,219 @@ test('a click outside closes the picker, a click on the toggle or panel does not
     assert.equal(panel.hidden, true);
 });
 
+// --- edge cases ------------------------------------------------------------------
+
+test('choosing an emoji replaces the selected text', () => {
+    const { toggle, panel, input, click, clickInPanel } = setup({ value: 'I am sad today' });
+    input.selectionStart = 5;
+    input.selectionEnd = 8;
+    click(toggle);
+    clickInPanel(buttons(panel).find((button) => button.dataset.emoji === '😀'));
+    assert.equal(input.value, 'I am 😀 today');
+    assert.equal(input.selectionStart, 7);
+    assert.equal(input.selectionEnd, 7);
+});
+
+test('an emoji that exactly fills maxlength is inserted', () => {
+    // 👍 is two UTF-16 units, which is what a textarea's maxlength counts.
+    const { input, inputs, picker } = setup({ value: 'ab', maxLength: 4 });
+    assert.equal(picker.choose('👍'), true);
+    assert.equal(input.value, 'ab👍');
+    assert.equal(inputs.length, 1);
+});
+
+test('no maxlength (the browser default of -1) means no limit', () => {
+    const { input, picker } = setup({ value: 'x'.repeat(5000), maxLength: -1 });
+    assert.equal(picker.choose('🎉'), true);
+    assert.equal(input.value.length, 5002);
+});
+
+test('emoji with variation selectors and joiners are inserted whole', () => {
+    const { input, picker } = setup({ value: 'ab' });
+    input.selectionStart = 1;
+    input.selectionEnd = 1;
+    picker.choose('❤️');
+    assert.equal(input.value, 'a❤️b');
+    assert.equal(input.selectionStart, 1 + '❤️'.length);
+    const all = EMOJI_CATEGORIES.flatMap((category) => category.emoji).map(([emoji]) => emoji);
+    const joined = all.find((emoji) => emoji.includes('‍'));
+    if (joined) {
+        picker.choose(joined);
+        assert.ok(input.value.includes(joined));
+    }
+});
+
+test('choosing gives the focus back to the composer', () => {
+    const { toggle, input, picker, click } = setup();
+    let focused = 0;
+    input.focus = () => { focused += 1; };
+    click(toggle);
+    picker.choose('👍');
+    assert.equal(focused, 1);
+});
+
+test('an emoji refused for maxlength is not remembered', () => {
+    const storage = fakeStorage();
+    const { picker } = setup({ value: 'abc', maxLength: 3, storage });
+    assert.equal(picker.choose('👍'), false);
+    assert.equal(storage.data[RECENT_KEY], undefined);
+});
+
+test('the recent row shows at most MAX_RECENT emoji, newest first', () => {
+    const storage = fakeStorage();
+    const { toggle, panel, picker, click } = setup({ storage, maxLength: -1 });
+    const all = EMOJI_CATEGORIES.flatMap((category) => category.emoji).map(([emoji]) => emoji);
+    const used = all.slice(0, MAX_RECENT + 4);
+    used.forEach((emoji) => picker.choose(emoji));
+
+    click(toggle);
+    const recent = panel.querySelector('[data-emoji-section]');
+    assert.equal(recent.dataset.emojiSection, 'recent');
+    const shown = recent.querySelectorAll('[data-emoji]').map((button) => button.dataset.emoji);
+    assert.equal(shown.length, MAX_RECENT);
+    assert.deepEqual(shown, used.slice(-MAX_RECENT).reverse());
+    assert.equal(JSON.parse(storage.data[RECENT_KEY]).length, MAX_RECENT);
+});
+
+test('the recent row is updated while the panel stays built', () => {
+    const { toggle, panel, picker, click } = setup();
+    click(toggle);
+    assert.notEqual(sections(panel)[0], 'recent');
+    picker.choose('🍕');
+    click(toggle);
+    assert.equal(sections(panel)[0], 'recent');
+    assert.equal(panel.querySelector('[data-emoji-section]').querySelectorAll('[data-emoji]')[0].dataset.emoji, '🍕');
+});
+
+test('a saved recent list longer than the maximum is cut', () => {
+    const all = EMOJI_CATEGORIES.flatMap((category) => category.emoji).map(([emoji]) => emoji);
+    const saved = all.slice(0, MAX_RECENT + 5);
+    assert.deepEqual(readRecent(fakeStorage({ [RECENT_KEY]: JSON.stringify(saved) })), saved.slice(0, MAX_RECENT));
+});
+
+test('search matches words in any order, across hyphens, and finds each emoji once', () => {
+    const found = searchEmoji('face');
+    assert.ok(found.length > 1);
+    assert.equal(new Set(found.map(([emoji]) => emoji)).size, found.length);
+    const twice = [{ id: 'a', emoji: [['👍', 'thumbs up']] }, { id: 'b', emoji: [['👍', 'thumbs up']] }];
+    assert.deepEqual(searchEmoji('thumbs', twice), [['👍', 'thumbs up']]);
+    assert.deepEqual(searchEmoji('up thumbs'), searchEmoji('thumbs up'));
+    const hyphen = [{ id: 'c', emoji: [['🤜', 'right-facing fist']] }];
+    assert.deepEqual(searchEmoji('facing', hyphen), [['🤜', 'right-facing fist']]);
+    assert.deepEqual(searchEmoji('ight', hyphen), []);
+});
+
+test('Enter in a whitespace-only search does not insert anything', () => {
+    const { toggle, panel, input, click, keyInPanel } = setup();
+    click(toggle);
+    const box = search(panel);
+    box.value = '   ';
+    box.dispatchEvent({ type: 'input' });
+    const event = keyInPanel(box, 'Enter');
+    assert.equal(event.defaultPrevented, true);
+    assert.equal(input.value, '');
+    assert.equal(panel.hidden, false);
+});
+
+test('Enter on a search with no results does nothing', () => {
+    const { toggle, panel, input, click, keyInPanel } = setup();
+    click(toggle);
+    const box = search(panel);
+    box.value = 'qwertyuiop';
+    box.dispatchEvent({ type: 'input' });
+    keyInPanel(box, 'Enter');
+    assert.equal(input.value, '');
+    assert.equal(panel.hidden, false);
+});
+
+test('ArrowDown with no results does not throw', () => {
+    const { toggle, panel, click, keyInPanel } = setup();
+    click(toggle);
+    const box = search(panel);
+    box.value = 'qwertyuiop';
+    box.dispatchEvent({ type: 'input' });
+    const event = keyInPanel(box, 'ArrowDown');
+    assert.equal(event.defaultPrevented, true);
+});
+
+test('other keys in the panel are left alone', () => {
+    const { toggle, panel, click, keyInPanel } = setup();
+    click(toggle);
+    const first = buttons(panel)[0];
+    ['a', 'Tab', ' ', 'Home'].forEach((key) => {
+        assert.equal(keyInPanel(first, key).defaultPrevented, false, key);
+    });
+    assert.equal(panel.hidden, false);
+});
+
+test('Enter on an emoji button is left to the button (a click)', () => {
+    const { toggle, panel, input, click, keyInPanel } = setup();
+    click(toggle);
+    const event = keyInPanel(buttons(panel)[0], 'Enter');
+    assert.equal(event.defaultPrevented, false);
+    assert.equal(input.value, '');
+});
+
+test('closing with the toggle does not move the focus to it', () => {
+    const { toggle, click } = setup();
+    let focused = 0;
+    toggle.focus = () => { focused += 1; };
+    click(toggle);
+    click(toggle);
+    assert.equal(focused, 0);
+});
+
+test('opening focuses the search box', () => {
+    const { toggle, panel, click } = setup();
+    click(toggle);
+    let focused = 0;
+    search(panel).focus = () => { focused += 1; };
+    click(toggle);
+    click(toggle);
+    assert.equal(focused, 1);
+});
+
+test('a click outside while closed and close() while closed change nothing', () => {
+    const { toggle, panel, outside, doc, picker } = setup();
+    doc.dispatch('click', { target: outside });
+    picker.close(true);
+    assert.equal(panel.hidden, true);
+    assert.equal(toggle.getAttribute('aria-expanded'), 'false');
+    assert.equal(picker.isOpen(), false);
+});
+
+test('the picker is only built once however often it opens', () => {
+    const { toggle, panel, click } = setup();
+    click(toggle);
+    const box = search(panel);
+    click(toggle);
+    click(toggle);
+    assert.equal(search(panel), box);
+    assert.equal(panel.querySelectorAll('[data-emoji-search]').length, 1);
+});
+
+test('two composers get independent pickers', () => {
+    const storage = fakeStorage();
+    const a = setup({ storage });
+    const b = setup({ storage });
+    a.click(a.toggle);
+    assert.equal(a.panel.hidden, false);
+    assert.equal(b.panel.hidden, true);
+    a.picker.choose('🚀');
+    assert.equal(a.input.value, '🚀');
+    assert.equal(b.input.value, '');
+});
+
+test('emoji names are used as labels and hover titles', () => {
+    const { toggle, panel, click } = setup();
+    click(toggle);
+    const names = new Map(EMOJI_CATEGORIES.flatMap((category) => category.emoji));
+    buttons(panel).forEach((button) => {
+        assert.equal(button.getAttribute('aria-label'), names.get(button.dataset.emoji));
+        assert.equal(button.title, names.get(button.dataset.emoji));
+    });
+});
+
 test('emoji buttons hold the emoji as text', () => {
     const { toggle, panel, click } = setup();
     click(toggle);
