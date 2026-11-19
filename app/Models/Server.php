@@ -8,6 +8,7 @@ use App\Observers\ServerObserver;
 use App\Services\PermissionService;
 use App\Support\ChannelLayout;
 use App\Support\MemberList;
+use App\Support\ServerPresence;
 use Database\Factories\ServerFactory;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -148,11 +149,18 @@ class Server extends Model
     }
 
     /**
-     * The member sidebar, grouped by highest role and online status.
+     * The member sidebar, grouped by highest role and online status. Who is
+     * online comes from the server's Reverb presence channel (ISSUE-31);
+     * the viewer (default: the signed-in user) always counts as online.
      */
-    public function memberList(): MemberList
+    public function memberList(?User $viewer = null): MemberList
     {
-        return MemberList::for($this);
+        $viewer ??= auth()->user();
+
+        return MemberList::for(
+            $this,
+            app(ServerPresence::class)->connectedUserIds($this, $viewer instanceof User ? $viewer : null),
+        );
     }
 
     /**

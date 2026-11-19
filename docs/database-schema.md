@@ -312,6 +312,11 @@ database, so these rules live in the app layer (validation, model events or poli
   `ManageGroupConversation`). Its `owner_id` is one of them. When the owner
   leaves, ownership passes to the longest-standing participant, and a group
   whose last participant leaves is deleted.
+- `users.status` is the status a user picked: `online`, `idle` or `dnd`
+  (`User::ONLINE_STATUSES`, ISSUE-31). Whether they are connected comes from
+  the server's Reverb presence channel, not from this column. The database
+  default is still `offline`, from before presence. New users get `online`
+  from the model, and a stored `offline` reads as `online` once connected.
 - Values in the `status` and `type` columns. These are plain strings, not
   `enum()`, because Laravel turns `enum()` into a CHECK constraint on SQLite,
   and changing it later would mean rebuilding the whole table.

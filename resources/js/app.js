@@ -6,3 +6,4 @@ import './friends';
 import './direct-messages';
 import './moderation';
 import './unread';
+import './presence';

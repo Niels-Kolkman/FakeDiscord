@@ -77,6 +77,8 @@
     </div>
 
     <div class="space-y-1 border-t border-[#1f2023] p-2 text-sm">
+        {{-- Online presence (ISSUE-31). --}}
+        <x-status-picker />
         @if ($canManage)
             <a href="{{ route('channels.create', $server) }}" class="block rounded px-2 py-1 text-[#b5bac1] hover:bg-[#35373c] hover:text-white">Create channel</a>
             <a href="{{ route('categories.create', $server) }}" class="block rounded px-2 py-1 text-[#b5bac1] hover:bg-[#35373c] hover:text-white">Create category</a>

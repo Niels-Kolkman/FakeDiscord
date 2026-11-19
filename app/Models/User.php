@@ -35,6 +35,17 @@ class User extends Authenticatable implements MustVerifyEmail
     ];
 
     /**
+     * New users show as online while connected (ISSUE-31). The column's
+     * database default is still "offline", from before presence; a stored
+     * "offline" reads as "online" through chosenStatus().
+     *
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'status' => 'online',
+    ];
+
+    /**
      * The attributes that should be hidden for serialization.
      *
      * @var list<string>
@@ -58,14 +69,31 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Statuses that count as online in member lists. Anything else
-     * ("offline" or an unknown value) is listed as offline.
+     * The statuses a user can pick (ISSUE-31), which are also the ones that
+     * count as online. Anything else ("offline" or an unknown value) is
+     * listed as offline.
      */
     public const ONLINE_STATUSES = ['online', 'idle', 'dnd'];
 
+    public const STATUS_LABELS = ['online' => 'Online', 'idle' => 'Idle', 'dnd' => 'Do Not Disturb'];
+
+    /**
+     * Whether the stored status counts as online. Real presence (is the
+     * user connected?) comes from App\Support\ServerPresence; MemberList
+     * only falls back to this when that is unknown.
+     */
     public function isOnline(): bool
     {
         return in_array($this->status, self::ONLINE_STATUSES, true);
+    }
+
+    /**
+     * The status the user picked, "online" when the stored value is not
+     * one of ONLINE_STATUSES.
+     */
+    public function chosenStatus(): string
+    {
+        return $this->isOnline() ? (string) $this->status : 'online';
     }
 
     /**

@@ -161,7 +161,8 @@ test('a ban on the open server leaves its channels, removes the panel and shows 
 
     assert.equal(handle(event('banned', 7, '<b>Mods</b>')), 'leave');
 
-    assert.deepEqual(echo.left, ['channel.3', 'typing.3']);
+    // The server's presence channel too (ISSUE-31).
+    assert.deepEqual(echo.left, ['server.7', 'channel.3', 'typing.3']);
     assert.equal(document.querySelector('[data-channel-messages]'), null);
     const notice = document.querySelector('[data-moderation-notice]');
     assert.ok(notice);
@@ -192,7 +193,7 @@ test('a kick on a server page without a message panel still shows the notice', (
 
     assert.equal(handle(event('kicked')), 'leave');
 
-    assert.deepEqual(echo.left, []);
+    assert.deepEqual(echo.left, ['server.7']);
     const notice = document.querySelector('[data-moderation-notice]');
     assert.ok(notice);
     const [box] = notice.childNodes;
@@ -233,7 +234,8 @@ test('events for another server leave the page alone', () => {
     assert.equal(handle(event('banned', 9)), null);
     assert.equal(handle(event('timed_out', 9)), null);
 
-    assert.deepEqual(echo.left, []);
+    // Only that server's presence channel (ISSUE-31), which every page joins.
+    assert.deepEqual(echo.left, ['server.9']);
     assert.equal(location.reloads, 0);
     assert.ok(document.querySelector('[data-channel-messages]'));
     assert.equal(document.querySelector('[data-moderation-notice]'), null);

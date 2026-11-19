@@ -90,6 +90,13 @@ export function initModeration({ echo, userId, document, location, dashboardUrl 
     if (!echo || !userId) return null;
 
     const handle = (event) => {
+        // Every page is in the server's presence channel (presence.js,
+        // ISSUE-31), so leave it wherever the user is.
+        const removedFrom = Number(event?.server?.id);
+        if (REMOVED.includes(event?.type) && Number.isInteger(removedFrom) && removedFrom > 0) {
+            echo.leave(`server.${removedFrom}`);
+        }
+
         const action = actionFor(event, currentServerId(document));
 
         if (action === 'reload') {
