@@ -206,6 +206,45 @@ test('the close button, Escape and a click elsewhere close the panel', async () 
     assert.equal(panel.hidden, true);
 });
 
+test('opening moves focus into the panel and Tab stays in it (ISSUE-38)', async () => {
+    const { panel, readAll, list, doc, handle } = setup({ items: [item()] });
+    for (const node of [panel, readAll]) {
+        node.focused = 0;
+        node.focus = () => { node.focused += 1; doc.activeElement = node; };
+    }
+
+    await handle.open();
+    assert.equal(panel.getAttribute('tabindex'), '-1');
+    assert.equal(panel.focused, 1);
+
+    const press = (extra = {}) => {
+        const event = { key: 'Tab', shiftKey: false, defaultPrevented: false, preventDefault() { this.defaultPrevented = true; }, ...extra };
+        panel.listeners.keydown.forEach((handler) => handler(event));
+        return event;
+    };
+
+    // From the panel itself, Tab goes to "Mark all read".
+    assert.equal(press().defaultPrevented, true);
+    assert.equal(readAll.focused, 1);
+
+    // From the entry's link (the last stop) back to the top.
+    const entryLink = list.children[0].tagName === 'A' ? list.children[0] : list.children[0].children.find((child) => child.tagName === 'A');
+    doc.activeElement = entryLink;
+    assert.equal(press().defaultPrevented, true);
+    assert.equal(readAll.focused, 2);
+
+    // Shift+Tab on the first goes to the last.
+    doc.activeElement = readAll;
+    let wrapped = 0;
+    entryLink.focus = () => { wrapped += 1; };
+    assert.equal(press({ shiftKey: true }).defaultPrevented, true);
+    assert.equal(wrapped, 1);
+
+    // In between, the browser moves on.
+    doc.activeElement = readAll;
+    assert.equal(press().defaultPrevented, false);
+});
+
 test('mark all read clears the count and the dots', async () => {
     const { readAll, posts, list, badge, click, handle } = setup({ unread: 2, items: [item(), item({ id: 'n-2' })] });
     await handle.open();

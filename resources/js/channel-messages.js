@@ -84,6 +84,7 @@ import { mentionsViewer } from './unread.js';
 import { fillMessageContent } from './markdown.js';
 import { initEmojiPicker } from './emoji-picker.js';
 import { announcementText, createAnnouncer } from './live-announcer.js';
+import { trapTab } from './focus-trap.js';
 
 const NEAR_BOTTOM_PX = 120;
 const LOAD_OLDER_PX = 400;
@@ -1009,6 +1010,8 @@ function initChannel(root) {
                 event.preventDefault();
                 closePins(true);
             }
+            // Tab stays in the open panel (ISSUE-38).
+            trapTab(pinsPanel, event);
         });
         document.addEventListener('click', (event) => {
             if (pinsOpen() && !pinsPanel.contains(event.target) && !pinsToggle.contains(event.target)) closePins();

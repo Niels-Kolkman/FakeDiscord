@@ -34,7 +34,7 @@
                 id="inbox-panel"
                 role="dialog"
                 aria-labelledby="inbox-panel-title"
-                class="absolute right-0 top-full z-40 mt-2 flex max-h-[70vh] w-[min(26rem,calc(100vw-2rem))] flex-col rounded-lg border border-edge bg-surface-2 shadow-xl"
+                class="absolute right-0 top-full z-40 mt-2 flex max-h-[70vh] w-[min(26rem,calc(100vw-2rem))] flex-col rounded-lg border border-edge bg-surface-2 shadow-xl focus:outline-none"
                 data-inbox-panel
                 hidden
             >
