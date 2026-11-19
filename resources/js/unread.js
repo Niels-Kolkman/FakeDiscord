@@ -10,7 +10,8 @@
  *   members who can see it). When App\Events\MessageSent (".message.sent")
  *   arrives in another channel, the row gets data-unread (the CSS shows
  *   the dot and the bold name) and, if the message mentions you
- *   (mentionsUser(), like App\Support\Mentions), its badge counts up.
+ *   (mentionsViewer(): by name, a role in data-viewer-role-ids or
+ *   @everyone, ISSUE-33), its badge counts up.
  * - In the open channel ([data-channel-messages][data-read-url]) a message
  *   from someone else is marked read (POST data-read-url, field
  *   message_id, ChannelReadController) once you have seen it: right away
@@ -30,13 +31,36 @@ export const MARK_READ_DELAY_MS = 1000;
 
 const escapeRegExp = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-/** Whether content mentions @username. Must match App\Support\Mentions::pattern(). */
+/**
+ * Whether content mentions @username. Must match App\Support\Mentions::pattern().
+ * Only a fallback now: the payload says who a message mentions (mentionsViewer()).
+ */
 export function mentionsUser(content, username) {
     if (typeof content !== 'string' || typeof username !== 'string' || username === '') return false;
 
     const pattern = new RegExp(`(?<![a-z0-9_.@])@${escapeRegExp(username.toLowerCase())}(?![a-z0-9_]|\\.[a-z0-9_])`, 'iu');
 
     return pattern.test(content);
+}
+
+/**
+ * Whether a message payload mentions the viewer (ISSUE-33). The server
+ * works out who a message mentions when it is saved (App\Support\Mentions,
+ * `mentions`: { users, roles, everyone }): by id, a role they hold
+ * (roleIds) or @everyone. A payload without `mentions` (an older server)
+ * falls back to looking for @username in the content.
+ */
+export function mentionsViewer(message, { userId = null, username = '', roleIds = new Set() } = {}) {
+    if (!message) return false;
+
+    const mentions = message.mentions;
+    if (mentions === undefined) return mentionsUser(message.content, username);
+    if (!mentions || typeof mentions !== 'object') return false;
+
+    if (mentions.everyone === true) return true;
+    if (userId !== null && (mentions.users ?? []).some((id) => String(id) === String(userId))) return true;
+
+    return (mentions.roles ?? []).some((id) => roleIds.has(String(id)));
 }
 
 /** Whether a message from the broadcast should count as unread for the viewer. */
@@ -96,6 +120,7 @@ export function initUnread({
     const openChannelId = panel?.dataset.channelId ?? null;
     const readUrl = panel?.dataset.readUrl ?? null;
     const blockedUserIds = parseIds(sidebar.dataset.blockedUserIds);
+    const roleIds = parseIds(sidebar.dataset.viewerRoleIds);
     const visible = () => document.visibilityState !== 'hidden';
 
     // Highest message id seen in the open channel but not sent yet.
@@ -138,7 +163,7 @@ export function initUnread({
             if (channelId === openChannelId) {
                 markRead(message.id);
             } else {
-                applyUnread(item, { mention: mentionsUser(message.content, username) });
+                applyUnread(item, { mention: mentionsViewer(message, { userId, username, roleIds }) });
             }
         });
     });

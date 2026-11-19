@@ -18,6 +18,11 @@
         start             view for the "start of the conversation" header
         readOnlyNotice    shown instead of the composer when you cannot send (optional)
         readUrl           POST marks messages read (ISSUE-32, resources/js/unread.js; optional)
+        mentionsUrl       GET mention suggestions for the composer (ISSUE-33,
+                          resources/js/mention-autocomplete.js; optional, channels only)
+
+    $viewerRoleIds (optional): the roles the viewer holds in the server, so
+    messages that mention one of them are highlighted like a mention by name.
 
     Also $feed (App\Support\MessageFeed), $viewerId, $canManageMessages and
     $canSendMessages, worked out once by the page for every message
@@ -40,6 +45,7 @@
         data-older-cursor="{{ $feed->olderCursor }}"
         data-viewer-id="{{ $viewerId }}"
         data-blocked-user-ids="{{ json_encode(array_values($blockedUserIds ?? [])) }}"
+        data-viewer-role-ids="{{ json_encode(array_values($viewerRoleIds ?? [])) }}"
         data-reaction-emoji="{{ json_encode(\App\Support\Reactions::QUICK, JSON_UNESCAPED_UNICODE) }}"
         @if ($canManageMessages) data-can-manage-messages @endif
         @if ($canSendMessages) data-can-send-messages @endif
@@ -127,6 +133,7 @@
             data-message-form
             data-max-files="{{ \App\Models\MessageAttachment::MAX_FILES }}"
             data-max-file-bytes="{{ \App\Models\MessageAttachment::MAX_KILOBYTES * 1024 }}"
+            @if ($panel['mentionsUrl'] ?? null) data-mentions-url="{{ $panel['mentionsUrl'] }}" @endif
         >
             @csrf
             {{-- Replies (ISSUE-20): "Reply" on a message fills reply_to_id and shows this bar. --}}
@@ -136,6 +143,17 @@
                 <button type="button" class="shrink-0 rounded px-1 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]" aria-label="Cancel reply" data-reply-cancel>✕</button>
             </div>
             <ul class="mb-1 flex flex-wrap gap-2" aria-label="Files to upload" data-attachment-list hidden></ul>
+            @if ($panel['mentionsUrl'] ?? null)
+                {{-- Mention autocomplete (ISSUE-33), filled by resources/js/mention-autocomplete.js. --}}
+                <ul
+                    id="mention-suggestions"
+                    role="listbox"
+                    aria-label="Mention suggestions"
+                    class="mb-1 max-h-64 overflow-y-auto rounded-lg border border-[#1f2023] bg-[#2b2d31] py-1 shadow-xl"
+                    data-mention-suggestions
+                    hidden
+                ></ul>
+            @endif
             <label for="message-content" class="sr-only">Message {{ $panel['label'] }}</label>
             <div class="flex items-end gap-2 rounded-lg bg-[#383a40] px-4 py-2">
                 {{-- Attach Files (ISSUE-27); DM pages do not set it, and every participant may attach there. --}}

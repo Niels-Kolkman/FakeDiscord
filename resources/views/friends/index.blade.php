@@ -23,6 +23,8 @@
     <header class="flex min-h-12 items-center gap-2 border-b border-[#1f2023] px-4 py-2 shadow-sm">
         <span aria-hidden="true" class="text-xl">👋</span>
         <h1 class="font-semibold text-white">Friends</h1>
+        {{-- Mention notifications (ISSUE-33). --}}
+        <div class="ml-auto"><x-inbox /></div>
     </header>
 
     <div class="flex-1 overflow-y-auto px-4 py-4 md:px-8">

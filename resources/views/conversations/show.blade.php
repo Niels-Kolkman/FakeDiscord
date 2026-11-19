@@ -33,6 +33,8 @@
         @if ($other)
             <span class="truncate text-sm text-[#949ba4]">{{ '@'.$other->username }}</span>
         @endif
+        {{-- Mention notifications (ISSUE-33). --}}
+        <div class="ml-auto"><x-inbox /></div>
     </header>
 
     @include('messages.panel', ['panel' => [

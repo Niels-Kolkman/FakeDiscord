@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Enums\Permission;
 use App\Models\Message;
 use App\Models\Role;
+use App\Models\Server;
 use App\Models\User;
 use App\Services\PermissionService;
 
@@ -128,6 +129,23 @@ final class Mentions
         }
 
         return ['users' => $users, 'roles' => $roles, 'everyone' => $everyone];
+    }
+
+    /**
+     * The ids of the roles (not @everyone) the user holds in the server:
+     * what includes() needs to tell whether a role mention is for them.
+     *
+     * @return list<int>
+     */
+    public static function roleIdsOf(User $user, Server $server): array
+    {
+        return $user->roles()
+            ->where('roles.server_id', $server->id)
+            ->orderBy('roles.id')
+            ->pluck('roles.id')
+            ->map(fn (mixed $id): int => (int) $id)
+            ->values()
+            ->all();
     }
 
     /**

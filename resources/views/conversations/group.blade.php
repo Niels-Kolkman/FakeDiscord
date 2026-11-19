@@ -37,6 +37,8 @@
             <span aria-hidden="true" class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#5865f2] text-xs text-white">👥</span>
             <h1 class="truncate font-semibold text-white" data-group-name>{{ $title }}</h1>
             <span class="shrink-0 text-sm text-[#949ba4]" data-group-count>{{ trans_choice('{1} 1 member|[2,*] :count members', $members->count(), ['count' => $members->count()]) }}</span>
+            {{-- Mention notifications (ISSUE-33). --}}
+            <div class="ml-auto"><x-inbox /></div>
         </header>
 
         <details class="border-b border-[#1f2023] px-4 py-2 text-sm" @if ($errors->has('user_ids') || $errors->has('name')) open @endif>

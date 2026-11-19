@@ -17,6 +17,15 @@
             Friends
             <span data-friend-request-badge @if ($friendRequests === 0) hidden @endif class="rounded-full bg-[#da373c] px-1.5 text-xs font-semibold">{{ $friendRequests }}</span>
         </a>
+
+        {{-- Mention notifications (ISSUE-33). Not live here; the bell on the app pages is. --}}
+        @php($inboxUnread = \App\Support\NotificationInbox::unreadCount(auth()->user()))
+        <a href="{{ route('notifications.index') }}" class="mb-3 flex w-full items-center justify-center gap-2 rounded bg-[#4e5058] py-2 font-medium text-white hover:bg-[#6d6f78]" data-dashboard-inbox>
+            Inbox
+            @if ($inboxUnread > 0)
+                <span class="rounded-full bg-[#da373c] px-1.5 text-xs font-semibold">{{ \App\Support\NotificationInbox::badge($inboxUnread) }}<span class="sr-only"> unread</span></span>
+            @endif
+        </a>
     @endif
 
     @if (request()->query('verified'))
