@@ -1,0 +1,48 @@
+<?php
+
+/*
+ * PHPStan stub (phpstan.neon stubFiles, ISSUE-39). Pest types $this in
+ * test closures as PHPUnit's TestCase; tests/Pest.php binds the feature
+ * tests to Tests\FeatureTestCase, so say that instead. Only the PHPDoc
+ * matters: the real functions and classes come from vendor/pestphp/pest
+ * and tests/FeatureTestCase.php.
+ *
+ * PHPStan checks stub files on their own, seeing only other stubs, so the
+ * classes named below are declared here too (empty: their real members
+ * are reflected from the real classes).
+ */
+
+namespace Tests {
+    abstract class FeatureTestCase {}
+}
+
+namespace Pest\PendingCalls {
+    final class BeforeEachCall {}
+
+    final class TestCall {}
+}
+
+namespace Pest\Support {
+    final class HigherOrderTapProxy {}
+}
+
+namespace {
+    use Pest\PendingCalls\BeforeEachCall;
+    use Pest\PendingCalls\TestCall;
+    use Pest\Support\HigherOrderTapProxy;
+
+    /**
+     * @param-closure-this \Tests\FeatureTestCase  $closure
+     */
+    function beforeEach(?Closure $closure = null): BeforeEachCall {}
+
+    /**
+     * @param-closure-this \Tests\FeatureTestCase  $closure
+     */
+    function test(?string $description = null, ?Closure $closure = null): HigherOrderTapProxy|TestCall {}
+
+    /**
+     * @param-closure-this \Tests\FeatureTestCase  $closure
+     */
+    function it(string $description, ?Closure $closure = null): TestCall {}
+}

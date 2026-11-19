@@ -9,6 +9,10 @@ use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\URL;
 
+/**
+ * @param  array<string, string>  $overrides
+ * @return array<string, string>
+ */
 function registration(array $overrides = []): array
 {
     return array_merge([

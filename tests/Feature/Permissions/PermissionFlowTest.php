@@ -8,22 +8,17 @@
 use App\Enums\Permission;
 use App\Models\Channel;
 use App\Models\Role;
-use App\Models\User;
-
-beforeEach(function () {
-    $this->owner = User::factory()->create();
-    $this->server = serverOwnedBy($this->owner);
-    $this->channel = generalChannel($this->server);
-});
 
 it('lets members with Manage Roles create roles, and nobody else', function () {
-    $this->actingAs(memberOf($this->server))
-        ->post("/servers/{$this->server->id}/roles", ['name' => 'Mods'])
+    $s = serverScene();
+
+    $this->actingAs($s->member)
+        ->post("/servers/{$s->server->id}/roles", ['name' => 'Mods'])
         ->assertForbidden();
 
-    $manager = $this->memberWith($this->server, Permission::ManageRoles, Permission::KickMembers);
+    $manager = $this->memberWith($s->server, Permission::ManageRoles, Permission::KickMembers);
     $this->actingAs($manager)
-        ->post("/servers/{$this->server->id}/roles", [
+        ->post("/servers/{$s->server->id}/roles", [
             'name' => 'Helpers',
             'color' => '#ABCDEF',
             'permissions' => [Permission::KickMembers->value],
@@ -37,18 +32,21 @@ it('lets members with Manage Roles create roles, and nobody else', function () {
 });
 
 it('does not let managers grant permissions they lack', function () {
-    $manager = $this->memberWith($this->server, Permission::ManageRoles);
+    $s = serverScene();
+    $manager = $this->memberWith($s->server, Permission::ManageRoles);
 
     $this->actingAs($manager)
-        ->post("/servers/{$this->server->id}/roles", ['name' => 'Admins', 'permissions' => [Permission::Administrator->value]])
+        ->post("/servers/{$s->server->id}/roles", ['name' => 'Admins', 'permissions' => [Permission::Administrator->value]])
         ->assertSessionHasErrors('permissions');
 
     expect(Role::where('name', 'Admins')->exists())->toBeFalse();
 });
 
 it('refuses the reserved @everyone name and bad colours', function (array $payload, string $field) {
-    $this->actingAs($this->owner)
-        ->post("/servers/{$this->server->id}/roles", $payload)
+    $s = serverScene();
+
+    $this->actingAs($s->owner)
+        ->post("/servers/{$s->server->id}/roles", $payload)
         ->assertSessionHasErrors($field);
 })->with([
     'reserved name' => [['name' => '@EVERYONE'], 'name'],
@@ -57,81 +55,83 @@ it('refuses the reserved @everyone name and bad colours', function (array $paylo
 ]);
 
 it('gives a member the role\'s permissions once it is assigned', function () {
-    $member = memberOf($this->server);
-    $role = $this->makeRole($this->server, 'Builders', Permission::ManageChannels->value);
-    $create = fn () => $this->actingAs($member)->post("/servers/{$this->server->id}/channels", ['name' => 'built']);
+    $s = serverScene();
+    $role = $this->makeRole($s->server, 'Builders', Permission::ManageChannels->value);
+    $channels = "/servers/{$s->server->id}/channels";
 
-    $create()->assertForbidden();
+    $this->actingAs($s->member)->post($channels, ['name' => 'built'])->assertForbidden();
 
-    $this->actingAs($this->owner)
-        ->post("/servers/{$this->server->id}/roles/{$role->id}/members", ['user_id' => $member->id])
-        ->assertRedirect(route('roles.edit', [$this->server, $role]));
+    $this->actingAs($s->owner)
+        ->post("/servers/{$s->server->id}/roles/{$role->id}/members", ['user_id' => $s->member->id])
+        ->assertRedirect(route('roles.edit', [$s->server, $role]));
 
-    $create()->assertRedirect();
+    $this->actingAs($s->member)->post($channels, ['name' => 'built'])->assertRedirect();
     expect(Channel::where('name', 'built')->exists())->toBeTrue();
 
     // Taking the role away takes the permission with it.
-    $this->actingAs($this->owner)
-        ->delete("/servers/{$this->server->id}/roles/{$role->id}/members/{$member->id}")
+    $this->actingAs($s->owner)
+        ->delete("/servers/{$s->server->id}/roles/{$role->id}/members/{$s->member->id}")
         ->assertRedirect();
-    $this->actingAs($member)->post("/servers/{$this->server->id}/channels", ['name' => 'again'])->assertForbidden();
+    $this->actingAs($s->member)->post($channels, ['name' => 'again'])->assertForbidden();
 });
 
 it('only lets managers hand out roles below their own highest role', function () {
-    $low = $this->makeRole($this->server, 'Low', 0, 1);
-    $manager = $this->joinServer($this->server);
-    $this->giveRole($manager, $this->makeRole($this->server, 'Manager', Permission::ManageRoles->value, 2));
-    $high = $this->makeRole($this->server, 'High', 0, 3);
-    $target = memberOf($this->server);
+    $s = serverScene();
+    $low = $this->makeRole($s->server, 'Low', 0, 1);
+    $manager = $this->joinServer($s->server);
+    $this->giveRole($manager, $this->makeRole($s->server, 'Manager', Permission::ManageRoles->value, 2));
+    $high = $this->makeRole($s->server, 'High', 0, 3);
 
     $this->actingAs($manager)
-        ->post("/servers/{$this->server->id}/roles/{$high->id}/members", ['user_id' => $target->id])
+        ->post("/servers/{$s->server->id}/roles/{$high->id}/members", ['user_id' => $s->member->id])
         ->assertForbidden();
     $this->actingAs($manager)
-        ->post("/servers/{$this->server->id}/roles/{$low->id}/members", ['user_id' => $target->id])
+        ->post("/servers/{$s->server->id}/roles/{$low->id}/members", ['user_id' => $s->member->id])
         ->assertRedirect();
 
-    expect($target->roles()->pluck('roles.id')->all())->toBe([$low->id]);
+    expect($s->member->roles()->pluck('roles.id')->all())->toBe([$low->id]);
 });
 
 it('hides a channel when @everyone is denied View Channels there', function () {
-    $member = memberOf($this->server);
-    $this->overrideChannel($this->channel, $this->server->defaultRole(), deny: Permission::ViewChannels->value);
+    $s = serverScene();
+    $this->overrideChannel($s->channel, $s->server->defaultRole(), deny: Permission::ViewChannels->value);
 
-    $this->actingAs($member)->get("/servers/{$this->server->id}/channels/{$this->channel->id}")->assertForbidden();
-    $this->actingAs($member)->postJson(messagesUrl($this->channel), ['content' => 'hi'])->assertForbidden();
+    $this->actingAs($s->member)->get($s->channelUrl())->assertForbidden();
+    $this->actingAs($s->member)->postJson($s->messagesUrl(), ['content' => 'hi'])->assertForbidden();
 });
 
 it('lets an allow on one role beat a deny on another', function () {
-    $member = memberOf($this->server);
-    $muted = $this->makeRole($this->server, 'Muted', 0);
-    $speaker = $this->makeRole($this->server, 'Speaker', 0);
-    $this->giveRole($member, $muted);
-    $this->overrideChannel($this->channel, $muted, deny: Permission::SendMessages->value);
+    $s = serverScene();
+    $muted = $this->makeRole($s->server, 'Muted', 0);
+    $speaker = $this->makeRole($s->server, 'Speaker', 0);
+    $this->giveRole($s->member, $muted);
+    $this->overrideChannel($s->channel, $muted, deny: Permission::SendMessages->value);
 
-    $this->actingAs($member)->postJson(messagesUrl($this->channel), ['content' => 'one'])->assertForbidden();
+    $this->actingAs($s->member)->postJson($s->messagesUrl(), ['content' => 'one'])->assertForbidden();
 
-    $this->giveRole($member, $speaker);
-    $this->overrideChannel($this->channel, $speaker, allow: Permission::SendMessages->value);
+    $this->giveRole($s->member, $speaker);
+    $this->overrideChannel($s->channel, $speaker, allow: Permission::SendMessages->value);
 
-    $this->actingAs($member)->postJson(messagesUrl($this->channel), ['content' => 'two'])->assertCreated();
+    $this->actingAs($s->member)->postJson($s->messagesUrl(), ['content' => 'two'])->assertCreated();
 });
 
 it('lets Administrators past every override and private channel', function () {
-    $admin = $this->memberWith($this->server, Permission::Administrator);
-    $this->channel->update(['is_private' => true]);
-    $this->overrideChannel($this->channel, $this->server->defaultRole(), deny: Permission::mask(Permission::ViewChannels, Permission::SendMessages));
+    $s = serverScene();
+    $admin = $this->memberWith($s->server, Permission::Administrator);
+    $s->channel->update(['is_private' => true]);
+    $this->overrideChannel($s->channel, $s->server->defaultRole(), deny: Permission::mask(Permission::ViewChannels, Permission::SendMessages));
 
-    $this->actingAs($admin)->get("/servers/{$this->server->id}/channels/{$this->channel->id}")->assertOk();
-    $this->actingAs($admin)->postJson(messagesUrl($this->channel), ['content' => 'admin here'])->assertCreated();
-    $this->actingAs($admin)->get("/servers/{$this->server->id}/settings")->assertOk();
+    $this->actingAs($admin)->get($s->channelUrl())->assertOk();
+    $this->actingAs($admin)->postJson($s->messagesUrl(), ['content' => 'admin here'])->assertCreated();
+    $this->actingAs($admin)->get("/servers/{$s->server->id}/settings")->assertOk();
 });
 
 it('maps each server permission to the pages it opens', function (Permission $permission, string $page) {
-    $url = str_replace('{server}', (string) $this->server->id, $page);
+    $s = serverScene();
+    $url = str_replace('{server}', (string) $s->server->id, $page);
 
-    $this->actingAs(memberOf($this->server))->get($url)->assertForbidden();
-    $this->actingAs($this->memberWith($this->server, $permission))->get($url)->assertOk();
+    $this->actingAs($s->member)->get($url)->assertForbidden();
+    $this->actingAs($this->memberWith($s->server, $permission))->get($url)->assertOk();
 })->with([
     'Manage Server opens settings' => [Permission::ManageServer, '/servers/{server}/settings'],
     'Manage Roles opens roles' => [Permission::ManageRoles, '/servers/{server}/roles'],
@@ -140,9 +140,10 @@ it('maps each server permission to the pages it opens', function (Permission $pe
 ]);
 
 it('keeps the owner in charge whatever @everyone is allowed', function () {
-    $this->server->defaultRole()->update(['permissions' => 0]);
+    $s = serverScene();
+    $s->server->defaultRole()->update(['permissions' => 0]);
 
-    $this->actingAs($this->owner)->get("/servers/{$this->server->id}/settings")->assertOk();
-    $this->actingAs($this->owner)->postJson(messagesUrl($this->channel), ['content' => 'still here'])->assertCreated();
-    $this->actingAs(memberOf($this->server))->get("/servers/{$this->server->id}/channels/{$this->channel->id}")->assertForbidden();
+    $this->actingAs($s->owner)->get("/servers/{$s->server->id}/settings")->assertOk();
+    $this->actingAs($s->owner)->postJson($s->messagesUrl(), ['content' => 'still here'])->assertCreated();
+    $this->actingAs($s->member)->get($s->channelUrl())->assertForbidden();
 });

@@ -5,26 +5,23 @@ use App\Models\Channel;
 use App\Models\Server;
 use App\Models\ServerMember;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\Concerns\GivesPermissions;
-use Tests\TestCase;
+use Tests\FeatureTestCase;
+use Tests\Support\ServerScene;
 
 /*
 |--------------------------------------------------------------------------
 | Pest configuration (ISSUE-39)
 |--------------------------------------------------------------------------
 |
-| Function-style Pest tests under tests/Feature run on the app's TestCase
-| with a fresh database and the permission helpers ($this->memberWith(),
-| $this->makeRole(), ...). The class-based PHPUnit tests that already live
-| there are not affected: Pest runs them as they are.
+| Function-style Pest tests under tests/Feature run on Tests\FeatureTestCase:
+| a fresh database, the permission helpers ($this->memberWith(),
+| $this->makeRole(), ...) and no Vite manifest needed. The class-based
+| PHPUnit tests that already live there are not affected: Pest runs them
+| as they are. tests/stubs/pest.stub types $this for PHPStan.
 |
 */
 
-pest()->extend(TestCase::class)
-    ->use(RefreshDatabase::class, GivesPermissions::class)
-    ->beforeEach(fn () => $this->withoutVite())
-    ->in('Feature');
+pest()->extend(FeatureTestCase::class)->in('Feature');
 
 /*
 |--------------------------------------------------------------------------
@@ -56,11 +53,21 @@ function memberOf(Server $server, ?User $user = null): User
  */
 function generalChannel(Server $server): Channel
 {
-    /** @var Channel */
     return $server->channels()->orderBy('id')->firstOrFail();
 }
 
 function messagesUrl(Channel $channel): string
 {
     return "/servers/{$channel->server_id}/channels/{$channel->id}/messages";
+}
+
+/**
+ * A new server with its owner, #general and one plain member.
+ */
+function serverScene(?User $member = null): ServerScene
+{
+    $owner = User::factory()->create();
+    $server = serverOwnedBy($owner);
+
+    return new ServerScene($owner, $server, generalChannel($server), memberOf($server, $member));
 }
