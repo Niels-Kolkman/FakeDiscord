@@ -69,6 +69,10 @@
  *   text stays in data-source for editing. emoji-picker.js adds the 😀 picker
  *   to the composer.
  *
+ * - Screen readers (ISSUE-38): messages from others that arrive live are
+ *   announced as one line in [data-message-announcer] (live-announcer.js);
+ *   the list itself is not a live region.
+ *
  * All user-provided text is inserted with textContent / text nodes, never
  * parsed as HTML.
  * renderMessage() must match resources/views/messages/item.blade.php.
@@ -79,6 +83,7 @@ import { initMentionAutocomplete } from './mention-autocomplete.js';
 import { mentionsViewer } from './unread.js';
 import { fillMessageContent } from './markdown.js';
 import { initEmojiPicker } from './emoji-picker.js';
+import { announcementText, createAnnouncer } from './live-announcer.js';
 
 const NEAR_BOTTOM_PX = 120;
 const LOAD_OLDER_PX = 400;
@@ -833,6 +838,8 @@ function initChannel(root) {
         output: root.querySelector('[data-typing-indicator]'),
     });
 
+    const announcer = createAnnouncer(root.querySelector('[data-message-announcer]'));
+
     const append = (message, own = false) => {
         if (!belongs(message)) return;
         if (!own) typing?.messageArrived(message.author?.id);
@@ -842,7 +849,12 @@ function initChannel(root) {
 
         const stick = own || nearBottom();
         seen.add(id);
-        list.appendChild(renderMessage(message, context));
+        const item = renderMessage(message, context);
+        list.appendChild(item);
+        // Not your own, also when sent from another tab.
+        if (!own && String(message.author?.id ?? '') !== String(context.viewerId)) {
+            announcer.announce(announcementText(message, { mention: item.dataset.mentionsViewer !== undefined }));
+        }
         if (stick) {
             scrollToBottom();
         } else {

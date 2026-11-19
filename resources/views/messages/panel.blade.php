@@ -97,7 +97,8 @@
                     </span>
                 </div>
 
-                <ol role="log" aria-label="Messages in {{ $panel['label'] }}" data-message-list>
+                {{-- Not a live region (ISSUE-38): new messages are announced in [data-message-announcer] below. --}}
+                <ol role="log" aria-live="off" aria-label="Messages in {{ $panel['label'] }}" data-message-list>
                     @foreach ($feed->messages as $message)
                         @include('messages.item')
                     @endforeach
@@ -215,5 +216,7 @@
     @if ($messagesEnabled)
         {{-- Filled by typing-indicator.js; empty (but keeping its height) while nobody types. --}}
         <p class="h-6 truncate px-4 pb-1 text-xs leading-5 text-fg-muted" aria-live="polite" data-typing-indicator></p>
+        {{-- New messages from others, one line each, for screen readers (ISSUE-38, resources/js/live-announcer.js). --}}
+        <div class="sr-only" aria-live="polite" aria-relevant="additions" data-message-announcer></div>
     @endif
 </section>
