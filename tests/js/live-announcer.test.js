@@ -79,6 +79,91 @@ test('the announcer adds one line per message as text, keeping the last few', ()
     assert.equal(region.children[0].textContent, 'line 3');
 });
 
+// --- Further edge cases (ISSUE-38 test pass) ---
+
+test('a code block is read as its code, without the language or fences, apart from the words around it', () => {
+    assert.equal(
+        announcementText({ author: alice, content: 'before```js\nconst x = 1\n```after' }),
+        'New message from Alice: before const x = 1 after',
+    );
+    assert.equal(plainText(parseMarkdown('```js\nc\n```')).trim(), 'c');
+});
+
+test('a quote over several lines does not run into the text after it', () => {
+    assert.equal(announcementText({ author: alice, content: '> q1\n> q2\nend' }), 'New message from Alice: q1 q2 end');
+});
+
+test('nested formatting keeps every word once', () => {
+    assert.equal(
+        announcementText({ author: alice, content: '***both*** and **bold _inner_ more**' }),
+        'New message from Alice: both and bold inner more',
+    );
+});
+
+test('text that is only formatting characters still says who wrote it', () => {
+    const line = announcementText({ author: alice, content: '****' });
+    assert.ok(line.startsWith('New message from Alice'), line);
+});
+
+test('the cut never leaves a space before the ellipsis', () => {
+    const content = `${'x'.repeat(MAX_ANNOUNCED_LENGTH - 2)}   yyyy`;
+    const text = announcementText({ author: alice, content }).slice('New message from Alice: '.length);
+    assert.equal(text, `${'x'.repeat(MAX_ANNOUNCED_LENGTH - 2)}…`);
+});
+
+test('long text with attachments is cut before the attachment count is added', () => {
+    const line = announcementText({ author: alice, content: 'z'.repeat(MAX_ANNOUNCED_LENGTH * 2), attachments: [{}, {}, {}] });
+    assert.ok(line.endsWith('…, with 3 attachments'), line);
+});
+
+test('a mention with only attachments, and a mention with no text at all', () => {
+    assert.equal(announcementText({ author: alice, content: '', attachments: [{}] }, { mention: true }), 'Alice mentioned you: 1 attachment');
+    assert.equal(announcementText({ author: alice, content: '' }, { mention: true }), 'Alice mentioned you');
+});
+
+test('an author without a name is read as Deleted User; missing content and attachments are fine', () => {
+    assert.equal(announcementText({ author: {}, content: 'hi' }), 'New message from Deleted User: hi');
+    assert.equal(announcementText({ author: alice }), 'New message from Alice');
+    assert.equal(announcementText(undefined), '');
+});
+
+// Known bug: the cut counts UTF-16 code units, so an emoji right at the
+// limit is split and the line ends in half a surrogate pair (read as a
+// replacement character, or skipped). Marked todo so it is reported
+// without failing the suite.
+test('the cut never splits an emoji', { todo: 'announcementText slices by code unit and can leave a lone surrogate before "…"' }, () => {
+    const content = `${'a'.repeat(MAX_ANNOUNCED_LENGTH - 2)}😀${'b'.repeat(10)}`;
+    const line = announcementText({ author: alice, content });
+    assert.equal(line.isWellFormed(), true, JSON.stringify(line.slice(-3)));
+});
+
+test('the announcer can keep a different number of lines', () => {
+    const doc = fakeDocument();
+    const region = make('div');
+    const announcer = createAnnouncer(region, { doc, keep: 1 });
+    announcer.announce('first');
+    announcer.announce('second');
+    assert.deepEqual(region.children.map((line) => line.textContent), ['second']);
+});
+
+test('the announcer ignores null and undefined text', () => {
+    const doc = fakeDocument();
+    const region = make('div');
+    const announcer = createAnnouncer(region, { doc });
+    announcer.announce(null);
+    announcer.announce(undefined);
+    assert.equal(region.children.length, 0);
+});
+
+test('the same line twice is added twice (each new message is read)', () => {
+    const doc = fakeDocument();
+    const region = make('div');
+    const announcer = createAnnouncer(region, { doc });
+    announcer.announce('New message from Alice: ok');
+    announcer.announce('New message from Alice: ok');
+    assert.equal(region.children.length, 2);
+});
+
 test('the announcer ignores empty text and a missing region', () => {
     const doc = fakeDocument();
     const region = make('div');

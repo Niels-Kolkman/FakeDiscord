@@ -215,6 +215,165 @@ test('arriving on a page without a composer focuses main', () => {
     assert.equal(main.focused, 1);
 });
 
+// --- Further edge cases (ISSUE-38 test pass) ---
+
+/** A friends / DM page: a DM list and main, no channel sidebar. */
+function dmPage(rows) {
+    const main = focusable(make('main', { appMain: '' }));
+    const doc = fakeDocument(make('body', {}, [make('section', { dmList: '' }, [make('ul', {}, rows)]), main]));
+    const visited = [];
+    initKeyboardShortcuts({ document: doc, navigate: (url) => visited.push(url), storage: fakeStorage() });
+    const press = (key, extra = {}) => {
+        const event = keyEvent(key, { altKey: true, ctrlKey: false, metaKey: false, target: main, ...extra });
+        doc.dispatch('keydown', event);
+        return event;
+    };
+    return { visited, press };
+}
+
+const dmRow = (id, { active = false, unread = false } = {}) => {
+    const row = make('li', { dmId: id }, [link(`/dms/${id}`, active)]);
+    if (unread) row.dataset.unread = '';
+    return row;
+};
+
+test('Alt+arrows switch direct messages on the friends and DM pages, wrapping around', () => {
+    const ctx = dmPage([dmRow('1'), dmRow('2', { active: true }), dmRow('3')]);
+    ctx.press('ArrowDown');
+    ctx.press('ArrowUp');
+    assert.deepEqual(ctx.visited, ['/dms/3', '/dms/1']);
+
+    const top = dmPage([dmRow('1', { active: true }), dmRow('2')]);
+    top.press('ArrowUp');
+    assert.deepEqual(top.visited, ['/dms/2'], 'wraps from the first to the last');
+});
+
+test('Alt+Shift+arrows go to unread direct messages', () => {
+    const ctx = dmPage([dmRow('1', { active: true }), dmRow('2'), dmRow('3', { unread: true })]);
+    ctx.press('ArrowDown', { shiftKey: true });
+    assert.deepEqual(ctx.visited, ['/dms/3']);
+});
+
+test('on the friends page with no DM open, Alt+Down opens the first DM and Alt+Up the last', () => {
+    const ctx = dmPage([dmRow('1'), dmRow('2'), dmRow('3')]);
+    ctx.press('ArrowDown');
+    ctx.press('ArrowUp');
+    assert.deepEqual(ctx.visited, ['/dms/1', '/dms/3']);
+});
+
+test('a channel sidebar wins over a DM list on the same page', () => {
+    const doc = fakeDocument(make('body', {}, [
+        make('section', { dmList: '' }, [dmRow('1')]),
+        make('nav', { channelSidebar: '' }, [channel('a')]),
+    ]));
+    assert.deepEqual(navigationItems(doc).map((item) => item.link.getAttribute('href')), ['/c/a']);
+
+    const empty = fakeDocument(make('body', {}, [make('nav', { channelSidebar: '' }), make('section', { dmList: '' }, [dmRow('1')])]));
+    assert.deepEqual(navigationItems(empty), [], 'no fall back to DMs from an empty channel sidebar');
+});
+
+test('rows whose link has an empty href are skipped', () => {
+    const blank = make('li', { channel: '' }, [link('')]);
+    const doc = fakeDocument(make('body', {}, [make('nav', { channelSidebar: '' }, [channel('a'), blank, channel('b')])]));
+    assert.deepEqual(navigationItems(doc).map((item) => item.link.getAttribute('href')), ['/c/a', '/c/b']);
+});
+
+test('only the open channel, or every other one hidden: Alt+arrows do nothing and keep the key', () => {
+    const alone = page([channel('a', { active: true })]);
+    const event = alone.press('ArrowDown');
+    assert.deepEqual(alone.visited, []);
+    assert.equal(event.defaultPrevented, false);
+
+    const collapsed = page([channel('a', { active: true }), channel('b', { hidden: true }), channel('c', { hidden: true })]);
+    collapsed.press('ArrowDown');
+    collapsed.press('ArrowUp');
+    assert.deepEqual(collapsed.visited, []);
+    assert.equal(collapsed.storage.data[FOCUS_KEY], undefined, 'nothing stored for a switch that did not happen');
+});
+
+test('an open channel inside a collapsed category still steps to its visible neighbours', () => {
+    const ctx = page([channel('a'), channel('b', { active: true, hidden: true }), channel('c')]);
+    ctx.press('ArrowDown');
+    ctx.press('ArrowUp');
+    assert.deepEqual(ctx.visited, ['/c/c', '/c/a']);
+});
+
+test('a filled search or other input keeps its text; an empty contenteditable does not block', () => {
+    const ctx = page([channel('a', { active: true }), channel('b')]);
+    const search = make('input');
+    search.value = 'gen';
+    ctx.press('ArrowDown', { target: search });
+    assert.deepEqual(ctx.visited, []);
+
+    // Only whitespace still counts as a draft: it is not thrown away.
+    ctx.composer.value = '   ';
+    ctx.press('ArrowDown', { target: ctx.composer });
+    assert.deepEqual(ctx.visited, []);
+
+    ctx.press('ArrowDown', { target: { isContentEditable: true, textContent: '' } });
+    assert.deepEqual(ctx.visited, ['/c/b']);
+});
+
+test('a text field in the sidebar with text in it is left alone, even with Shift', () => {
+    const rows = [channel('a', { active: true }), channel('b', { unread: true })];
+    const ctx = page(rows);
+    const filter = make('input');
+    filter.value = 'x';
+    ctx.sidebar.appendChild(filter);
+    ctx.press('ArrowDown', { target: filter, shiftKey: true });
+    assert.deepEqual(ctx.visited, []);
+});
+
+test('in a sidebar you can reorder, focus outside a channel or category (its header) still switches', () => {
+    const header = make('button');
+    const ctx = page([channel('a', { active: true }), channel('b')], { manage: true });
+    ctx.sidebar.appendChild(header);
+    ctx.press('ArrowDown', { target: header });
+    assert.deepEqual(ctx.visited, ['/c/b']);
+});
+
+test('an event without a target (window focus) still switches', () => {
+    const ctx = page([channel('a', { active: true }), channel('b')]);
+    ctx.press('ArrowDown', { target: undefined });
+    assert.deepEqual(ctx.visited, ['/c/b']);
+});
+
+test('handle() is the keydown listener the page uses', () => {
+    const ctx = page([channel('a', { active: true }), channel('b')]);
+    assert.deepEqual(ctx.doc.listeners.keydown, [ctx.api.handle]);
+    ctx.api.handle(keyEvent('ArrowDown', { altKey: true, target: ctx.main }));
+    assert.deepEqual(ctx.visited, ['/c/b']);
+});
+
+test('arriving focuses without scrolling, and only for the exact flag value', () => {
+    const calls = [];
+    const composer = make('textarea', { messageInput: '' });
+    composer.focus = (options) => calls.push(options);
+    const doc = () => fakeDocument(make('body', {}, [make('main', { appMain: '' }, [composer])]));
+
+    initKeyboardShortcuts({ document: doc(), navigate: () => {}, storage: fakeStorage({ [FOCUS_KEY]: '1' }) });
+    assert.deepEqual(calls, [{ preventScroll: true }]);
+
+    const other = fakeStorage({ [FOCUS_KEY]: 'yes' });
+    initKeyboardShortcuts({ document: doc(), navigate: () => {}, storage: other });
+    assert.equal(calls.length, 1, 'any other value is not a shortcut arrival');
+});
+
+test('arriving on a page with neither composer nor main does not throw', () => {
+    const storage = fakeStorage({ [FOCUS_KEY]: '1' });
+    assert.doesNotThrow(() => initKeyboardShortcuts({ document: fakeDocument(make('body')), navigate: () => {}, storage }));
+    assert.equal(storage.data[FOCUS_KEY], undefined);
+});
+
+test('storage that reads but cannot be cleared does not focus (or throw)', () => {
+    const composer = focusable(make('textarea', { messageInput: '' }));
+    const storage = { getItem: () => '1', setItem() {}, removeItem() { throw new Error('blocked'); } };
+    assert.doesNotThrow(() => initKeyboardShortcuts({
+        document: fakeDocument(make('body', {}, [composer])), navigate: () => {}, storage,
+    }));
+    assert.equal(composer.focused, 0);
+});
+
 test('blocked or missing storage still switches', () => {
     const throwing = {
         getItem() { throw new Error('blocked'); },
