@@ -18,7 +18,7 @@
 
 <aside
     aria-label="Members of {{ $server->name }}"
-    class="w-full shrink-0 overflow-y-auto bg-[#2b2d31] px-2 py-4 md:w-60"
+    class="w-full shrink-0 overflow-y-auto bg-surface-2 px-2 py-4 md:w-60"
     data-member-list
     data-server-id="{{ $server->id }}"
 >
@@ -32,7 +32,7 @@
             @if ($group->color) data-role-color="{{ $group->color }}" @endif
             @if ($group->members->isEmpty()) hidden @endif
         >
-            <h3 id="member-group-{{ $group->key }}" class="mb-1 px-2 text-xs font-semibold uppercase tracking-wide text-[#949ba4]" data-member-heading data-label="{{ $group->label }}">
+            <h3 id="member-group-{{ $group->key }}" class="mb-1 px-2 text-xs font-semibold uppercase tracking-wide text-fg-subtle" data-member-heading data-label="{{ $group->label }}">
                 {{ $group->label }} — {{ $group->members->count() }}
             </h3>
 
@@ -44,7 +44,7 @@
                     @php($color = $online ? $group->color : null)
                     @php($roleGroup = $member->highestRole() ? 'role-'.$member->highestRole()->id : \App\Support\MemberGroup::ONLINE)
                     <li
-                        class="flex items-center gap-3 rounded px-2 py-1 hover:bg-[#35373c] {{ $online ? '' : 'opacity-40 hover:opacity-100' }}"
+                        class="flex items-center gap-3 rounded px-2 py-1 hover:bg-hover {{ $online ? '' : 'opacity-40 hover:opacity-100' }}"
                         data-member="{{ $user->username }}"
                         data-user-id="{{ $user->id }}"
                         data-user-status="{{ $user->chosenStatus() }}"
@@ -55,16 +55,16 @@
                         <span class="relative shrink-0">
                             <x-user-avatar :user="$user" :size="32" />
                             <span
-                                class="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-[3px] border-[#2b2d31]"
+                                class="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-[3px] border-surface-2"
                                 style="background-color: {{ $statusColors[$status] ?? '#80848e' }}"
                                 aria-hidden="true"
                                 data-status-dot
                             ></span>
                         </span>
                         <span class="flex min-w-0 flex-1 items-center gap-1">
-                            <span class="truncate font-medium {{ $color ? '' : 'text-[#dbdee1]' }}" @if ($color) style="color: {{ $color }}" @endif data-member-name>{{ $member->displayName() }}</span>
+                            <span class="truncate font-medium {{ $color ? '' : 'text-fg' }}" @if ($color) style="color: {{ $color }}" @endif data-member-name>{{ $member->displayName() }}</span>
                             @if ($server->isOwnedBy($user))
-                                <span class="shrink-0 text-xs text-[#f0b232]" title="Server Owner" aria-label="Server Owner" data-owner-badge>👑</span>
+                                <span class="shrink-0 text-xs text-warn-fg" title="Server Owner" aria-label="Server Owner" data-owner-badge>👑</span>
                             @endif
                             <span class="sr-only" data-status-label>, {{ $statusLabels[$status] ?? 'Offline' }}</span>
                         </span>

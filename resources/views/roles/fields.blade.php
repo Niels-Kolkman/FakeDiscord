@@ -24,12 +24,12 @@
         :value="old('name', $role?->name)" />
 
     <div class="mb-4">
-        <label for="color" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-[#b5bac1]">Role colour</label>
+        <label for="color" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-fg-muted">Role colour</label>
         <div class="flex items-center gap-3">
             <input id="color" name="color" type="color" value="{{ $color }}"
                 @error('color') aria-invalid="true" aria-describedby="color-error" @enderror
-                class="h-9 w-14 cursor-pointer rounded bg-[#1e1f22] p-1">
-            <label class="flex items-center gap-2 text-sm text-[#b5bac1]">
+                class="h-9 w-14 cursor-pointer rounded bg-surface-3 p-1">
+            <label class="flex items-center gap-2 text-sm text-fg-muted">
                 <input type="checkbox" name="no_color" value="1" class="accent-[#5865f2]" @checked($noColor)>
                 No colour
             </label>
@@ -41,9 +41,9 @@
 @endunless
 
 <fieldset class="mb-6">
-    <legend class="mb-2 text-xs font-semibold uppercase tracking-wide text-[#b5bac1]">Permissions</legend>
+    <legend class="mb-2 text-xs font-semibold uppercase tracking-wide text-fg-muted">Permissions</legend>
     @if ($isDefault)
-        <p class="mb-3 text-sm text-[#b5bac1]">Every member of the server has these permissions.</p>
+        <p class="mb-3 text-sm text-fg-muted">Every member of the server has these permissions.</p>
     @endif
     @error('permissions')
         <p class="mb-2 text-sm text-red-400">{{ $message }}</p>
@@ -52,7 +52,7 @@
         <p class="mb-2 text-sm text-red-400">{{ $message }}</p>
     @enderror
 
-    <ul class="divide-y divide-[#3f4147]">
+    <ul class="divide-y divide-line">
         @foreach ($permissions as $permission)
             <li class="py-2">
                 <label class="flex items-start gap-3">
@@ -60,8 +60,8 @@
                         class="mt-1 accent-[#5865f2]" data-permission="{{ $permission->name }}"
                         @checked(in_array($permission->value, $checked, true))>
                     <span>
-                        <span class="block text-sm font-medium text-white">{{ $permission->label() }}</span>
-                        <span class="block text-xs text-[#949ba4]">{{ $permission->description() }}</span>
+                        <span class="block text-sm font-medium text-fg-strong">{{ $permission->label() }}</span>
+                        <span class="block text-xs text-fg-subtle">{{ $permission->description() }}</span>
                     </span>
                 </label>
             </li>

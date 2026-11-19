@@ -256,7 +256,7 @@ export function createMemberListView(root) {
             const color = online ? target?.dataset.roleColor : null;
             if (name) {
                 name.style.color = color || '';
-                name.classList.toggle('text-[#dbdee1]', !color);
+                name.classList.toggle('text-fg', !color);
             }
 
             updateCounts();

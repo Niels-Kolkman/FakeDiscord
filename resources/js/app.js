@@ -9,3 +9,5 @@ import './unread';
 import './presence';
 import './notifications';
 import './push-notifications';
+import './theme';
+import './mobile-nav';

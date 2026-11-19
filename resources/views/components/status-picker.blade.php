@@ -15,13 +15,13 @@
         <select
             id="status-picker"
             name="status"
-            class="min-w-0 flex-1 rounded bg-[#1e1f22] px-2 py-1 text-sm text-[#dbdee1] outline-none focus:ring-2 focus:ring-[#5865f2]"
+            class="min-w-0 flex-1 rounded bg-surface-3 px-2 py-1 text-sm text-fg outline-none focus:ring-2 focus:ring-[#5865f2]"
             data-status-select
         >
             @foreach (\App\Models\User::STATUS_LABELS as $value => $label)
                 <option value="{{ $value }}" @selected($value === $current)>{{ $label }}</option>
             @endforeach
         </select>
-        <button type="submit" class="rounded px-2 py-1 text-sm text-[#b5bac1] hover:bg-[#35373c] hover:text-white" data-status-submit>Set</button>
+        <button type="submit" class="rounded px-2 py-1 text-sm text-fg-muted hover:bg-hover hover:text-fg-strong" data-status-submit>Set</button>
     </form>
 @endauth

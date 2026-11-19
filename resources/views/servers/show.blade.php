@@ -21,19 +21,19 @@
     </x-slot:aside>
 
     @if ($channel)
-        <header class="flex min-h-12 items-center gap-2 border-b border-[#1f2023] px-4 py-2 shadow-sm">
-            <span aria-hidden="true" class="text-xl text-[#80848e]">{{ $channel->isVoice() ? '🔊' : '#' }}</span>
-            <h1 class="shrink-0 font-semibold text-white">{{ $channel->name }}</h1>
+        <header class="flex min-h-12 items-center gap-2 border-b border-edge px-4 py-2 shadow-sm">
+            <span aria-hidden="true" class="text-xl text-fg-faint">{{ $channel->isVoice() ? '🔊' : '#' }}</span>
+            <h1 class="shrink-0 font-semibold text-fg-strong">{{ $channel->name }}</h1>
             @if ($channel->topic)
-                <span aria-hidden="true" class="h-6 w-px shrink-0 bg-[#3f4147]"></span>
-                <p class="truncate text-sm text-[#b5bac1]" title="{{ $channel->topic }}" data-channel-topic>{{ $channel->topic }}</p>
+                <span aria-hidden="true" class="h-6 w-px shrink-0 bg-line"></span>
+                <p class="truncate text-sm text-fg-muted" title="{{ $channel->topic }}" data-channel-topic>{{ $channel->topic }}</p>
             @endif
             <div class="ml-auto flex shrink-0 items-center gap-2">
                 @unless ($channel->isVoice())
                     {{-- Pinned messages (ISSUE-20): the script opens [data-pins-panel]; without it this is the pins page. --}}
                     <a
                         href="{{ route('pins.index', [$server, $channel]) }}"
-                        class="shrink-0 rounded px-2 py-1 text-sm text-[#b5bac1] hover:bg-[#404249] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2] aria-expanded:bg-[#404249] aria-expanded:text-white"
+                        class="shrink-0 rounded px-2 py-1 text-sm text-fg-muted hover:bg-active hover:text-fg-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2] aria-expanded:bg-active aria-expanded:text-fg-strong"
                         aria-controls="pins-panel"
                         data-pins-toggle
                     ><span aria-hidden="true">📌</span> Pinned<span class="sr-only"> messages</span></a>
@@ -48,7 +48,7 @@
                         maxlength="{{ \App\Support\MessageSearch::MAX_QUERY_LENGTH }}"
                         placeholder="Search"
                         autocomplete="off"
-                        class="w-36 rounded bg-[#1e1f22] px-2 py-1 text-sm text-white placeholder-[#949ba4] outline-none transition-[width] focus:w-56 focus:ring-2 focus:ring-[#5865f2]"
+                        class="w-36 rounded bg-surface-3 px-2 py-1 text-sm text-fg-strong placeholder-fg-subtle outline-none transition-[width] focus:w-56 focus:ring-2 focus:ring-[#5865f2]"
                     >
                 </form>
                 {{-- Mention notifications (ISSUE-33). --}}
@@ -93,12 +93,12 @@
         ]])
     @else
         <section class="flex flex-1 flex-col items-center justify-center p-8 text-center">
-            <h1 class="mb-2 text-xl font-semibold text-white">No text channels</h1>
-            <p class="text-[#b5bac1]">
+            <h1 class="mb-2 text-xl font-semibold text-fg-strong">No text channels</h1>
+            <p class="text-fg-muted">
                 {{-- The layout only holds the channels the viewer can see (ISSUE-27). --}}
                 This server has no text channels yet.
                 @can('manageChannels', $server)
-                    <a href="{{ route('channels.create', $server) }}" class="text-[#00a8fc] hover:underline">Create one</a>.
+                    <a href="{{ route('channels.create', $server) }}" class="text-link hover:underline">Create one</a>.
                 @endcan
             </p>
         </section>

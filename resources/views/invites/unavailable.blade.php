@@ -5,8 +5,8 @@
     </div>
 
     @unless ($reason === \App\Exceptions\InviteUnavailableException::BANNED)
-        <p class="mb-6 text-center text-sm text-[#b5bac1]">
-            Ask someone in <strong class="text-white">{{ $server->name }}</strong> for a new invite.
+        <p class="mb-6 text-center text-sm text-fg-muted">
+            Ask someone in <strong class="text-fg-strong">{{ $server->name }}</strong> for a new invite.
         </p>
     @endunless
 

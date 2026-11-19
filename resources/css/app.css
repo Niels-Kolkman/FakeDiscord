@@ -14,12 +14,12 @@
     .message-markdown em { font-style: italic; }
     .message-markdown u { text-decoration: underline; }
     .message-markdown s { text-decoration: line-through; }
-    .message-markdown a { color: #00a8fc; overflow-wrap: anywhere; }
+    .message-markdown a { color: var(--color-link); overflow-wrap: anywhere; }
     .message-markdown a:hover,
     .message-markdown a:focus-visible { text-decoration: underline; }
     .message-markdown code {
         border-radius: 0.25rem;
-        background-color: #2b2d31;
+        background-color: var(--color-surface-2);
         padding: 0 0.25rem;
         font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
         font-size: 0.875em;
@@ -29,9 +29,9 @@
         max-width: 100%;
         margin: 0.25rem 0;
         overflow-x: auto;
-        border: 1px solid #1f2023;
+        border: 1px solid var(--color-edge);
         border-radius: 0.25rem;
-        background-color: #2b2d31;
+        background-color: var(--color-surface-2);
         padding: 0.5rem;
         white-space: pre;
     }
@@ -44,7 +44,130 @@
     }
 }
 
+/*
+ * Themes (ISSUE-37). The neutral colours are tokens, so `bg-surface`,
+ * `text-fg-muted`, `border-edge` and so on follow <html data-theme>
+ * (the user's saved choice, users.theme). The dark values are the
+ * defaults; [data-theme="light"] swaps them. Accent, danger, success and
+ * status colours (#5865f2, #da373c, ...) are the same in both themes and
+ * stay as plain hex classes; so does white text on them.
+ */
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
+
+    /* Backgrounds, from the chat pane out. */
+    --color-surface: #313338;          /* messages, page content */
+    --color-surface-2: #2b2d31;        /* sidebars, cards, code */
+    --color-surface-3: #1e1f22;        /* server rail, inputs */
+    --color-surface-alt: #232428;      /* panels inside sidebars */
+    --color-surface-float: #111214;    /* popovers */
+    --color-hover-soft: #2e3035;       /* a hovered message */
+    --color-hover: #35373c;            /* a hovered list row */
+    --color-field: #383a40;            /* the composer */
+    --color-active: #404249;           /* the open / selected row */
+    --color-line: #3f4147;             /* dividers */
+    --color-edge: #1f2023;             /* header and pane borders */
+
+    /* Text, from loudest to quietest. */
+    --color-fg-strong: #ffffff;
+    --color-fg: #dbdee1;
+    --color-fg-muted: #b5bac1;
+    --color-fg-subtle: #949ba4;
+    --color-fg-faint: #80848e;
+    --color-fg-dim: #6d6f78;
+    --color-link: #00a8fc;
+    --color-danger-fg: #fa777c;
+    --color-warn-fg: #f0b232;
+}
+
+@layer base {
+    :root {
+        color-scheme: dark;
+    }
+
+    :root[data-theme='light'] {
+        color-scheme: light;
+
+        --color-surface: #ffffff;
+        --color-surface-2: #f2f3f5;
+        --color-surface-3: #e3e5e8;
+        --color-surface-alt: #ebedef;
+        --color-surface-float: #ffffff;
+        --color-hover-soft: #f5f6f7;
+        --color-hover: #e3e5e8;
+        --color-field: #ebedef;
+        --color-active: #d4d7dc;
+        --color-line: #dcdee1;
+        --color-edge: #d4d7dc;
+
+        --color-fg-strong: #060607;
+        --color-fg: #313338;
+        --color-fg-muted: #4e5058;
+        --color-fg-subtle: #5c5e66;
+        --color-fg-faint: #6d6f78;
+        --color-fg-dim: #80848e;
+        --color-link: #006ce7;
+        --color-danger-fg: #da373c;
+        --color-warn-fg: #9a6700;
+    }
+}
+
+/*
+ * Small screens (ISSUE-37, below Tailwind's md, 768px). With JavaScript
+ * (the layout adds .js to <html>), the server rail + channel sidebar and
+ * the member list become drawers that slide over the page: buttons in
+ * [data-mobile-bar] and swipes open them (resources/js/mobile-nav.js).
+ * Without JavaScript the panes stay stacked, so everything is reachable.
+ *
+ * Not in a layer on purpose: these must beat the panes' utility classes.
+ */
+@media (width < 48rem) {
+    .js body[data-app-shell] {
+        height: 100dvh;
+        overflow: hidden;
+    }
+
+    .js [data-mobile-bar] {
+        display: flex;
+    }
+
+    .js [data-drawer] {
+        position: fixed;
+        inset-block: 0;
+        z-index: 40;
+        max-width: 88vw;
+        visibility: hidden;
+        box-shadow: 0 0 24px rgb(0 0 0 / 0.4);
+        transition: transform 200ms ease, visibility 0s linear 200ms;
+    }
+
+    .js [data-drawer='nav'] {
+        left: 0;
+        transform: translateX(-100%);
+    }
+
+    .js [data-drawer='members'] {
+        right: 0;
+        width: 15rem;
+        transform: translateX(100%);
+    }
+
+    /* The channel / friends sidebar next to the rail. */
+    .js [data-drawer='nav'] > :not([data-server-rail]) {
+        flex: 0 1 15rem;
+    }
+
+    .js [data-drawer][data-open] {
+        visibility: visible;
+        transform: none;
+        transition: transform 200ms ease;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .js [data-drawer],
+        .js [data-drawer][data-open] {
+            transition: none;
+        }
+    }
 }

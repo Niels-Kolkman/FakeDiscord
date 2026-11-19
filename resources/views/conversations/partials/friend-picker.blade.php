@@ -7,12 +7,12 @@
     @var string $idPrefix  keeps the checkbox ids unique on the page
 --}}
 @php($picked = collect(old('user_ids', []))->map(fn ($id) => (int) $id)->all())
-<fieldset class="max-h-60 overflow-y-auto rounded bg-[#1e1f22] p-2" data-friend-picker>
+<fieldset class="max-h-60 overflow-y-auto rounded bg-surface-3 p-2" data-friend-picker>
     <legend class="sr-only">Friends</legend>
     <ul class="space-y-0.5">
         @foreach ($friends as $friend)
             <li data-pick-user="{{ $friend->id }}">
-                <label for="{{ $idPrefix }}-{{ $friend->id }}" class="flex cursor-pointer items-center gap-2 rounded px-2 py-1 text-[#dbdee1] hover:bg-[#35373c]">
+                <label for="{{ $idPrefix }}-{{ $friend->id }}" class="flex cursor-pointer items-center gap-2 rounded px-2 py-1 text-fg hover:bg-hover">
                     <input
                         id="{{ $idPrefix }}-{{ $friend->id }}"
                         type="checkbox"
@@ -23,7 +23,7 @@
                     >
                     <x-user-avatar :user="$friend" :size="24" />
                     <span class="truncate">{{ $friend->name }}</span>
-                    <span class="truncate text-sm text-[#949ba4]">{{ '@'.$friend->username }}</span>
+                    <span class="truncate text-sm text-fg-subtle">{{ '@'.$friend->username }}</span>
                 </label>
             </li>
         @endforeach

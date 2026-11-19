@@ -22,29 +22,29 @@ function memberSince(iso) {
 }
 
 function render(profile) {
-    const card = el('div', 'fixed z-50 w-72 overflow-hidden rounded-lg bg-[#232428] text-[#dbdee1] shadow-2xl');
+    const card = el('div', 'fixed z-50 w-72 overflow-hidden rounded-lg bg-surface-alt text-fg shadow-2xl');
     card.setAttribute('role', 'dialog');
     card.setAttribute('aria-label', `Profile of ${profile.name}`);
 
     card.appendChild(el('div', 'h-14 bg-[#5865f2]'));
 
     const body = el('div', 'px-4 pb-4');
-    const avatar = el('img', '-mt-9 h-[72px] w-[72px] rounded-full border-[6px] border-[#232428] object-cover');
+    const avatar = el('img', '-mt-9 h-[72px] w-[72px] rounded-full border-[6px] border-surface-alt object-cover');
     avatar.src = profile.avatar_url;
     avatar.alt = '';
     body.appendChild(avatar);
 
-    body.appendChild(el('p', 'mt-2 text-lg font-semibold text-white', profile.name));
-    body.appendChild(el('p', 'text-sm text-[#b5bac1]', `@${profile.username}`));
+    body.appendChild(el('p', 'mt-2 text-lg font-semibold text-fg-strong', profile.name));
+    body.appendChild(el('p', 'text-sm text-fg-muted', `@${profile.username}`));
 
     if (profile.bio) {
-        body.appendChild(el('p', 'mt-3 text-xs font-semibold uppercase tracking-wide text-[#b5bac1]', 'About me'));
+        body.appendChild(el('p', 'mt-3 text-xs font-semibold uppercase tracking-wide text-fg-muted', 'About me'));
         body.appendChild(el('p', 'mt-1 whitespace-pre-line break-words text-sm', profile.bio));
     }
 
     const since = memberSince(profile.member_since);
     if (since) {
-        body.appendChild(el('p', 'mt-3 text-xs font-semibold uppercase tracking-wide text-[#b5bac1]', 'Member since'));
+        body.appendChild(el('p', 'mt-3 text-xs font-semibold uppercase tracking-wide text-fg-muted', 'Member since'));
         body.appendChild(el('p', 'mt-1 text-sm', since));
     }
 
@@ -67,7 +67,7 @@ export function renderBlockButton(profile) {
     const button = el(
         'button',
         'mt-4 w-full rounded px-3 py-1.5 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2] '
-            + (profile.blocked ? 'bg-[#4e5058] text-white hover:bg-[#6d6f78]' : 'text-[#fa777c] hover:bg-[#da373c] hover:text-white'),
+            + (profile.blocked ? 'bg-[#4e5058] text-white hover:bg-[#6d6f78]' : 'text-danger-fg hover:bg-[#da373c] hover:text-white'),
         profile.blocked ? 'Unblock' : 'Block',
     );
     button.type = 'button';

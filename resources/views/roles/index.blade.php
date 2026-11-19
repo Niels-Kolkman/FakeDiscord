@@ -5,7 +5,7 @@
     @var \Illuminate\Support\Collection<int, \App\Models\Role> $roles  with users_count
 --}}
 <x-layouts.auth :title="'Roles of '.$server->name">
-    <p class="mb-4 text-sm text-[#b5bac1]">
+    <p class="mb-4 text-sm text-fg-muted">
         Members are listed under their highest role. Use the arrows to move a role up or down.
     </p>
 
@@ -26,7 +26,7 @@
             @php($index = $movable->search(fn ($r) => $r->is($role)))
             {{-- The role hierarchy (ISSUE-27): only roles below your own highest role can be opened or moved, and not past it. --}}
             @php($canManage = auth()->user()?->can('manage', $role) ?? false)
-            <li class="flex items-center gap-3 rounded bg-[#1e1f22] px-3 py-2 text-sm" data-role="{{ $role->id }}">
+            <li class="flex items-center gap-3 rounded bg-surface-3 px-3 py-2 text-sm" data-role="{{ $role->id }}">
                 <span class="h-3 w-3 shrink-0 rounded-full" aria-hidden="true"
                     style="background-color: {{ $role->displayColor() ?? '#99aab5' }}"></span>
                 @if ($canManage)
@@ -34,8 +34,8 @@
                 @else
                     <div class="min-w-0 flex-1" title="Only roles below your highest role can be changed">
                 @endif
-                    <span class="block truncate font-medium text-white">{{ $role->name }}</span>
-                    <span class="block text-xs text-[#949ba4]">
+                    <span class="block truncate font-medium text-fg-strong">{{ $role->name }}</span>
+                    <span class="block text-xs text-fg-subtle">
                         @if ($role->is_default)
                             Every member
                         @else
@@ -55,7 +55,7 @@
                             @csrf
                             <input type="hidden" name="direction" value="{{ $direction }}">
                             <button type="submit" @disabled($disabled) aria-label="{{ $label }}: {{ $role->name }}" title="{{ $label }}"
-                                class="rounded px-2 py-1 text-[#b5bac1] hover:bg-[#35373c] hover:text-white disabled:opacity-30 disabled:hover:bg-transparent">{{ $arrow }}</button>
+                                class="rounded px-2 py-1 text-fg-muted hover:bg-hover hover:text-fg-strong disabled:opacity-30 disabled:hover:bg-transparent">{{ $arrow }}</button>
                         </form>
                     @endforeach
                 @endif
@@ -63,7 +63,7 @@
         @endforeach
     </ul>
 
-    <p class="text-sm text-[#949ba4]">
-        <a href="{{ route('servers.edit', $server) }}" class="text-[#00a8fc] hover:underline">Back to server settings</a>
+    <p class="text-sm text-fg-subtle">
+        <a href="{{ route('servers.edit', $server) }}" class="text-link hover:underline">Back to server settings</a>
     </p>
 </x-layouts.auth>

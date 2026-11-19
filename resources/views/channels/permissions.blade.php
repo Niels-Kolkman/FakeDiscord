@@ -24,8 +24,8 @@
         @method('PATCH')
         <input type="hidden" name="is_private" value="0">
 
-        <h2 class="mb-2 font-semibold text-white">Private channel</h2>
-        <label class="mb-2 flex items-start gap-3 text-sm text-[#dbdee1]">
+        <h2 class="mb-2 font-semibold text-fg-strong">Private channel</h2>
+        <label class="mb-2 flex items-start gap-3 text-sm text-fg">
             <input type="checkbox" name="is_private" value="1" class="mt-1 accent-[#5865f2]" @checked($channel->is_private)>
             <span>
                 Only roles allowed <strong>View Channels</strong> below can see this channel.
@@ -38,9 +38,9 @@
         <button type="submit" class="mb-8 w-full rounded bg-[#5865f2] py-2 font-medium text-white hover:bg-[#4752c4]">Save privacy</button>
     </form>
 
-    <section aria-labelledby="role-overrides-heading" class="border-t border-[#3f4147] pt-6">
-        <h2 id="role-overrides-heading" class="mb-2 font-semibold text-white">Role permissions</h2>
-        <p class="mb-4 text-sm text-[#b5bac1]">
+    <section aria-labelledby="role-overrides-heading" class="border-t border-line pt-6">
+        <h2 id="role-overrides-heading" class="mb-2 font-semibold text-fg-strong">Role permissions</h2>
+        <p class="mb-4 text-sm text-fg-muted">
             Override what a role may do in #{{ $channel->name }}. Inherit uses the role's server permissions.
             An allow on any of a member's roles beats a deny on another.
         </p>
@@ -52,13 +52,13 @@
                     $canEdit = in_array($role->id, $manageable, true);
                     $failed = $failedRole === $role->id;
                 @endphp
-                <li class="rounded bg-[#2b2d31] p-3" data-role-override="{{ $role->id }}">
+                <li class="rounded bg-surface-2 p-3" data-role-override="{{ $role->id }}">
                     <form method="POST" action="{{ route('channels.permissions.update', [$server, $channel, $role]) }}">
                         @csrf
                         @method('PUT')
                         <input type="hidden" name="role_id" value="{{ $role->id }}">
 
-                        <p class="mb-2 font-medium text-white" @if ($role->displayColor()) style="color: {{ $role->displayColor() }}" @endif>{{ $role->name }}</p>
+                        <p class="mb-2 font-medium text-fg-strong" @if ($role->displayColor()) style="color: {{ $role->displayColor() }}" @endif>{{ $role->name }}</p>
 
                         @foreach ($flags as $flag)
                             @php
@@ -67,9 +67,9 @@
                                     : ($override?->stateOf($flag) ?? \App\Models\ChannelPermissionOverride::INHERIT);
                             @endphp
                             <fieldset class="mb-2 flex flex-wrap items-center gap-3 text-sm" @disabled(! $canEdit)>
-                                <legend class="float-left w-36 text-[#dbdee1]">{{ $flag->label() }}</legend>
+                                <legend class="float-left w-36 text-fg">{{ $flag->label() }}</legend>
                                 @foreach ($stateLabels as $value => $label)
-                                    <label class="flex items-center gap-1 text-[#b5bac1]">
+                                    <label class="flex items-center gap-1 text-fg-muted">
                                         <input type="radio" name="permissions[{{ $flag->name }}]" value="{{ $value }}"
                                             class="accent-[#5865f2]" @checked($state === $value)>
                                         {{ $label }}
@@ -84,7 +84,7 @@
                         @if ($canEdit)
                             <button type="submit" class="mt-1 rounded bg-[#5865f2] px-3 py-1 text-sm font-medium text-white hover:bg-[#4752c4]">Save</button>
                         @else
-                            <p class="text-xs text-[#949ba4]">Only members with Manage Roles can change roles below their highest role.</p>
+                            <p class="text-xs text-fg-subtle">Only members with Manage Roles can change roles below their highest role.</p>
                         @endif
                     </form>
                 </li>
@@ -92,7 +92,7 @@
         </ul>
     </section>
 
-    <p class="mt-6 text-sm text-[#949ba4]">
-        <a href="{{ route('channels.edit', [$server, $channel]) }}" class="text-[#00a8fc] hover:underline">Back to channel settings</a>
+    <p class="mt-6 text-sm text-fg-subtle">
+        <a href="{{ route('channels.edit', [$server, $channel]) }}" class="text-link hover:underline">Back to channel settings</a>
     </p>
 </x-layouts.auth>

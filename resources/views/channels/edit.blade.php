@@ -8,25 +8,25 @@
         <button type="submit" class="w-full rounded bg-[#5865f2] py-2 font-medium text-white hover:bg-[#4752c4]">Save changes</button>
     </form>
 
-    <p class="mt-4 text-sm text-[#b5bac1]">
+    <p class="mt-4 text-sm text-fg-muted">
         {{ $channel->is_private ? 'This channel is private.' : 'Everyone who can view channels sees this one.' }}
-        <a href="{{ route('channels.permissions.edit', [$server, $channel]) }}" class="text-[#00a8fc] hover:underline">Permissions</a>
+        <a href="{{ route('channels.permissions.edit', [$server, $channel]) }}" class="text-link hover:underline">Permissions</a>
     </p>
 
-    <form method="POST" action="{{ route('channels.destroy', [$server, $channel]) }}" class="mt-8 border-t border-[#3f4147] pt-6"
+    <form method="POST" action="{{ route('channels.destroy', [$server, $channel]) }}" class="mt-8 border-t border-line pt-6"
         data-confirm="Delete #{{ $channel->name }}? Its messages are deleted too. This cannot be undone.">
         @csrf
         @method('DELETE')
 
-        <h2 class="mb-2 font-semibold text-white">Delete channel</h2>
-        <p class="mb-4 text-sm text-[#b5bac1]">
-            This deletes <strong class="text-white">#{{ $channel->name }}</strong> and all its messages. It cannot be undone.
+        <h2 class="mb-2 font-semibold text-fg-strong">Delete channel</h2>
+        <p class="mb-4 text-sm text-fg-muted">
+            This deletes <strong class="text-fg-strong">#{{ $channel->name }}</strong> and all its messages. It cannot be undone.
         </p>
 
         <button type="submit" class="w-full rounded bg-[#da373c] py-2 font-medium text-white hover:bg-[#a12828]">Delete channel</button>
     </form>
 
-    <p class="mt-4 text-sm text-[#949ba4]">
-        <a href="{{ route('channels.show', [$server, $channel]) }}" class="text-[#00a8fc] hover:underline">Back to #{{ $channel->name }}</a>
+    <p class="mt-4 text-sm text-fg-subtle">
+        <a href="{{ route('channels.show', [$server, $channel]) }}" class="text-link hover:underline">Back to #{{ $channel->name }}</a>
     </p>
 </x-layouts.auth>

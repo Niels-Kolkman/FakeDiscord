@@ -3,9 +3,9 @@
 
 <x-layouts.auth title="My Account">
     <section aria-labelledby="email-heading" class="mb-8">
-        <h2 id="email-heading" class="mb-1 text-lg font-semibold text-white">Email</h2>
-        <p class="mb-4 text-sm text-[#949ba4]">
-            Currently <strong class="text-[#dbdee1]">{{ $user?->email }}</strong>
+        <h2 id="email-heading" class="mb-1 text-lg font-semibold text-fg-strong">Email</h2>
+        <p class="mb-4 text-sm text-fg-subtle">
+            Currently <strong class="text-fg">{{ $user?->email }}</strong>
             ({{ $user?->hasVerifiedEmail() ? 'verified' : 'not verified' }}).
             A new address has to be verified again.
         </p>
@@ -22,7 +22,7 @@
     </section>
 
     <section aria-labelledby="password-heading" class="mb-8">
-        <h2 id="password-heading" class="mb-4 text-lg font-semibold text-white">Password</h2>
+        <h2 id="password-heading" class="mb-4 text-lg font-semibold text-fg-strong">Password</h2>
 
         <form method="POST" action="{{ route('user-password.update') }}">
             @csrf
@@ -37,8 +37,8 @@
     </section>
 
     <section aria-labelledby="delete-heading" class="rounded border border-[#da373c]/60 p-4">
-        <h2 id="delete-heading" class="mb-1 text-lg font-semibold text-white">Delete account</h2>
-        <p class="mb-4 text-sm text-[#949ba4]">
+        <h2 id="delete-heading" class="mb-1 text-lg font-semibold text-fg-strong">Delete account</h2>
+        <p class="mb-4 text-sm text-fg-subtle">
             This cannot be undone. Your messages stay in their channels and DMs, shown as from "Deleted User".
             If you own servers, transfer or delete them first.
         </p>
@@ -54,6 +54,6 @@
     </section>
 
     <p class="mt-6 text-center">
-        <a href="{{ route('dashboard') }}" class="text-sm font-medium text-[#00a8fc] hover:underline">Back</a>
+        <a href="{{ route('dashboard') }}" class="text-sm font-medium text-link hover:underline">Back</a>
     </p>
 </x-layouts.auth>

@@ -18,10 +18,10 @@
         @include('servers.partials.member-list')
     </x-slot:aside>
 
-    <header class="flex min-h-12 items-center gap-2 border-b border-[#1f2023] px-4 py-2 shadow-sm">
-        <span aria-hidden="true" class="text-xl text-[#80848e]">📌</span>
-        <h1 class="font-semibold text-white">Pinned messages in #{{ $channel->name }}</h1>
-        <a href="{{ route('channels.show', [$server, $channel]) }}" class="ml-auto text-sm text-[#00a8fc] hover:underline">Back to #{{ $channel->name }}</a>
+    <header class="flex min-h-12 items-center gap-2 border-b border-edge px-4 py-2 shadow-sm">
+        <span aria-hidden="true" class="text-xl text-fg-faint">📌</span>
+        <h1 class="font-semibold text-fg-strong">Pinned messages in #{{ $channel->name }}</h1>
+        <a href="{{ route('channels.show', [$server, $channel]) }}" class="ml-auto text-sm text-link hover:underline">Back to #{{ $channel->name }}</a>
     </header>
 
     <section class="flex-1 overflow-y-auto p-4">
@@ -30,24 +30,24 @@
         @endif
 
         @if ($pins->isEmpty())
-            <p class="text-[#b5bac1]" data-pins-empty>This channel has no pinned messages yet.</p>
+            <p class="text-fg-muted" data-pins-empty>This channel has no pinned messages yet.</p>
         @else
             <ul class="space-y-2" aria-label="Pinned messages" data-pins-list>
                 @foreach ($pins as $pin)
-                    <li class="rounded-lg border border-[#1f2023] bg-[#2b2d31] p-3" data-pin data-message-id="{{ $pin->id }}">
+                    <li class="rounded-lg border border-edge bg-surface-2 p-3" data-pin data-message-id="{{ $pin->id }}">
                         <p class="flex items-baseline gap-2">
-                            <span class="truncate font-medium text-white">{{ $pin->authorName() }}</span>
-                            <time class="shrink-0 text-xs text-[#949ba4]" datetime="{{ $pin->created_at?->toIso8601String() }}">{{ $pin->created_at?->format('Y-m-d H:i') }}</time>
+                            <span class="truncate font-medium text-fg-strong">{{ $pin->authorName() }}</span>
+                            <time class="shrink-0 text-xs text-fg-subtle" datetime="{{ $pin->created_at?->toIso8601String() }}">{{ $pin->created_at?->format('Y-m-d H:i') }}</time>
                         </p>
                         @if ($pin->content !== '')
-                            <p class="whitespace-pre-wrap break-words text-[#dbdee1]">{{ $pin->content }}</p>
+                            <p class="whitespace-pre-wrap break-words text-fg">{{ $pin->content }}</p>
                         @endif
                         @if ($pin->attachments->isNotEmpty())
-                            <p class="text-sm text-[#949ba4]">{{ trans_choice(':count attachment|:count attachments', $pin->attachments->count()) }}</p>
+                            <p class="text-sm text-fg-subtle">{{ trans_choice(':count attachment|:count attachments', $pin->attachments->count()) }}</p>
                         @endif
-                        <div class="mt-2 flex items-center gap-3 text-xs text-[#949ba4]">
+                        <div class="mt-2 flex items-center gap-3 text-xs text-fg-subtle">
                             <span>Pinned {{ $pin->pinned_at?->format('Y-m-d H:i') }}@if ($pin->pinnedBy) by {{ $pin->pinnedBy->name }}@endif</span>
-                            <a href="{{ route('channels.show', [$server, $channel]) }}#message-{{ $pin->id }}" class="text-[#00a8fc] hover:underline">Jump</a>
+                            <a href="{{ route('channels.show', [$server, $channel]) }}#message-{{ $pin->id }}" class="text-link hover:underline">Jump</a>
                             @if ($canManageMessages)
                                 <form method="POST" action="{{ route('pins.destroy', [$server, $channel, $pin]) }}">
                                     @csrf

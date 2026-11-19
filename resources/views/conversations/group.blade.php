@@ -33,40 +33,40 @@
     </x-slot:sidebar>
 
     <div data-group-details data-conversation-id="{{ $conversation->id }}">
-        <header class="flex min-h-12 items-center gap-2 border-b border-[#1f2023] px-4 py-2 shadow-sm">
+        <header class="flex min-h-12 items-center gap-2 border-b border-edge px-4 py-2 shadow-sm">
             <span aria-hidden="true" class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#5865f2] text-xs text-white">👥</span>
-            <h1 class="truncate font-semibold text-white" data-group-name>{{ $title }}</h1>
-            <span class="shrink-0 text-sm text-[#949ba4]" data-group-count>{{ trans_choice('{1} 1 member|[2,*] :count members', $members->count(), ['count' => $members->count()]) }}</span>
+            <h1 class="truncate font-semibold text-fg-strong" data-group-name>{{ $title }}</h1>
+            <span class="shrink-0 text-sm text-fg-subtle" data-group-count>{{ trans_choice('{1} 1 member|[2,*] :count members', $members->count(), ['count' => $members->count()]) }}</span>
             {{-- Mention notifications (ISSUE-33). --}}
             <div class="ml-auto"><x-inbox /></div>
         </header>
 
-        <details class="border-b border-[#1f2023] px-4 py-2 text-sm" @if ($errors->has('user_ids') || $errors->has('name')) open @endif>
-            <summary class="cursor-pointer text-[#b5bac1] hover:text-white">Group settings</summary>
+        <details class="border-b border-edge px-4 py-2 text-sm" @if ($errors->has('user_ids') || $errors->has('name')) open @endif>
+            <summary class="cursor-pointer text-fg-muted hover:text-fg-strong">Group settings</summary>
 
             <div class="mt-3 grid gap-6 pb-2 md:grid-cols-2">
                 <section aria-labelledby="group-members-heading">
-                    <h2 id="group-members-heading" class="mb-2 text-xs font-semibold uppercase tracking-wide text-[#949ba4]">
+                    <h2 id="group-members-heading" class="mb-2 text-xs font-semibold uppercase tracking-wide text-fg-subtle">
                         Members — {{ $members->count() }} / {{ \App\Models\Conversation::MAX_PARTICIPANTS }}
                     </h2>
                     <ul class="space-y-1" data-group-members>
                         @foreach ($members as $member)
                             <li class="flex items-center gap-2" data-member-id="{{ $member->id }}">
                                 <x-user-avatar :user="$member" :size="24" />
-                                <span class="min-w-0 flex-1 truncate text-[#dbdee1]">
+                                <span class="min-w-0 flex-1 truncate text-fg">
                                     {{ $member->name }}
                                     @if ($conversation->isOwnedBy($member))
-                                        <span class="ml-1 text-xs text-[#f0b232]" data-group-owner>Owner</span>
+                                        <span class="ml-1 text-xs text-warn-fg" data-group-owner>Owner</span>
                                     @endif
                                     @if ((int) $member->id === $viewerId)
-                                        <span class="ml-1 text-xs text-[#949ba4]">(you)</span>
+                                        <span class="ml-1 text-xs text-fg-subtle">(you)</span>
                                     @endif
                                 </span>
                                 @if ($isOwner && (int) $member->id !== $viewerId)
                                     <form method="POST" action="{{ route('dms.participants.destroy', [$conversation, $member]) }}" data-confirm="Remove {{ $member->name }} from the group?">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="{{ $button }} text-[#fa777c] hover:bg-[#da373c] hover:text-white" aria-label="Remove {{ $member->name }} from the group">Remove</button>
+                                        <button type="submit" class="{{ $button }} text-danger-fg hover:bg-[#da373c] hover:text-white" aria-label="Remove {{ $member->name }} from the group">Remove</button>
                                     </form>
                                 @endif
                             </li>
@@ -82,7 +82,7 @@
 
                 <div class="space-y-6">
                     <section aria-labelledby="group-rename-heading">
-                        <h2 id="group-rename-heading" class="mb-2 text-xs font-semibold uppercase tracking-wide text-[#949ba4]">Group name</h2>
+                        <h2 id="group-rename-heading" class="mb-2 text-xs font-semibold uppercase tracking-wide text-fg-subtle">Group name</h2>
                         <form method="POST" action="{{ route('dms.update', $conversation) }}" class="flex gap-2" data-rename-group>
                             @csrf
                             @method('PATCH')
@@ -95,31 +95,31 @@
                                 maxlength="{{ \App\Models\Conversation::NAME_MAX_LENGTH }}"
                                 placeholder="{{ $title }}"
                                 @error('name') aria-invalid="true" aria-describedby="group-name-error" @enderror
-                                class="min-w-0 flex-1 rounded bg-[#1e1f22] px-2 py-1 text-white placeholder-[#949ba4] outline-none focus:ring-2 focus:ring-[#5865f2]"
+                                class="min-w-0 flex-1 rounded bg-surface-3 px-2 py-1 text-fg-strong placeholder-fg-subtle outline-none focus:ring-2 focus:ring-[#5865f2]"
                             >
                             <button type="submit" class="{{ $button }} bg-[#5865f2] text-white hover:bg-[#4752c4]">Rename</button>
                         </form>
                         @error('name')
-                            <p id="group-name-error" role="alert" class="mt-2 text-[#fa777c]">{{ $message }}</p>
+                            <p id="group-name-error" role="alert" class="mt-2 text-danger-fg">{{ $message }}</p>
                         @enderror
                     </section>
 
                     <section aria-labelledby="group-add-heading">
-                        <h2 id="group-add-heading" class="mb-2 text-xs font-semibold uppercase tracking-wide text-[#949ba4]">Add friends</h2>
+                        <h2 id="group-add-heading" class="mb-2 text-xs font-semibold uppercase tracking-wide text-fg-subtle">Add friends</h2>
                         @if ($seatsLeft === 0)
-                            <p class="text-[#949ba4]">This group is full.</p>
+                            <p class="text-fg-subtle">This group is full.</p>
                         @elseif ($invitable->isEmpty())
-                            <p class="text-[#949ba4]">All your friends are already here.</p>
+                            <p class="text-fg-subtle">All your friends are already here.</p>
                         @else
                             <form method="POST" action="{{ route('dms.participants.store', $conversation) }}" data-add-to-group>
                                 @csrf
-                                <p class="mb-2 text-[#b5bac1]">{{ trans_choice('{1} 1 spot left.|[2,*] :count spots left.', $seatsLeft, ['count' => $seatsLeft]) }}</p>
+                                <p class="mb-2 text-fg-muted">{{ trans_choice('{1} 1 spot left.|[2,*] :count spots left.', $seatsLeft, ['count' => $seatsLeft]) }}</p>
                                 @include('conversations.partials.friend-picker', ['friends' => $invitable, 'idPrefix' => 'add-friend'])
                                 <button type="submit" class="{{ $button }} mt-2 bg-[#5865f2] text-white hover:bg-[#4752c4]">Add to group</button>
                             </form>
                         @endif
                         @error('user_ids')
-                            <p role="alert" class="mt-2 text-[#fa777c]">{{ $message }}</p>
+                            <p role="alert" class="mt-2 text-danger-fg">{{ $message }}</p>
                         @enderror
                     </section>
                 </div>

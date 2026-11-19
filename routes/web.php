@@ -29,6 +29,7 @@ use App\Http\Controllers\RoleMemberController;
 use App\Http\Controllers\ServerController;
 use App\Http\Controllers\ServerMembershipController;
 use App\Http\Controllers\ServerOwnershipController;
+use App\Http\Controllers\ThemeController;
 use App\Http\Controllers\UserProfileController;
 use App\Http\Controllers\UserStatusController;
 use Illuminate\Support\Facades\Route;
@@ -81,6 +82,11 @@ Route::middleware('auth')->group(function () {
     Route::put('/settings/status', [UserStatusController::class, 'update'])
         ->middleware('throttle:30,1')
         ->name('status.update');
+
+    // The theme toggle (ISSUE-37): dark or light, saved per user.
+    Route::put('/settings/theme', [ThemeController::class, 'update'])
+        ->middleware('throttle:30,1')
+        ->name('theme.update');
 });
 
 // Friends (ISSUE-22): the page has ?tab=all|pending|blocked. Like servers,

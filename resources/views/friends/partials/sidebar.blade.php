@@ -12,16 +12,16 @@
     $onFriendsPage = ($activeConversation ?? null) === null;
 @endphp
 
-<nav aria-label="Navigation" class="flex w-full shrink-0 flex-col bg-[#2b2d31] md:w-60">
-    <div class="flex min-h-12 items-center border-b border-[#1f2023] px-4 py-2 shadow-sm">
-        <a href="{{ route('dashboard') }}" class="font-semibold text-white hover:underline">{{ config('app.name', 'Laravel') }}</a>
+<nav aria-label="Navigation" class="flex min-w-0 flex-1 flex-col bg-surface-2 md:w-60 md:flex-none">
+    <div class="flex min-h-12 items-center border-b border-edge px-4 py-2 shadow-sm">
+        <a href="{{ route('dashboard') }}" class="font-semibold text-fg-strong hover:underline">{{ config('app.name', 'Laravel') }}</a>
     </div>
 
     <div class="flex-1 overflow-y-auto px-2 py-3">
         <a
             href="{{ route('friends.index') }}"
             @if ($onFriendsPage) aria-current="page" @endif
-            class="mb-4 flex items-center gap-2 rounded px-2 py-1.5 font-medium text-[#b5bac1] hover:bg-[#35373c] hover:text-white aria-[current=page]:bg-[#404249] aria-[current=page]:text-white"
+            class="mb-4 flex items-center gap-2 rounded px-2 py-1.5 font-medium text-fg-muted hover:bg-hover hover:text-fg-strong aria-[current=page]:bg-active aria-[current=page]:text-fg-strong"
         >
             <span aria-hidden="true">👋</span> Friends
             <span data-friend-request-badge @if ($incomingCount === 0) hidden @endif class="ml-auto rounded-full bg-[#da373c] px-1.5 text-xs font-semibold text-white">{{ $incomingCount }}</span>

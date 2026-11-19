@@ -7,7 +7,7 @@
         <button type="submit" class="w-full rounded bg-[#5865f2] py-2 font-medium text-white hover:bg-[#4752c4]">Create channel</button>
     </form>
 
-    <p class="mt-4 text-sm text-[#949ba4]">
-        <a href="{{ route('servers.show', $server) }}" class="text-[#00a8fc] hover:underline">Back to {{ $server->name }}</a>
+    <p class="mt-4 text-sm text-fg-subtle">
+        <a href="{{ route('servers.show', $server) }}" class="text-link hover:underline">Back to {{ $server->name }}</a>
     </p>
 </x-layouts.auth>

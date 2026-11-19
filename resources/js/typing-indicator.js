@@ -141,7 +141,7 @@ export function initTypingIndicator({ echo, channelId, viewerId, input, output, 
         output.replaceChildren(...typingParts(names).map(({ text, name }) => {
             if (!name) return document.createTextNode(text);
             const strong = document.createElement('strong');
-            strong.className = 'font-semibold text-[#dbdee1]';
+            strong.className = 'font-semibold text-fg';
             strong.textContent = text;
             return strong;
         }));

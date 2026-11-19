@@ -46,12 +46,12 @@ function formatWhen(iso) {
  * broadcast); every text goes in as text.
  */
 export function renderNotification(item, doc = globalThis.document) {
-    const row = el(doc, 'li', 'border-b border-[#1f2023] last:border-b-0 data-[unread]:bg-[#5865f2]/10');
+    const row = el(doc, 'li', 'border-b border-edge last:border-b-0 data-[unread]:bg-[#5865f2]/10');
     row.dataset.notification = '';
     row.dataset.notificationId = String(item.id ?? '');
     if (!item.read) row.dataset.unread = '';
 
-    const link = el(doc, 'a', 'flex items-start gap-3 px-4 py-3 hover:bg-[#35373c] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#5865f2]');
+    const link = el(doc, 'a', 'flex items-start gap-3 px-4 py-3 hover:bg-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#5865f2]');
     link.href = item.open_url ?? item.url ?? '#';
     link.dataset.notificationLink = '';
 
@@ -70,18 +70,18 @@ export function renderNotification(item, doc = globalThis.document) {
 
     const text = el(doc, 'span', 'min-w-0 flex-1');
 
-    const title = el(doc, 'span', 'block text-sm text-[#dbdee1]');
-    const author = el(doc, 'span', 'font-semibold text-white', item.author_name ?? 'Deleted User');
+    const title = el(doc, 'span', 'block text-sm text-fg');
+    const author = el(doc, 'span', 'font-semibold text-fg-strong', item.author_name ?? 'Deleted User');
     author.dataset.notificationAuthor = '';
     const label = el(doc, 'span', null, item.label ?? 'mentioned you');
     label.dataset.notificationLabel = '';
     title.append(author, doc.createTextNode(' '), label);
 
     const when = formatWhen(item.created_at);
-    const where = el(doc, 'span', 'block truncate text-xs text-[#949ba4]', `${item.server_name ?? ''} · #${item.channel_name ?? ''}${when ? ` · ${when}` : ''}`);
+    const where = el(doc, 'span', 'block truncate text-xs text-fg-subtle', `${item.server_name ?? ''} · #${item.channel_name ?? ''}${when ? ` · ${when}` : ''}`);
     where.dataset.notificationWhere = '';
 
-    const excerpt = el(doc, 'span', 'mt-0.5 block truncate text-sm text-[#b5bac1]', item.excerpt ?? '');
+    const excerpt = el(doc, 'span', 'mt-0.5 block truncate text-sm text-fg-muted', item.excerpt ?? '');
     excerpt.dataset.notificationExcerpt = '';
 
     text.append(title, where, excerpt);

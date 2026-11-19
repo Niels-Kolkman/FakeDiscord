@@ -24,7 +24,7 @@ export const RECENT_KEY = 'fakediscord.recent-emoji';
 export const MAX_RECENT = 16;
 export const COLUMNS = 8;
 
-const EMOJI_BUTTON = 'flex h-9 w-9 items-center justify-center rounded text-2xl leading-none hover:bg-[#404249] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]';
+const EMOJI_BUTTON = 'flex h-9 w-9 items-center justify-center rounded text-2xl leading-none hover:bg-active focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]';
 
 /** emoji → name, for labelling the recent row. */
 const NAMES = new Map(EMOJI_CATEGORIES.flatMap((category) => category.emoji));
@@ -124,7 +124,7 @@ export function initEmojiPicker({ toggle, panel, input, storage = defaultStorage
     const section = (label, entries, key) => {
         const wrapper = el('section', 'mb-2');
         wrapper.dataset.emojiSection = key;
-        wrapper.appendChild(el('h3', 'px-1 pb-1 text-xs font-semibold uppercase text-[#b5bac1]', label));
+        wrapper.appendChild(el('h3', 'px-1 pb-1 text-xs font-semibold uppercase text-fg-muted', label));
         const grid = el('div', 'grid grid-cols-8 gap-0.5');
         grid.setAttribute('role', 'group');
         grid.setAttribute('aria-label', label);
@@ -138,7 +138,7 @@ export function initEmojiPicker({ toggle, panel, input, storage = defaultStorage
         if (query !== '') {
             const found = searchEmoji(query);
             if (found.length === 0) {
-                const empty = el('p', 'px-1 py-6 text-center text-sm text-[#949ba4]', 'No emoji match that search.');
+                const empty = el('p', 'px-1 py-6 text-center text-sm text-fg-subtle', 'No emoji match that search.');
                 empty.dataset.emojiEmpty = '';
                 results.replaceChildren(empty);
             } else {
@@ -156,7 +156,7 @@ export function initEmojiPicker({ toggle, panel, input, storage = defaultStorage
     // Built on first open: a few hundred buttons nobody may need.
     const build = () => {
         if (search) return;
-        search = el('input', 'mb-2 w-full rounded bg-[#1e1f22] px-2 py-1.5 text-sm text-[#dbdee1] placeholder-[#6d6f78] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]');
+        search = el('input', 'mb-2 w-full rounded bg-surface-3 px-2 py-1.5 text-sm text-fg placeholder-fg-dim focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]');
         search.type = 'search';
         search.value = '';
         search.placeholder = 'Find the perfect emoji';
