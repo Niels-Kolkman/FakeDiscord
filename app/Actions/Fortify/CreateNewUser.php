@@ -3,6 +3,7 @@
 namespace App\Actions\Fortify;
 
 use App\Models\User;
+use App\Support\Mentions;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -37,6 +38,8 @@ class CreateNewUser implements CreatesNewUsers
                 'max:32',
                 // Discord-style handles: lowercase letters, digits, "_" and ".".
                 'regex:/^[a-z0-9_.]+$/',
+                // "@everyone" is a mass mention (ISSUE-33), never a user.
+                Rule::notIn(Mentions::RESERVED_USERNAMES),
                 Rule::unique(User::class),
             ],
             'email' => [
@@ -49,6 +52,7 @@ class CreateNewUser implements CreatesNewUsers
             'password' => $this->passwordRules(),
         ], [
             'username.regex' => 'The username may only contain lowercase letters, numbers, underscores and periods.',
+            'username.not_in' => 'This username is reserved.',
         ])->validate();
 
         return User::create([

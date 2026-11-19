@@ -25,6 +25,7 @@ enum Permission: int
     case SendMessages = 1 << 11;
     case ManageMessages = 1 << 13;
     case AttachFiles = 1 << 15;
+    case MentionEveryone = 1 << 17;
     case ManageRoles = 1 << 28;
     case TimeoutMembers = 1 << 40;
 
@@ -42,6 +43,7 @@ enum Permission: int
             self::SendMessages => 'Send Messages',
             self::ManageMessages => 'Manage Messages',
             self::AttachFiles => 'Attach Files',
+            self::MentionEveryone => 'Mention @everyone',
             self::ManageRoles => 'Manage Roles',
             self::TimeoutMembers => 'Timeout Members',
         };
@@ -61,6 +63,7 @@ enum Permission: int
             self::SendMessages => 'Post messages in text channels.',
             self::ManageMessages => 'Delete and pin other members\' messages.',
             self::AttachFiles => 'Upload files and images with messages.',
+            self::MentionEveryone => 'Notify every member who can see the channel with @everyone.',
             self::ManageRoles => 'Create and edit roles below their own highest role.',
             self::TimeoutMembers => 'Stop members from chatting or reacting for a while.',
         };

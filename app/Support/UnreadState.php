@@ -20,10 +20,12 @@ use Illuminate\Database\Query\JoinClause;
  * marker, was sent after they joined the server. Their own messages,
  * deleted messages and those of people they blocked (Message::visibleTo())
  * never count. A mention is an unread message that mentions them
- * (App\Support\Mentions).
+ * (App\Support\Mentions, stored in messages.mentions): by username, by a
+ * role they hold now, or @everyone (ISSUE-33).
  *
- * One aggregate query for all channels, plus one for the mention
- * candidates when anything is unread.
+ * One aggregate query for all channels, plus one for the unread messages
+ * that mention anyone when anything is unread, plus one for the viewer's
+ * roles when one of those mentions a role.
  */
 final readonly class UnreadState
 {
@@ -62,16 +64,28 @@ final readonly class UnreadState
             ->all();
 
         $mentions = [];
-        $username = (string) $viewer->username;
+        $viewerId = (int) $viewer->id;
 
-        if ($unread !== [] && $username !== '') {
+        if ($unread !== []) {
             $candidates = self::unreadMessages($viewer, array_keys($unread))
-                ->whereRaw("messages.content like ? escape '\\'", [Mentions::likePattern($username)])
+                ->whereNotNull('messages.mentions')
                 ->toBase()
-                ->get(['messages.channel_id', 'messages.content']);
+                ->get(['messages.channel_id', 'messages.mentions']);
+
+            // The viewer's roles are only looked up once a role was mentioned.
+            $roleIds = null;
 
             foreach ($candidates as $row) {
-                if (preg_match(Mentions::pattern($username), (string) $row->content) === 1) {
+                $set = json_decode((string) $row->mentions, true);
+                $set = is_array($set) ? $set : null;
+                $mentioned = Mentions::includes($set, $viewerId);
+
+                if (! $mentioned && ($set['roles'] ?? []) !== []) {
+                    $roleIds ??= $viewer->roles()->pluck('roles.id')->map(fn (mixed $id): int => (int) $id)->all();
+                    $mentioned = Mentions::includes($set, $viewerId, $roleIds);
+                }
+
+                if ($mentioned) {
                     $channelId = (int) $row->channel_id;
                     $mentions[$channelId] = ($mentions[$channelId] ?? 0) + 1;
                 }

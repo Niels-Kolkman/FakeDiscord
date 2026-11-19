@@ -9,6 +9,7 @@ use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\MessageAttachment;
 use App\Models\User;
+use App\Support\MentionNotifier;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -34,9 +35,15 @@ use Throwable;
  * under attachments/conversations/{id}/, and the conversation's
  * last_message_at moves, so it rises to the top of the DM list. Every
  * participant hears about that through ConversationActivity.
+ *
+ * In a server channel, the message's mentions (ISSUE-33, stored on save by
+ * App\Support\Mentions) notify the people mentioned
+ * (App\Support\MentionNotifier).
  */
 class SendMessage
 {
+    public function __construct(private readonly MentionNotifier $mentions) {}
+
     /**
      * @param  list<UploadedFile>  $files  already validated (StoreMessageRequest)
      */
@@ -91,6 +98,9 @@ class SendMessage
             rescue(function () use ($target): void {
                 broadcast(new ConversationActivity($target));
             });
+        } else {
+            // Mention notifications (ISSUE-33) for whoever it mentions.
+            $this->mentions->sync($message);
         }
 
         return $message;
