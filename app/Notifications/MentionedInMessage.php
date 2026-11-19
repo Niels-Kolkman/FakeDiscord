@@ -15,7 +15,7 @@ use Illuminate\Notifications\Notification;
  *
  * Sent by App\Support\MentionNotifier, which decides who gets one. Not
  * queued, like the app's other broadcasts (ShouldBroadcastNow): it shows
- * up together with the message, without a queue worker.
+ * up together with the message, without a queue worker (toBroadcast()).
  *
  * The stored data is a snapshot (names as they were, a short excerpt);
  * NotificationInbox::present() turns it into what the inbox shows, with
@@ -71,15 +71,21 @@ class MentionedInMessage extends Notification
         ];
     }
 
+    /**
+     * Laravel broadcasts notifications through a queued event
+     * (BroadcastNotificationCreated); the "sync" connection sends it right
+     * away, like the app's ShouldBroadcastNow events, whatever
+     * QUEUE_CONNECTION is.
+     */
     public function toBroadcast(object $notifiable): BroadcastMessage
     {
-        return new BroadcastMessage(NotificationInbox::present(
+        return (new BroadcastMessage(NotificationInbox::present(
             (string) $this->id,
             $this->toArray($notifiable),
             readAt: null,
             createdAt: $this->message->created_at,
             author: $this->message->author,
-        ));
+        )))->onConnection('sync');
     }
 
     public function broadcastType(): string
