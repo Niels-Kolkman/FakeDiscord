@@ -628,6 +628,187 @@ test('a network error puts the old status back too', async () => {
     assert.equal(select.value, 'dnd');
 });
 
+// --- More edge cases -----------------------------------------------------------
+
+test('a status change during the grace period recolours, then they still go offline', () => {
+    const { presence, timers, changes } = tracker();
+    presence.joining({ id: 2, status: 'online' });
+    presence.leaving({ id: 2 });
+
+    presence.statusChanged(2, 'dnd');
+    assert.equal(presence.shown(2), 'dnd');
+
+    timers.runAll();
+    assert.deepEqual(changes, [['2', 'online'], ['2', 'dnd'], ['2', 'offline']]);
+});
+
+test('someone who went offline comes back online when they join again', () => {
+    const { presence, timers, changes } = tracker();
+    presence.joining({ id: 2, status: 'idle' });
+    presence.leaving({ id: 2 });
+    timers.runAll();
+
+    presence.joining({ id: 2 });
+
+    assert.equal(presence.shown(2), 'idle');
+    assert.deepEqual(changes, [['2', 'idle'], ['2', 'offline'], ['2', 'idle']]);
+});
+
+test('ids are compared as strings whatever Reverb sends', () => {
+    const { presence, timers } = tracker();
+    presence.seed('2', 'dnd', true);
+
+    presence.here([{ id: 2 }, { id: '1' }]);
+    timers.runAll();
+
+    assert.equal(presence.shown('2'), 'dnd');
+    assert.equal(timers.pending.size, 0);
+});
+
+test('here() with no members lets everyone but the viewer go after one grace period each', () => {
+    const { presence, timers } = tracker();
+    presence.seed(1, 'online', true);
+    presence.seed(2, 'online', true);
+    presence.seed(3, 'idle', true);
+
+    presence.here(undefined);
+
+    assert.equal(timers.pending.size, 2);
+    timers.runAll();
+    assert.equal(presence.shown(1), 'online');
+    assert.equal(presence.shown(2), 'offline');
+    assert.equal(presence.shown(3), 'offline');
+});
+
+test('the same server listed twice is joined once', () => {
+    const echo = fakeEcho();
+    const joins = [];
+    const join = echo.join.bind(echo);
+    echo.join = (name) => {
+        joins.push(name);
+        return join(name);
+    };
+
+    initPresence({ echo, document: fakeDocument({ servers: '7,7,3' }) });
+
+    assert.deepEqual(joins, ['server.7', 'server.3']);
+});
+
+test('a status event on the private channel for someone else, or with a bad status, is ignored', () => {
+    const { echo, document } = start();
+    const privateChannel = echo.privates['App.Models.User.1'].callbacks[STATUS_EVENT];
+
+    privateChannel({ user_id: 2, status: 'dnd' });
+    privateChannel({ user_id: 1, status: 'invisible' });
+    privateChannel({ user_id: 1 });
+    privateChannel(null);
+
+    assert.equal(document.querySelector('[data-status-select]').value, 'online');
+    assert.equal(document.querySelector('meta[name="user-status"]').getAttribute('content'), 'online');
+    assert.equal(item(document, 1).dataset.presence, 'online');
+    assert.equal(item(document, 2).dataset.presence, 'online');
+});
+
+test('a bad status event on the server channel is ignored', () => {
+    const { echo, document } = start();
+    const channel = echo.joined['server.7'].callbacks;
+
+    channel[STATUS_EVENT]({ user_id: 3, status: 'offline' });
+    channel[STATUS_EVENT]({ status: 'dnd' });
+    channel[STATUS_EVENT](undefined);
+
+    assert.equal(item(document, 3).dataset.presence, 'idle');
+});
+
+test('the viewer\'s own picked status from the meta tag is shown at once', () => {
+    const { document } = start({ document: fakeDocument({ status: 'dnd' }) });
+
+    assert.equal(item(document, 1).dataset.presence, 'dnd');
+});
+
+test('without fetch the picker stays a plain form', () => {
+    const { document } = start();
+    const form = document.querySelector('[data-status-picker]');
+
+    assert.equal(form.querySelector('[data-status-submit]').getAttribute('hidden'), null);
+});
+
+test('the server\'s reply wins over what was picked', async () => {
+    const fetch = async () => ({ ok: true, json: async () => ({ status: 'online' }) });
+    const { document } = start({ fetch });
+    const select = document.querySelector('[data-status-select]');
+
+    select.value = 'idle';
+    select.dispatch('change');
+    await new Promise((resolve) => setImmediate(resolve));
+
+    assert.equal(select.value, 'online');
+    assert.equal(item(document, 1).dataset.presence, 'online');
+});
+
+test('a reply without a status keeps what was picked', async () => {
+    const fetch = async () => ({ ok: true, json: async () => ({}) });
+    const { document } = start({ fetch });
+    const select = document.querySelector('[data-status-select]');
+
+    select.value = 'idle';
+    select.dispatch('change');
+    await new Promise((resolve) => setImmediate(resolve));
+
+    assert.equal(select.value, 'idle');
+    assert.equal(document.querySelector('meta[name="user-status"]').getAttribute('content'), 'idle');
+});
+
+test('without a status-url meta tag the picker posts to its form action', async () => {
+    const urls = [];
+    const fetch = async (url) => {
+        urls.push(url);
+        return { ok: true, json: async () => ({ status: 'dnd' }) };
+    };
+    const document = fakeDocument();
+    document.body.removeChild(document.querySelector('meta[name="status-url"]'));
+    document.querySelector('[data-status-picker]').action = '/form-action';
+    start({ document, fetch });
+
+    const select = document.querySelector('[data-status-select]');
+    select.value = 'dnd';
+    select.dispatch('change');
+    await new Promise((resolve) => setImmediate(resolve));
+
+    assert.deepEqual(urls, ['/form-action']);
+});
+
+test('a page without a member list still tracks the viewer\'s status', () => {
+    const { presence, echo } = start({ document: fakeDocument({ list: false }) });
+
+    echo.privates['App.Models.User.1'].callbacks[STATUS_EVENT]({ user_id: 1, status: 'idle' });
+
+    assert.equal(presence.tracker.shown(1), 'idle');
+});
+
+// Known bug (see the ISSUE-31 test summary): save() rolls back to the
+// status the page showed when that request started, so an older request
+// failing after a newer one succeeded shows a status the server no longer
+// has. Marked todo so it is reported without failing the suite.
+test('a slow failed save does not undo a newer successful one', { todo: 'save() rolls back past a newer save' }, async () => {
+    const pending = [];
+    const fetch = () => new Promise((resolve) => pending.push(resolve));
+    const { document } = start({ fetch });
+    const select = document.querySelector('[data-status-select]');
+
+    select.value = 'idle';
+    select.dispatch('change');
+    select.value = 'dnd';
+    select.dispatch('change');
+
+    pending[1]({ ok: true, json: async () => ({ status: 'dnd' }) });
+    await new Promise((resolve) => setImmediate(resolve));
+    pending[0]({ ok: false, status: 500, json: async () => ({}) });
+    await new Promise((resolve) => setImmediate(resolve));
+
+    assert.equal(select.value, 'dnd');
+});
+
 test('the viewer shows as online even when the page listed them as offline', () => {
     const document = fakeDocument();
     item(document, 1).dataset.presence = 'offline';
