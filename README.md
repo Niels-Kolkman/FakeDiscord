@@ -689,6 +689,41 @@ The broadcast payload is the same as the JSON response (`Message::toPayload()`):
 first three `users` per emoji; `me` is only there in responses to the viewer
 (the history API and the reaction routes), not in broadcasts.
 
+### Formatting, links and emoji
+
+Messages in channels and DMs support a small, Discord-like markdown subset:
+
+| Type | Shows as |
+| --- | --- |
+| `**bold**` | **bold** |
+| `*italic*` or `_italic_` | *italic* |
+| `__underline__` | underlined |
+| `~~strike~~` | ~~struck through~~ |
+| `` `code` `` | inline code |
+| ` ```js` … ` ``` ` | a code block (the language is optional) |
+| `> text` | a quote (every line that starts with `> `) |
+| `>>> text` | a quote of the rest of the message |
+| `\*` | a literal `*` (any symbol can be escaped) |
+
+`http://` and `https://` URLs (and `<https://…>`) become links that open in
+a new tab (`rel="noopener noreferrer nofollow ugc"`). Headings, lists, images,
+masked links (`[text](url)`) and raw HTML are not supported and show as typed.
+
+Message text is never treated as HTML. `App\Support\Markdown` parses it into a
+tree of known nodes and writes only those tags (`strong`, `em`, `u`, `s`,
+`code`, `pre`, `blockquote`, `a`), escaping every piece of text and every
+attribute; links are only made from http(s) URLs. Messages that arrive live
+are formatted by `resources/js/markdown.js`, the same parser, which builds DOM
+nodes instead of HTML. Both are checked against `tests/fixtures/markdown.json`.
+The stored and broadcast `content` stays the raw text.
+
+The 😀 button in the composer opens an emoji picker: search by name (e.g.
+"thumbs up"), browse by category, or pick from your recently used emoji (kept
+in this browser's localStorage). The emoji is inserted at the cursor. The
+arrow keys move between emoji, Enter in the search box picks the first
+result, and Escape closes the picker. The button needs JavaScript and is
+hidden without it.
+
 ### Search
 
 The search box in the channel header opens `GET /servers/{id}/search?q=...`, a
