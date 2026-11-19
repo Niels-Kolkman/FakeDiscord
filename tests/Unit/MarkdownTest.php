@@ -3,8 +3,10 @@
 namespace Tests\Unit;
 
 use App\Support\Markdown;
+use Illuminate\Contracts\Support\Htmlable;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Tests\Concerns\DocumentsKnownBugs;
 
 /**
  * ISSUE-36: message markdown (App\Support\Markdown). The cases come from
@@ -13,6 +15,8 @@ use PHPUnit\Framework\TestCase;
  */
 class MarkdownTest extends TestCase
 {
+    use DocumentsKnownBugs;
+
     /**
      * @return array<string, array{string, string}>
      */
@@ -64,33 +68,149 @@ class MarkdownTest extends TestCase
         ];
 
         foreach ($inputs as $input) {
-            $html = Markdown::toHtml($input)->toHtml();
+            $this->assertAllowedMarkup($input);
+        }
+    }
 
-            $this->assertStringNotContainsStringIgnoringCase('<script', $html);
-            preg_match_all('/<(\/?)([a-z0-9]+)([^>]*)>/i', $html, $tags, PREG_SET_ORDER);
+    private function assertAllowedMarkup(string $input): void
+    {
+        $html = Markdown::toHtml($input)->toHtml();
 
-            foreach ($tags as [$whole, $closing, $tag, $rest]) {
-                $this->assertContains($tag, ['strong', 'em', 'u', 's', 'code', 'pre', 'blockquote', 'a'], "Unexpected <{$tag}> for {$input}");
+        $this->assertStringNotContainsStringIgnoringCase('<script', $html);
+        preg_match_all('/<(\/?)([a-z0-9]+)([^>]*)>/i', $html, $tags, PREG_SET_ORDER);
 
-                preg_match_all('/ ([a-z-]+)="([^"]*)"/', $rest, $attributes, PREG_SET_ORDER);
-                $this->assertSame('', preg_replace('/ [a-z-]+="[^"]*"/', '', $rest), "Stray attribute text in {$whole}");
+        foreach ($tags as [$whole, $closing, $tag, $rest]) {
+            $this->assertContains($tag, ['strong', 'em', 'u', 's', 'code', 'pre', 'blockquote', 'a'], "Unexpected <{$tag}> for {$input}");
 
-                $names = array_column($attributes, 1);
-                $expected = match (true) {
-                    $closing === '/' => [],
-                    $tag === 'a' => ['href', 'target', 'rel'],
-                    $tag === 'code' => array_intersect($names, ['data-language']),
-                    default => [],
-                };
-                $this->assertSame(array_values($expected), $names, "Unexpected attributes in {$whole}");
+            preg_match_all('/ ([a-z-]+)="([^"]*)"/', $rest, $attributes, PREG_SET_ORDER);
+            $this->assertSame('', preg_replace('/ [a-z-]+="[^"]*"/', '', $rest), "Stray attribute text in {$whole}");
 
-                foreach ($attributes as [, $name, $value]) {
-                    if ($name === 'href') {
-                        $this->assertMatchesRegularExpression('/^https?:\/\//i', html_entity_decode($value, ENT_QUOTES), "Unsafe link for {$input}");
-                    }
+            $names = array_column($attributes, 1);
+            $expected = match (true) {
+                $closing === '/' => [],
+                $tag === 'a' => ['href', 'target', 'rel'],
+                $tag === 'code' => array_intersect($names, ['data-language']),
+                default => [],
+            };
+            $this->assertSame(array_values($expected), $names, "Unexpected attributes in {$whole}");
+
+            foreach ($attributes as [, $name, $value]) {
+                if ($name === 'href') {
+                    $this->assertMatchesRegularExpression('/^https?:\/\//i', html_entity_decode($value, ENT_QUOTES), "Unsafe link for {$input}");
                 }
             }
         }
+    }
+
+    /**
+     * Seeded random input built from markdown symbols, URLs and HTML
+     * characters: the same every run, so a failure can be replayed.
+     *
+     * @return list<string>
+     */
+    private static function fuzzInputs(int $count): array
+    {
+        $alphabet = ['*', '**', '_', '__', '~~', '`', '```', '> ', '>>> ', "\n", "\r\n", '\\', ' ', "\t", 'a', 'b', 'é', '😀', 'js', 'https://x.y/', 'http://a.b', 'javascript:', '<', '>', '&', '"', "'", '.', '(', ')', '[', ']', '|', '#', '<b>', '</code>', '<https://e.f/'];
+        $seed = 36;
+        $inputs = [];
+
+        for ($i = 0; $i < $count; $i++) {
+            $seed = ($seed * 1103515245 + 12345) % 2147483648;
+            $length = 1 + $seed % 16;
+            $input = '';
+
+            for ($j = 0; $j < $length; $j++) {
+                $seed = ($seed * 1103515245 + 12345) % 2147483648;
+                $input .= $alphabet[$seed % count($alphabet)];
+            }
+
+            $inputs[] = $input;
+        }
+
+        return $inputs;
+    }
+
+    /**
+     * Whatever the input, the output is well-formed (every tag closed in
+     * order, no raw "<" or "&") and only holds the allowed markup.
+     */
+    public function test_fuzzed_input_renders_balanced_allowed_markup(): void
+    {
+        $previous = libxml_use_internal_errors(true);
+
+        try {
+            foreach (self::fuzzInputs(2000) as $input) {
+                $html = Markdown::toHtml($input)->toHtml();
+                $xml = '<r>'.str_replace('&#039;', '&apos;', $html).'</r>';
+
+                $this->assertNotFalse(simplexml_load_string($xml), 'Not well-formed for '.json_encode($input).': '.$html);
+                $this->assertAllowedMarkup($input);
+            }
+        } finally {
+            libxml_clear_errors();
+            libxml_use_internal_errors($previous);
+        }
+    }
+
+    /**
+     * The text a reader sees is never more than what was typed: rendering
+     * only drops markup symbols, it never adds characters.
+     */
+    public function test_the_visible_text_only_comes_from_the_input(): void
+    {
+        foreach (self::fuzzInputs(2000) as $input) {
+            $visible = html_entity_decode(strip_tags(Markdown::toHtml($input)->toHtml()), ENT_QUOTES | ENT_HTML5);
+
+            $this->assertLessThanOrEqual(mb_strlen($input), mb_strlen($visible), 'Text grew for '.json_encode($input));
+        }
+    }
+
+    public function test_text_without_markup_symbols_is_only_escaped(): void
+    {
+        $input = "Hello there, it's 5 o'clock & 2 + 2 = 4.\nSecond line; done!";
+
+        $this->assertSame(e($input), Markdown::toHtml($input)->toHtml());
+        $this->assertSame([['type' => 'text', 'text' => $input]], Markdown::parse($input));
+    }
+
+    public function test_parse_returns_the_node_tree(): void
+    {
+        $this->assertSame([], Markdown::parse(''));
+        $this->assertSame([['type' => 'codeblock', 'language' => null, 'text' => 'x']], Markdown::parse("```\nx\n```"));
+        $this->assertSame([['type' => 'codeblock', 'language' => 'php', 'text' => 'x']], Markdown::parse("```php\nx\n```"));
+        $this->assertSame([['type' => 'link', 'href' => 'https://a.b', 'text' => 'https://a.b']], Markdown::parse('<https://a.b>'));
+        $this->assertSame([
+            ['type' => 'quote', 'children' => [['type' => 'strong', 'children' => [['type' => 'text', 'text' => 'x']]]]],
+        ], Markdown::parse('> **x**'));
+    }
+
+    public function test_to_html_returns_an_html_string_blade_will_not_escape_again(): void
+    {
+        $html = Markdown::toHtml('**a** & b');
+
+        $this->assertInstanceOf(Htmlable::class, $html);
+        $this->assertSame('<strong>a</strong> &amp; b', (string) $html);
+    }
+
+    /**
+     * Discord and most chat apps keep a balanced closing parenthesis in a
+     * URL (Wikipedia links). Here the ")" is always cut off, so the link
+     * points to a page that does not exist.
+     */
+    public function test_a_url_keeps_a_balanced_closing_parenthesis(): void
+    {
+        // An unbalanced one (a URL in parentheses) is left out, as it should be.
+        $this->assertSame(
+            '(<a href="https://a.b" target="_blank" rel="noopener noreferrer nofollow ugc">https://a.b</a>)',
+            Markdown::toHtml('(https://a.b)')->toHtml(),
+        );
+
+        $this->knownBug('URL regex always drops a trailing ")" even when it closes a "(" in the URL', function (): void {
+            $this->assertSame(
+                '<a href="https://en.wikipedia.org/wiki/Foo_(bar)" target="_blank" rel="noopener noreferrer nofollow ugc">https://en.wikipedia.org/wiki/Foo_(bar)</a>',
+                Markdown::toHtml('https://en.wikipedia.org/wiki/Foo_(bar)')->toHtml(),
+            );
+        });
     }
 
     public function test_links_open_in_a_new_tab_without_a_referrer(): void
