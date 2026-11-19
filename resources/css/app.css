@@ -5,6 +5,45 @@
 @source '../**/*.blade.php';
 @source '../**/*.js';
 
+/*
+ * Message markdown (ISSUE-36): App\Support\Markdown and resources/js/markdown.js
+ * write bare tags (no classes), styled here inside .message-markdown.
+ */
+@layer components {
+    .message-markdown strong { font-weight: 700; }
+    .message-markdown em { font-style: italic; }
+    .message-markdown u { text-decoration: underline; }
+    .message-markdown s { text-decoration: line-through; }
+    .message-markdown a { color: #00a8fc; overflow-wrap: anywhere; }
+    .message-markdown a:hover,
+    .message-markdown a:focus-visible { text-decoration: underline; }
+    .message-markdown code {
+        border-radius: 0.25rem;
+        background-color: #2b2d31;
+        padding: 0 0.25rem;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.875em;
+    }
+    .message-markdown pre {
+        display: block;
+        max-width: 100%;
+        margin: 0.25rem 0;
+        overflow-x: auto;
+        border: 1px solid #1f2023;
+        border-radius: 0.25rem;
+        background-color: #2b2d31;
+        padding: 0.5rem;
+        white-space: pre;
+    }
+    .message-markdown pre code { background: none; padding: 0; }
+    .message-markdown blockquote {
+        display: block;
+        margin: 0.125rem 0;
+        border-left: 4px solid #4e5058;
+        padding-left: 0.75rem;
+    }
+}
+
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';

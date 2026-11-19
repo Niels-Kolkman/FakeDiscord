@@ -30,6 +30,11 @@
     Pins: 📌 marks a pinned message; moderators ($canManageMessages) get a
     Pin / Unpin form that also works without JavaScript.
 
+    Markdown (ISSUE-36): the content is rendered by App\Support\Markdown
+    (bold, italic, underline, strike, code, code blocks, quotes, links),
+    which escapes all text itself, so {{ }} prints its HtmlString as is.
+    data-source keeps the raw text for editing.
+
     Used for channel messages and DMs (ISSUE-23) alike, from
     messages/panel.blade.php; every URL is built from $messagesUrl.
 
@@ -101,11 +106,12 @@
             >{{ $message->created_at?->format('Y-m-d H:i') }}</time>
             <span class="shrink-0 text-xs" title="Pinned" data-message-pinned @unless ($message->isPinned()) hidden @endunless><span aria-hidden="true">📌</span><span class="sr-only">Pinned</span></span>
         </p>
-        <p class="whitespace-pre-wrap break-words text-[#dbdee1]" data-message-body><span data-message-content>{{ $message->content }}</span><span
+        {{-- Markdown (ISSUE-36): a <div>, since a code block or quote cannot sit in a <p>. --}}
+        <div class="message-markdown whitespace-pre-wrap break-words text-[#dbdee1]" data-message-body><span data-message-content data-source="{{ $message->content }}">{{ \App\Support\Markdown::toHtml($message->content) }}</span><span
             class="ml-1 text-xs text-[#949ba4]"
             data-message-edited
             @if ($message->isEdited()) title="Edited {{ $message->edited_at?->toIso8601String() }}" @else hidden @endif
-        >(edited)</span></p>
+        >(edited)</span></div>
 
         @if ($message->attachments->isNotEmpty())
             <ul class="mt-1 flex flex-col items-start gap-1" aria-label="Attachments" data-message-attachments>

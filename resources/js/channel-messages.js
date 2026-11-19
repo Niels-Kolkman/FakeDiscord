@@ -64,13 +64,21 @@
  *   messages out (Message::visibleTo()); this skips the ones that arrive
  *   live and shows "Blocked message" instead of quoting them in replies.
  *
- * All user-provided text is inserted with textContent, never parsed as HTML.
+ * - Markdown and emoji (ISSUE-36): message text is formatted by markdown.js
+ *   (the same rules as App\Support\Markdown), which builds DOM nodes; the raw
+ *   text stays in data-source for editing. emoji-picker.js adds the 😀 picker
+ *   to the composer.
+ *
+ * All user-provided text is inserted with textContent / text nodes, never
+ * parsed as HTML.
  * renderMessage() must match resources/views/messages/item.blade.php.
  */
 
 import { initTypingIndicator } from './typing-indicator.js';
 import { initMentionAutocomplete } from './mention-autocomplete.js';
 import { mentionsViewer } from './unread.js';
+import { fillMessageContent } from './markdown.js';
+import { initEmojiPicker } from './emoji-picker.js';
 
 const NEAR_BOTTOM_PX = 120;
 const LOAD_OLDER_PX = 400;
@@ -583,10 +591,11 @@ export function renderMessage(message, context = {}) {
     header.appendChild(pinned);
     body.appendChild(header);
 
-    const text = el('p', 'whitespace-pre-wrap break-words text-[#dbdee1]');
+    const text = el('div', 'message-markdown whitespace-pre-wrap break-words text-[#dbdee1]');
     text.dataset.messageBody = '';
-    const content = el('span', null, message.content);
+    const content = el('span');
     content.dataset.messageContent = '';
+    fillMessageContent(content, message.content);
     text.appendChild(content);
     const edited = el('span', 'ml-1 text-xs text-[#949ba4]', '(edited)');
     edited.dataset.messageEdited = '';
@@ -877,7 +886,7 @@ function initChannel(root) {
         if (!item) return;
         changeItem(item, () => {
             const content = item.querySelector('[data-message-content]');
-            if (content) content.textContent = message.content;
+            if (content) fillMessageContent(content, message.content);
             applyEdited(item.querySelector('[data-message-edited]'), message.edited_at);
         });
     };
@@ -1073,7 +1082,8 @@ function initChannel(root) {
         input.id = `message-edit-${item.dataset.messageId}`;
         input.rows = 1;
         input.maxLength = MAX_CONTENT_LENGTH;
-        input.value = item.querySelector('[data-message-content]')?.textContent ?? '';
+        const source = item.querySelector('[data-message-content]');
+        input.value = source?.dataset.source ?? source?.textContent ?? '';
         input.setAttribute('aria-label', 'Edit message');
         input.setAttribute('aria-describedby', `${input.id}-hint ${input.id}-error`);
         const hint = el('p', 'mt-1 text-xs text-[#949ba4]', 'Escape to cancel · Enter to save');
@@ -1316,6 +1326,13 @@ function initChannel(root) {
         box: form.querySelector('[data-mention-suggestions]'),
         url: form.dataset.mentionsUrl ?? null,
         fetchSuggestions: (url, query) => window.axios.get(url, { params: { q: query } }).then((response) => response.data),
+    });
+
+    // --- Emoji picker (ISSUE-36) -----------------------------------------
+    initEmojiPicker({
+        toggle: form.querySelector('[data-emoji-picker-toggle]'),
+        panel: form.querySelector('[data-emoji-picker]'),
+        input,
     });
 
     // --- Replying (ISSUE-20) ---------------------------------------------
