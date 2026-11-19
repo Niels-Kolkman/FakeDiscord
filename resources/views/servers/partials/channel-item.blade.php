@@ -12,6 +12,8 @@
     $active = $activeChannel?->is($channel) ?? false;
     $isUnread = ! $active && $unread->isUnread($channel);
     $mentionCount = $active ? 0 : $unread->mentions($channel);
+    // Mute settings (ISSUE-34): $mutes comes from the sidebar.
+    $channelMuted = in_array((int) $channel->id, ($mutes ?? ['channels' => []])['channels'], true);
 @endphp
 
 <li class="group relative flex items-center rounded {{ $active ? 'bg-[#404249]' : 'hover:bg-[#35373c]' }}"
@@ -19,6 +21,7 @@
     data-channel-type="{{ $channel->type }}"
     @if ($active) data-active @endif
     @if ($isUnread) data-unread @endif
+    @if ($channelMuted) data-muted @endif
     @if ($canManage) draggable="true" @endif
 >
     <span aria-hidden="true" class="absolute -left-2 top-1/2 hidden h-2 w-1 -translate-y-1/2 rounded-r bg-white group-data-unread:block" data-unread-dot></span>
@@ -38,6 +41,19 @@
             @if ($mentionCount === 0) hidden @endif
         ><span data-mention-count>{{ $mentionCount }}</span><span class="sr-only" data-mention-label> {{ $mentionCount === 1 ? 'mention' : 'mentions' }}</span></span>
     </a>
+    @auth
+        @unless ($channel->isVoice())
+            <form method="POST" action="{{ $channelMuted ? route('channels.unmute', [$server, $channel]) : route('channels.mute', [$server, $channel]) }}" class="shrink-0" data-mute-channel-form>
+                @csrf
+                @method($channelMuted ? 'DELETE' : 'PUT')
+                <button type="submit" @if ($canManage) draggable="false" @endif
+                    class="px-1 text-sm text-[#949ba4] hover:text-white focus:opacity-100 {{ $channelMuted ? '' : 'opacity-0 group-hover:opacity-100' }}"
+                    title="{{ $channelMuted ? 'Unmute channel' : 'Mute channel' }}"
+                    aria-pressed="{{ $channelMuted ? 'true' : 'false' }}"
+                ><span aria-hidden="true">🔕</span><span class="sr-only">Mute channel {{ $channel->name }}</span></button>
+            </form>
+        @endunless
+    @endauth
     @if ($canManage)
         <a href="{{ route('channels.edit', [$server, $channel]) }}" draggable="false"
             class="px-2 text-sm text-[#949ba4] opacity-0 hover:text-white focus:opacity-100 group-hover:opacity-100"

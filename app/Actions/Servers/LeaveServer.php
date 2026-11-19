@@ -5,6 +5,7 @@ namespace App\Actions\Servers;
 use App\Models\Server;
 use App\Models\User;
 use App\Support\MentionNotifier;
+use App\Support\NotificationMutes;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 
@@ -14,7 +15,8 @@ use Illuminate\Support\Facades\DB;
  * role_user rows are keyed by user, not by membership, so they do not
  * cascade when the server_members row goes and are deleted here. Invites the
  * member created stay usable, like on Discord. Their mention notifications
- * from the server (ISSUE-33) go too: they could no longer open them.
+ * from the server (ISSUE-33) go too: they could no longer open them. So
+ * do their mute settings for it (ISSUE-34): rejoining starts unmuted.
  */
 class LeaveServer
 {
@@ -40,6 +42,7 @@ class LeaveServer
                 ->delete();
 
             MentionNotifier::forgetServer($user, $server);
+            NotificationMutes::forgetServer($user, $server);
         });
     }
 }

@@ -5,6 +5,7 @@ namespace Tests\Feature\DirectMessages;
 use App\Actions\Conversations\OpenDirectConversation;
 use App\Actions\Servers\CreateServer;
 use App\Events\ConversationActivity;
+use App\Events\DirectMessageReceived;
 use App\Events\MessageDeleted;
 use App\Events\MessageSent;
 use App\Events\MessageUpdated;
@@ -458,6 +459,8 @@ class DirectMessageTest extends TestCase
         $this->assertSame([
             [["private-conversation.{$conversation->id}"], MessageSent::NAME],
             [["private-App.Models.User.{$this->alice->id}", "private-App.Models.User.{$this->bob->id}"], ConversationActivity::NAME],
+            // Browser notifications (ISSUE-34): only the other person.
+            [["private-App.Models.User.{$this->bob->id}"], DirectMessageReceived::NAME],
         ], array_map(fn (array $sent): array => [$sent[0], $sent[1]], $spy->sent));
     }
 

@@ -13,6 +13,9 @@
 @php
     $canManage = auth()->user()?->can('manageChannels', $server) ?? false;
     $unread ??= auth()->user() ? \App\Support\UnreadState::forChannels(auth()->user(), $layout->channels()) : new \App\Support\UnreadState;
+    // Mute settings (ISSUE-34): the 🔕 toggles in the header and on each channel.
+    $mutes ??= auth()->user() ? \App\Support\NotificationMutes::forUser(auth()->user()) : ['servers' => [], 'channels' => []];
+    $serverMuted = in_array((int) $server->id, $mutes['servers'], true);
 @endphp
 
 <nav
@@ -27,7 +30,18 @@
 >
     <div class="flex min-h-12 items-center gap-2 border-b border-[#1f2023] px-4 py-2 shadow-sm">
         <x-server-icon :server="$server" :size="24" />
-        <span class="truncate font-semibold text-white">{{ $server->name }}</span>
+        <span class="min-w-0 flex-1 truncate font-semibold text-white">{{ $server->name }}</span>
+        @auth
+            <form method="POST" action="{{ $serverMuted ? route('servers.unmute', $server) : route('servers.mute', $server) }}" class="shrink-0" data-mute-server-form @if ($serverMuted) data-muted @endif>
+                @csrf
+                @method($serverMuted ? 'DELETE' : 'PUT')
+                <button type="submit"
+                    class="rounded px-1 text-sm {{ $serverMuted ? 'text-white' : 'text-[#949ba4] hover:text-white' }} focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]"
+                    title="{{ $serverMuted ? 'Unmute server' : 'Mute server' }}"
+                    aria-pressed="{{ $serverMuted ? 'true' : 'false' }}"
+                ><span aria-hidden="true">{{ $serverMuted ? '🔕' : '🔔' }}</span><span class="sr-only">Mute {{ $server->name }}</span></button>
+            </form>
+        @endauth
     </div>
 
     <div class="flex-1 overflow-y-auto px-2 py-3">

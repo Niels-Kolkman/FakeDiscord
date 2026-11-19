@@ -20,6 +20,7 @@ use App\Http\Controllers\MentionSuggestionController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\MessageSearchController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\NotificationSettingsController;
 use App\Http\Controllers\PinController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReactionController;
@@ -120,6 +121,13 @@ Route::middleware(['auth', 'verified', 'throttle:60,1'])->prefix('notifications'
         Route::post('/{notification}/read', [NotificationController::class, 'read'])->name('notifications.read');
     });
 });
+
+// Notification settings (ISSUE-34): browser notifications for this browser
+// (resources/js/push-notifications.js) and your muted servers and channels.
+// The mute routes themselves are with the server routes below.
+Route::get('/settings/notifications', [NotificationSettingsController::class, 'edit'])
+    ->middleware(['auth', 'verified'])
+    ->name('settings.notifications');
 
 // 1:1 direct messages (ISSUE-23). POST /dms opens (or creates) the DM with
 // `user_id`: friends and people you share a server with, never across a
@@ -265,6 +273,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/servers/{server}/channels/{channel}/messages/{message}/pin', [PinController::class, 'destroy'])
             ->middleware('throttle:30,1')
             ->name('pins.destroy');
+
+        // Mute settings (ISSUE-34): PUT mutes, DELETE unmutes, for you only.
+        // Members who can see the channel. Muted places send no browser
+        // notifications (App\Support\NotificationMutes).
+        Route::middleware('throttle:60,1')->group(function () {
+            Route::put('/servers/{server}/mute', [NotificationSettingsController::class, 'muteServer'])->name('servers.mute');
+            Route::delete('/servers/{server}/mute', [NotificationSettingsController::class, 'unmuteServer'])->name('servers.unmute');
+            Route::put('/servers/{server}/channels/{channel}/mute', [NotificationSettingsController::class, 'muteChannel'])->name('channels.mute');
+            Route::delete('/servers/{server}/channels/{channel}/mute', [NotificationSettingsController::class, 'unmuteChannel'])->name('channels.unmute');
+        });
 
         // Drag and drop saves the whole sidebar order as JSON.
         Route::put('/servers/{server}/layout', [ChannelLayoutController::class, 'update'])
