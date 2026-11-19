@@ -20,6 +20,7 @@
 
 <nav
     aria-label="{{ $server->name }} channels"
+    aria-describedby="channel-shortcuts-help"
     class="flex min-w-0 flex-1 flex-col bg-surface-2 md:w-60 md:flex-none"
     data-channel-sidebar
     data-server-id="{{ $server->id }}"
@@ -43,6 +44,9 @@
             </form>
         @endauth
     </div>
+
+    {{-- Keyboard shortcuts (ISSUE-38, resources/js/keyboard-shortcuts.js). --}}
+    <p id="channel-shortcuts-help" class="sr-only">Alt+Up and Alt+Down switch channels, Alt+Shift+Up and Alt+Shift+Down go to unread channels.</p>
 
     <div class="flex-1 overflow-y-auto px-2 py-3">
         <ul class="mb-2 min-h-1 space-y-0.5" data-channel-list data-category-id="">

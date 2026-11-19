@@ -137,7 +137,7 @@ class MobileLayoutTest extends TestCase
     public function test_sidebars_fill_the_drawer_beside_the_rail_and_are_240px_from_md(): void
     {
         $html = $this->channelPage();
-        $this->assertSame(1, preg_match('#<nav\s+aria-label="Alpha Base channels"\s+class="([^"]*)"#', $html, $m));
+        $this->assertSame(1, preg_match('#<nav\s+aria-label="Alpha Base channels"[^>]*?\s+class="([^"]*)"#', $html, $m));
         $classes = explode(' ', $m[1]);
         foreach (['min-w-0', 'flex-1', 'md:w-60', 'md:flex-none'] as $class) {
             $this->assertContains($class, $classes, $class);
@@ -145,7 +145,7 @@ class MobileLayoutTest extends TestCase
         $this->assertNotContains('w-full', $classes, 'w-full next to the 72px rail would overflow the drawer.');
 
         $html = $this->page(route('friends.index'));
-        $this->assertSame(1, preg_match('#<nav aria-label="Navigation" class="([^"]*)"#', $html, $m));
+        $this->assertSame(1, preg_match('#<nav aria-label="Navigation"[^>]*?\s+class="([^"]*)"#', $html, $m));
         $this->assertNotContains('w-full', explode(' ', $m[1]));
     }
 
@@ -155,7 +155,7 @@ class MobileLayoutTest extends TestCase
      */
     public function test_views_and_scripts_use_theme_tokens_for_neutral_colours(): void
     {
-        $neutral = ['313338', '2b2d31', '1e1f22', '232428', '111214', '2e3035', '35373c', '35363c', '383a40', '404249', '41434a', '3f4147', '1f2023', 'dbdee1', 'b5bac1', '949ba4', '80848e', '00a8fc', 'fa777c'];
+        $neutral = ['313338', '2b2d31', '1e1f22', '232428', '111214', '2e3035', '35373c', '35363c', '383a40', '404249', '41434a', '3f4147', '1f2023', 'dbdee1', 'b5bac1', '949ba4', '80848e', '00a8fc', 'fa777c', 'abb1b8', '8c9099', '37bbfd', 'fb9296'];
         $pattern = '/[a-z-]+-\[#('.implode('|', $neutral).')\]/i';
 
         $offenders = [];

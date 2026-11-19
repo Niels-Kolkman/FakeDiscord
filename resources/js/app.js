@@ -11,3 +11,4 @@ import './notifications';
 import './push-notifications';
 import './theme';
 import './mobile-nav';
+import './keyboard-shortcuts';

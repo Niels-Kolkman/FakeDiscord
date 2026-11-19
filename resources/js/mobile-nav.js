@@ -72,6 +72,8 @@ export function initMobileNav({ document: doc, matchMedia = null, now = () => Da
     const toggles = doc.querySelectorAll('[data-drawer-toggle]');
     const backdrop = doc.querySelector('[data-drawer-backdrop]');
     const main = doc.querySelector('[data-app-main]');
+    // The skip link (ISSUE-38) is outside <main>, but must not be a way out of a drawer either.
+    const skipLink = doc.querySelector('[data-skip-link]');
     const media = matchMedia ? matchMedia(MOBILE_QUERY) : null;
     const isMobile = () => Boolean(media?.matches);
 
@@ -86,7 +88,7 @@ export function initMobileNav({ document: doc, matchMedia = null, now = () => Da
 
     // Everything but the open drawer.
     const setInert = (openName, inert) => {
-        const others = [main, ...Object.entries(drawers).filter(([name]) => name !== openName).map(([, el]) => el)];
+        const others = [main, skipLink, ...Object.entries(drawers).filter(([name]) => name !== openName).map(([, el]) => el)];
         others.forEach((el) => {
             if (!el) return;
             if (inert) el.setAttribute('inert', '');
