@@ -29,13 +29,13 @@
     @endif
 
     @if (request()->query('verified'))
-        <div role="status" class="mb-4 rounded bg-green-900/40 px-3 py-2 text-sm text-green-300">
+        <div role="status" class="mb-4 rounded bg-green-900/40 px-3 py-2 text-sm text-green-300 in-data-[theme=light]:bg-green-100 in-data-[theme=light]:text-green-800">
             Your email address is verified.
         </div>
     @endif
 
     @unless (auth()->user()?->hasVerifiedEmail())
-        <div class="mb-6 rounded bg-yellow-900/40 px-3 py-2 text-sm text-yellow-200">
+        <div class="mb-6 rounded bg-yellow-900/40 px-3 py-2 text-sm text-yellow-200 in-data-[theme=light]:bg-yellow-100 in-data-[theme=light]:text-yellow-900">
             <p class="mb-2">Verify your email address before you join servers. Check your inbox for the link.</p>
             <a href="{{ route('verification.notice') }}" class="font-medium text-link hover:underline">Resend verification email</a>
         </div>

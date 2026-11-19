@@ -61,7 +61,7 @@
                         @endforeach
                     </select>
                     @error('new_owner_id', $bag)
-                        <p id="new_owner_id-error" class="mt-1 text-sm text-red-400">{{ $message }}</p>
+                        <p id="new_owner_id-error" class="mt-1 text-sm text-danger-fg">{{ $message }}</p>
                     @enderror
                 </div>
 

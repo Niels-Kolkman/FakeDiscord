@@ -2,9 +2,12 @@
  * Profile popover: clicking any element with [data-profile-url] (see the
  * <x-user-avatar> Blade component) fetches that user's profile JSON and shows
  * a small card next to it. Closes on outside click, Escape or a second click.
+ * Opening focuses the card and Tab stays in it (ISSUE-38, focus-trap.js);
+ * Escape gives focus back to the avatar or name that opened it.
  *
  * All user-provided text is inserted with textContent, never parsed as HTML.
  */
+import { trapTab } from './focus-trap.js';
 
 const cache = new Map();
 let open = null; // { trigger, element }
@@ -22,9 +25,10 @@ function memberSince(iso) {
 }
 
 function render(profile) {
-    const card = el('div', 'fixed z-50 w-72 overflow-hidden rounded-lg bg-surface-alt text-fg shadow-2xl');
+    const card = el('div', 'fixed z-50 w-72 overflow-hidden rounded-lg bg-surface-alt text-fg shadow-2xl focus:outline-none');
     card.setAttribute('role', 'dialog');
     card.setAttribute('aria-label', `Profile of ${profile.name}`);
+    card.setAttribute('tabindex', '-1');
 
     card.appendChild(el('div', 'h-14 bg-[#5865f2]'));
 
@@ -153,6 +157,8 @@ async function toggle(trigger) {
     position(card, trigger);
     trigger.setAttribute('aria-expanded', 'true');
     open = { trigger, element: card };
+    // The card is at the end of <body>: move focus to it (ISSUE-38).
+    card.focus({ preventScroll: true });
 }
 
 document.addEventListener('click', (event) => {
@@ -170,7 +176,10 @@ document.addEventListener('keydown', (event) => {
         const { trigger } = open;
         close();
         trigger.focus();
+        return;
     }
+    // Tab stays in the card until Escape (ISSUE-38).
+    if (open && open.element.contains(document.activeElement)) trapTab(open.element, event);
 });
 
 window.addEventListener('resize', close);

@@ -55,7 +55,8 @@ function shell({ members = true, mobile = true } = {}) {
     const backdrop = make('div', { drawerBackdrop: '' });
     backdrop.hidden = true;
 
-    const body = make('body', { appShell: '' }, [nav, main, ...(membersDrawer ? [membersDrawer] : []), backdrop]);
+    const skipLink = make('a', { skipLink: '' });
+    const body = make('body', { appShell: '' }, [skipLink, nav, main, ...(membersDrawer ? [membersDrawer] : []), backdrop]);
     const doc = fakeDocument(body);
     doc.activeElement = body;
 
@@ -68,7 +69,7 @@ function shell({ members = true, mobile = true } = {}) {
         now: clock.now,
     });
 
-    return { doc, api, media, clock, main, nav, membersDrawer, backdrop, navToggle, membersToggle, composer, code, message, noSwipe };
+    return { doc, api, media, clock, main, nav, membersDrawer, backdrop, skipLink, navToggle, membersToggle, composer, code, message, noSwipe };
 }
 
 function click(node) {
@@ -130,6 +131,15 @@ test('the bar buttons open a drawer, make the page inert and show the backdrop',
     assert.equal(ctx.nav.getAttribute('inert'), null);
     assert.equal(ctx.nav.getAttribute('tabindex'), '-1');
     assert.equal(ctx.nav.focused, 1);
+});
+
+test('the skip link is inert while a drawer is open (ISSUE-38)', () => {
+    const ctx = shell();
+    click(ctx.navToggle);
+    assert.equal(ctx.skipLink.getAttribute('inert'), '');
+
+    ctx.api.close();
+    assert.equal(ctx.skipLink.getAttribute('inert'), null);
 });
 
 test('closing undoes all of it and gives focus back to the button', () => {

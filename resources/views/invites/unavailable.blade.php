@@ -1,6 +1,6 @@
 {{-- Expired or used-up invite (410), or the user is banned (403). --}}
 <x-layouts.auth title="Invite invalid">
-    <div role="alert" class="mb-6 rounded bg-red-900/40 px-3 py-2 text-center text-sm text-red-300">
+    <div role="alert" class="mb-6 rounded bg-red-900/40 px-3 py-2 text-center text-sm text-red-300 in-data-[theme=light]:bg-red-100 in-data-[theme=light]:text-red-800">
         {{ $message }}
     </div>
 

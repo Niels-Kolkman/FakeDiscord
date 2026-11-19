@@ -12,7 +12,10 @@
     $onFriendsPage = ($activeConversation ?? null) === null;
 @endphp
 
-<nav aria-label="Navigation" class="flex min-w-0 flex-1 flex-col bg-surface-2 md:w-60 md:flex-none">
+<nav aria-label="Navigation" aria-describedby="dm-shortcuts-help" class="flex min-w-0 flex-1 flex-col bg-surface-2 md:w-60 md:flex-none">
+    {{-- Keyboard shortcuts (ISSUE-38, resources/js/keyboard-shortcuts.js). --}}
+    <p id="dm-shortcuts-help" class="sr-only">Alt+Up and Alt+Down switch between direct messages.</p>
+
     <div class="flex min-h-12 items-center border-b border-edge px-4 py-2 shadow-sm">
         <a href="{{ route('dashboard') }}" class="font-semibold text-fg-strong hover:underline">{{ config('app.name', 'Laravel') }}</a>
     </div>

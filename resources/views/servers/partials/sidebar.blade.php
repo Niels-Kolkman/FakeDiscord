@@ -20,6 +20,7 @@
 
 <nav
     aria-label="{{ $server->name }} channels"
+    aria-describedby="channel-shortcuts-help"
     class="flex min-w-0 flex-1 flex-col bg-surface-2 md:w-60 md:flex-none"
     data-channel-sidebar
     data-server-id="{{ $server->id }}"
@@ -43,6 +44,9 @@
             </form>
         @endauth
     </div>
+
+    {{-- Keyboard shortcuts (ISSUE-38, resources/js/keyboard-shortcuts.js). --}}
+    <p id="channel-shortcuts-help" class="sr-only">Alt+Up and Alt+Down switch channels, Alt+Shift+Up and Alt+Shift+Down go to unread channels.</p>
 
     <div class="flex-1 overflow-y-auto px-2 py-3">
         <ul class="mb-2 min-h-1 space-y-0.5" data-channel-list data-category-id="">
@@ -88,7 +92,7 @@
             <p class="mt-4 hidden px-2 text-xs text-fg-subtle" data-reorder-hint>
                 Drag channels and categories to reorder them, or focus one and press Alt+↑ / Alt+↓.
             </p>
-            <p class="mt-2 hidden rounded bg-red-900/40 px-2 py-1 text-xs text-red-300" role="alert" data-reorder-error></p>
+            <p class="mt-2 hidden rounded bg-red-900/40 px-2 py-1 text-xs text-red-300 in-data-[theme=light]:bg-red-100 in-data-[theme=light]:text-red-800" role="alert" data-reorder-error></p>
         @endif
     </div>
 
@@ -120,7 +124,7 @@
             <a href="{{ route('audit-log.index', $server) }}" class="block rounded px-2 py-1 text-fg-muted hover:bg-hover hover:text-fg-strong">Audit log</a>
         @endcan
         {{-- The owner gets the same link; the page explains the transfer. --}}
-        <a href="{{ route('servers.leave.confirm', $server) }}" class="block rounded px-2 py-1 text-[#f23f43] hover:bg-hover">Leave server</a>
+        <a href="{{ route('servers.leave.confirm', $server) }}" class="block rounded px-2 py-1 text-danger-fg hover:bg-hover">Leave server</a>
         <a href="{{ route('dashboard') }}" class="block rounded px-2 py-1 text-fg-muted hover:bg-hover hover:text-fg-strong">Back to dashboard</a>
     </div>
 </nav>

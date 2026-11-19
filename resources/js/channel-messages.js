@@ -69,6 +69,10 @@
  *   text stays in data-source for editing. emoji-picker.js adds the 😀 picker
  *   to the composer.
  *
+ * - Screen readers (ISSUE-38): messages from others that arrive live are
+ *   announced as one line in [data-message-announcer] (live-announcer.js);
+ *   the list itself is not a live region.
+ *
  * All user-provided text is inserted with textContent / text nodes, never
  * parsed as HTML.
  * renderMessage() must match resources/views/messages/item.blade.php.
@@ -79,6 +83,8 @@ import { initMentionAutocomplete } from './mention-autocomplete.js';
 import { mentionsViewer } from './unread.js';
 import { fillMessageContent } from './markdown.js';
 import { initEmojiPicker } from './emoji-picker.js';
+import { announcementText, createAnnouncer } from './live-announcer.js';
+import { trapTab } from './focus-trap.js';
 
 const NEAR_BOTTOM_PX = 120;
 const LOAD_OLDER_PX = 400;
@@ -415,7 +421,7 @@ export function renderPin(pin, context = {}) {
     jump.dataset.pinJump = '';
     footer.appendChild(jump);
     if (context.canManageMessages) {
-        const unpin = el('button', 'shrink-0 rounded text-red-400 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]', 'Unpin');
+        const unpin = el('button', 'shrink-0 rounded text-danger-fg hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]', 'Unpin');
         unpin.type = 'button';
         unpin.dataset.pinUnpin = '';
         footer.appendChild(unpin);
@@ -538,7 +544,7 @@ function renderActions(message, url, context) {
         form.action = url;
         form.dataset.messageDeleteForm = '';
         hiddenInputs(form, [['_token', context.csrfToken ?? ''], ['_method', 'DELETE']]);
-        const remove = el('button', 'rounded px-2 py-0.5 text-xs text-red-400 hover:bg-active hover:text-red-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]', 'Delete');
+        const remove = el('button', 'rounded px-2 py-0.5 text-xs text-danger-fg hover:bg-active focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]', 'Delete');
         remove.type = 'submit';
         form.appendChild(remove);
         actions.appendChild(form);
@@ -833,6 +839,8 @@ function initChannel(root) {
         output: root.querySelector('[data-typing-indicator]'),
     });
 
+    const announcer = createAnnouncer(root.querySelector('[data-message-announcer]'));
+
     const append = (message, own = false) => {
         if (!belongs(message)) return;
         if (!own) typing?.messageArrived(message.author?.id);
@@ -842,7 +850,12 @@ function initChannel(root) {
 
         const stick = own || nearBottom();
         seen.add(id);
-        list.appendChild(renderMessage(message, context));
+        const item = renderMessage(message, context);
+        list.appendChild(item);
+        // Not your own, also when sent from another tab.
+        if (!own && String(message.author?.id ?? '') !== String(context.viewerId)) {
+            announcer.announce(announcementText(message, { mention: item.dataset.mentionsViewer !== undefined }));
+        }
         if (stick) {
             scrollToBottom();
         } else {
@@ -997,6 +1010,8 @@ function initChannel(root) {
                 event.preventDefault();
                 closePins(true);
             }
+            // Tab stays in the open panel (ISSUE-38).
+            trapTab(pinsPanel, event);
         });
         document.addEventListener('click', (event) => {
             if (pinsOpen() && !pinsPanel.contains(event.target) && !pinsToggle.contains(event.target)) closePins();
@@ -1088,7 +1103,7 @@ function initChannel(root) {
         input.setAttribute('aria-describedby', `${input.id}-hint ${input.id}-error`);
         const hint = el('p', 'mt-1 text-xs text-fg-subtle', 'Escape to cancel · Enter to save');
         hint.id = `${input.id}-hint`;
-        const error = el('p', 'mt-1 hidden text-sm text-red-400');
+        const error = el('p', 'mt-1 hidden text-sm text-danger-fg');
         error.id = `${input.id}-error`;
         error.setAttribute('role', 'alert');
         editor.append(input, hint, error);

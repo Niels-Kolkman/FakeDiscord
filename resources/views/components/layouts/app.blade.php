@@ -45,6 +45,12 @@
         @endif
     </head>
     <body class="flex min-h-screen flex-col bg-surface font-sans text-fg antialiased md:h-screen md:flex-row md:overflow-hidden" data-app-shell>
+        {{-- Skip link (ISSUE-38): the first Tab stop, past the rail and the sidebar. --}}
+        <a href="#main-content"
+            class="sr-only rounded bg-[#5865f2] px-3 py-2 text-sm font-medium text-white focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            data-skip-link
+        >Skip to content</a>
+
         @if ($hasNav)
             <div id="app-nav-drawer" class="flex shrink-0 bg-surface-2" data-drawer="nav">
                 @if ($hasRail)
@@ -57,7 +63,8 @@
             </div>
         @endif
 
-        <main class="flex min-w-0 flex-1 flex-col" data-app-main>
+        {{-- tabindex="-1": the skip link and a channel switch (resources/js/keyboard-shortcuts.js) can focus it. --}}
+        <main id="main-content" tabindex="-1" class="flex min-w-0 flex-1 flex-col focus:outline-none" data-app-main>
             @if ($hasNav || $hasMembers)
                 {{-- Small screens with JavaScript only (resources/css/app.css). --}}
                 <div class="hidden min-h-11 shrink-0 items-center gap-1 border-b border-edge bg-surface-2 px-1" data-mobile-bar>

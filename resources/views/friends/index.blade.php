@@ -62,7 +62,7 @@
 
         @error('user')
             {{-- "Message" could not open a DM (ISSUE-23). --}}
-            <p role="alert" class="mb-4 rounded bg-red-500/10 px-3 py-2 text-sm text-red-300" data-dm-error>{{ $message }}</p>
+            <p role="alert" class="mb-4 rounded bg-red-500/10 px-3 py-2 text-sm text-red-300 in-data-[theme=light]:bg-red-100 in-data-[theme=light]:text-red-800" data-dm-error>{{ $message }}</p>
         @enderror
 
         {{-- Group DMs (ISSUE-24): pick up to MAX_PARTICIPANTS - 1 friends. Only on the All tab, next to the friends list. --}}

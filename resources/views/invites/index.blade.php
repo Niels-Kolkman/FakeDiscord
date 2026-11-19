@@ -1,6 +1,6 @@
 <x-layouts.auth :title="'Invite people to '.$server->name">
     @if (session('invite_url'))
-        <div role="status" class="mb-4 rounded bg-green-900/40 px-3 py-2 text-sm text-green-300">
+        <div role="status" class="mb-4 rounded bg-green-900/40 px-3 py-2 text-sm text-green-300 in-data-[theme=light]:bg-green-100 in-data-[theme=light]:text-green-800">
             <p class="mb-2">Your invite link is ready. Share it with your friends:</p>
             <input type="text" readonly value="{{ session('invite_url') }}" aria-label="Invite link" onfocus="this.select()"
                 class="w-full rounded bg-surface-3 px-3 py-2 font-mono text-fg-strong outline-none focus:ring-2 focus:ring-[#5865f2]">
@@ -24,7 +24,7 @@
                     @endforeach
                 </select>
                 @error($select['name'])
-                    <p id="{{ $select['name'] }}-error" class="mt-1 text-sm text-red-400">{{ $message }}</p>
+                    <p id="{{ $select['name'] }}-error" class="mt-1 text-sm text-danger-fg">{{ $message }}</p>
                 @enderror
             </div>
         @endforeach

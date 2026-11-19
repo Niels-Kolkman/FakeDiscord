@@ -50,7 +50,10 @@
  * (the user's saved choice, users.theme). The dark values are the
  * defaults; [data-theme="light"] swaps them. Accent, danger, success and
  * status colours (#5865f2, #da373c, ...) are the same in both themes and
- * stay as plain hex classes; so does white text on them.
+ * stay as plain hex classes; so does white text on them. Red, green and
+ * yellow text goes through text-danger-fg / text-warn-fg, or alert boxes
+ * add in-data-[theme=light]: variants (Tailwind's -300 shades are only
+ * readable on dark backgrounds; tests/Feature/Layout/ContrastTest.php).
  */
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
@@ -69,15 +72,24 @@
     --color-line: #3f4147;             /* dividers */
     --color-edge: #1f2023;             /* header and pane borders */
 
-    /* Text, from loudest to quietest. */
+    /*
+     * Text, from loudest to quietest. Contrast (ISSUE-38, WCAG 2.2 AA,
+     * checked by tests/js/contrast.test.js in both themes, on every
+     * background above):
+     *   fg-strong … fg-subtle, link, danger-fg, warn-fg: 4.5:1, for text
+     *     (placeholders use fg-subtle too);
+     *   fg-faint: 3:1, only for decorative icons (#, 🔊, ↱; aria-hidden);
+     *   fg-dim: no minimum, only for disabled controls ("Newer" on the
+     *     first page), which WCAG exempts.
+     */
     --color-fg-strong: #ffffff;
     --color-fg: #dbdee1;
     --color-fg-muted: #b5bac1;
-    --color-fg-subtle: #949ba4;
-    --color-fg-faint: #80848e;
+    --color-fg-subtle: #abb1b8;
+    --color-fg-faint: #8c9099;
     --color-fg-dim: #6d6f78;
-    --color-link: #00a8fc;
-    --color-danger-fg: #fa777c;
+    --color-link: #37bbfd;
+    --color-danger-fg: #fb9296;
     --color-warn-fg: #f0b232;
 }
 
@@ -104,12 +116,12 @@
         --color-fg-strong: #060607;
         --color-fg: #313338;
         --color-fg-muted: #4e5058;
-        --color-fg-subtle: #5c5e66;
+        --color-fg-subtle: #5a5c64;
         --color-fg-faint: #6d6f78;
         --color-fg-dim: #80848e;
-        --color-link: #006ce7;
-        --color-danger-fg: #da373c;
-        --color-warn-fg: #9a6700;
+        --color-link: #0058bc;
+        --color-danger-fg: #ac2b2f;
+        --color-warn-fg: #7e5400;
     }
 }
 
