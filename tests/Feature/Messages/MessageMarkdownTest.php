@@ -92,7 +92,7 @@ class MessageMarkdownTest extends TestCase
 
         $this->channelPage()
             ->assertOk()
-            ->assertSee('<div class="message-markdown whitespace-pre-wrap break-words text-[#dbdee1]" data-message-body>', false)
+            ->assertSee('<div class="message-markdown whitespace-pre-wrap break-words text-fg" data-message-body>', false)
             ->assertSee('<pre><code>code</code></pre>', false);
     }
 

@@ -133,7 +133,7 @@ function member({ id, name, chosen = 'online', presence = 'online', roleGroup = 
         classes: presence === 'offline' ? ['opacity-40', 'hover:opacity-100'] : [],
     }, [
         el('span', { dataset: { statusDot: '' } }),
-        el('span', { dataset: { memberName: '' }, text: name, classes: ['text-[#dbdee1]'] }),
+        el('span', { dataset: { memberName: '' }, text: name, classes: ['text-fg'] }),
         el('span', { dataset: { statusLabel: '' } }),
     ]);
 }
@@ -445,7 +445,7 @@ test('a member coming online moves to their role group, in their role colour', (
     assert.equal(carol.querySelector('[data-status-label]').textContent, ', Do Not Disturb');
     const name = carol.querySelector('[data-member-name]');
     assert.equal(name.style.color, '#e67e22');
-    assert.equal(name.classList.contains('text-[#dbdee1]'), false);
+    assert.equal(name.classList.contains('text-fg'), false);
     assert.equal(document.querySelector('[data-member-group="role-5"]').querySelector('[data-member-heading]').textContent, 'Mods — 2');
     assert.equal(document.querySelector('[data-member-summary]').textContent, 'Members (4 online of 5)');
 });
@@ -460,7 +460,7 @@ test('a member going offline moves to offline, sorted, without their role colour
     assert.deepEqual(names(document, 'offline'), ['Alice', 'Carol', 'Dave']);
     assert.equal(alice.classList.contains('opacity-40'), true);
     assert.equal(alice.querySelector('[data-member-name]').style.color, '');
-    assert.equal(alice.querySelector('[data-member-name]').classList.contains('text-[#dbdee1]'), true);
+    assert.equal(alice.querySelector('[data-member-name]').classList.contains('text-fg'), true);
     assert.equal(alice.querySelector('[data-status-label]').textContent, ', Offline');
     // The Mods group is empty now, so it is hidden.
     assert.equal(document.querySelector('[data-member-group="role-5"]').hidden, true);
