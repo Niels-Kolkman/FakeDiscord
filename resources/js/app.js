@@ -8,3 +8,4 @@ import './moderation';
 import './unread';
 import './presence';
 import './notifications';
+import './push-notifications';
