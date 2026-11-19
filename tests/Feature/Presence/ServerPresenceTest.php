@@ -244,6 +244,76 @@ class ServerPresenceTest extends TestCase
         $this->assertCount(4, $this->server->getConnection()->getQueryLog());
     }
 
+    // --- Server::memberList() ----------------------------------------------------
+
+    /**
+     * @return array<string, string> display name => status shown
+     */
+    private function statuses(MemberList $list): array
+    {
+        return collect($list->allGroups)
+            ->flatMap(fn (MemberGroup $group) => $group->members)
+            ->mapWithKeys(fn (ServerMember $member) => [$member->displayName() => $list->statusOf($member)])
+            ->sortKeys()
+            ->all();
+    }
+
+    public function test_member_list_counts_the_signed_in_user_as_the_viewer(): void
+    {
+        $alice = $this->member('Alice', 'idle');
+        $this->reverbWith([]);
+
+        $this->actingAs($alice);
+
+        $this->assertSame(['Alice' => 'idle', 'Owner' => 'offline'], $this->statuses($this->server->fresh()->memberList()));
+    }
+
+    public function test_an_explicit_viewer_wins_over_the_signed_in_user(): void
+    {
+        $alice = $this->member('Alice', 'dnd');
+        $this->reverbWith([]);
+
+        $this->actingAs($this->owner);
+
+        $this->assertSame(['Alice' => 'dnd', 'Owner' => 'offline'], $this->statuses($this->server->fresh()->memberList($alice)));
+    }
+
+    public function test_without_a_viewer_only_reverbs_list_counts(): void
+    {
+        $alice = $this->member('Alice', 'online');
+        $this->reverbWith([(object) ['id' => $alice->id]]);
+
+        $list = $this->server->fresh()->memberList();
+
+        $this->assertSame(['Alice' => 'online', 'Owner' => 'offline'], $this->statuses($list));
+        $this->assertSame(1, $list->online);
+        $this->assertSame(2, $list->total);
+    }
+
+    public function test_without_a_websocket_broadcaster_member_list_falls_back_to_the_stored_status(): void
+    {
+        config(['broadcasting.default' => 'null']);
+        $this->member('Alice', 'idle');
+        $this->member('Bob', 'offline');
+
+        $this->actingAs($this->owner);
+
+        $this->assertSame(
+            ['Alice' => 'idle', 'Bob' => 'offline', 'Owner' => 'online'],
+            $this->statuses($this->server->fresh()->memberList()),
+        );
+    }
+
+    public function test_a_connected_member_with_an_unknown_stored_status_shows_online_on_the_page(): void
+    {
+        $alice = $this->member('Alice', 'invisible');
+        $this->reverbWith([(object) ['id' => $alice->id]]);
+
+        $html = (string) $this->actingAs($this->owner)->get("/servers/{$this->server->id}")->assertOk()->getContent();
+
+        $this->assertMatchesRegularExpression('/data-user-id="'.$alice->id.'"\s+data-user-status="online"\s+data-presence="online"/', $html);
+    }
+
     // --- The server page ---------------------------------------------------------
 
     public function test_the_server_page_shows_who_reverb_says_is_connected(): void

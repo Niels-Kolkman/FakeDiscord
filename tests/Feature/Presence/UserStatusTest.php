@@ -2,7 +2,9 @@
 
 namespace Tests\Feature\Presence;
 
+use App\Actions\Moderation\BanMember;
 use App\Actions\Moderation\KickMember;
+use App\Actions\Moderation\TimeoutMember;
 use App\Actions\Profile\UpdateUserStatus;
 use App\Actions\Servers\CreateServer;
 use App\Actions\Servers\LeaveServer;
@@ -106,6 +108,27 @@ class UserStatusTest extends TestCase
         $this->actingAs($this->member)->authorize("presence-server.{$this->server->id}")->assertForbidden();
     }
 
+    public function test_banned_members_cannot_join_again(): void
+    {
+        app(BanMember::class)->ban($this->server, $this->member, $this->owner, 'spam');
+
+        $this->actingAs($this->member)->authorize("presence-server.{$this->server->id}")->assertForbidden();
+    }
+
+    public function test_timed_out_members_still_show_as_online(): void
+    {
+        app(TimeoutMember::class)->timeout($this->server, $this->member, 600);
+
+        $this->actingAs($this->member)->authorize("presence-server.{$this->server->id}")->assertOk();
+    }
+
+    public function test_a_member_cannot_join_another_servers_channel(): void
+    {
+        $other = app(CreateServer::class)->create(User::factory()->create(), 'Other');
+
+        $this->actingAs($this->member)->authorize("presence-server.{$other->id}")->assertForbidden();
+    }
+
     public function test_an_unknown_server_is_refused(): void
     {
         $this->actingAs($this->member)->authorize('presence-server.999999')->assertForbidden();
@@ -156,6 +179,35 @@ class UserStatusTest extends TestCase
         $this->actingAs($this->member)->putJson('/settings/status', [])->assertUnprocessable();
 
         $this->assertSame('online', $this->member->fresh()?->status);
+    }
+
+    public function test_the_json_reply_carries_the_saved_status_even_when_nothing_changed(): void
+    {
+        $this->member->update(['status' => 'idle']);
+
+        $this->actingAs($this->member)
+            ->putJson('/settings/status', ['status' => 'idle'])
+            ->assertOk()
+            ->assertExactJson(['status' => 'idle']);
+    }
+
+    public function test_picking_a_status_is_rate_limited(): void
+    {
+        foreach (range(1, 30) as $i) {
+            $this->actingAs($this->member)
+                ->putJson('/settings/status', ['status' => $i % 2 === 0 ? 'online' : 'idle'])
+                ->assertOk();
+        }
+
+        $this->actingAs($this->member)->putJson('/settings/status', ['status' => 'dnd'])->assertTooManyRequests();
+        $this->assertSame('online', $this->member->fresh()?->status);
+    }
+
+    public function test_a_status_change_does_not_touch_other_users(): void
+    {
+        $this->actingAs($this->member)->putJson('/settings/status', ['status' => 'dnd'])->assertOk();
+
+        $this->assertSame('online', $this->owner->fresh()?->status);
     }
 
     public function test_guests_cannot_pick_a_status(): void
@@ -234,6 +286,16 @@ class UserStatusTest extends TestCase
                 && $event->broadcastAs() === 'user.status'
                 && $event->broadcastWith() === ['user_id' => $this->member->id, 'status' => 'dnd'];
         });
+    }
+
+    public function test_a_server_the_user_left_is_no_longer_told(): void
+    {
+        app(LeaveServer::class)->leave($this->server, $this->member);
+        Event::fake([UserStatusChanged::class]);
+
+        app(UpdateUserStatus::class)->update($this->member, 'idle');
+
+        Event::assertDispatched(UserStatusChanged::class, fn (UserStatusChanged $event): bool => $event->serverIds === []);
     }
 
     public function test_the_change_is_broadcast_on_presence_and_private_channels(): void
