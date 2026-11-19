@@ -165,6 +165,19 @@ class MarkdownTest extends TestCase
         }
     }
 
+    /**
+     * tests/js/markdown.test.js builds the same corpus and checks the same
+     * first inputs, so both renderers are fuzzed with identical text.
+     */
+    public function test_the_fuzz_corpus_is_the_one_the_js_tests_use(): void
+    {
+        $this->assertSame([
+            "\" </code><</code> `\n**#]>😀\\",
+            "http://a.b'(** ",
+            '>">>> https://x.y/&*http://a.b] _"https://x.y/<._',
+        ], array_slice(self::fuzzInputs(2000), 0, 3));
+    }
+
     public function test_text_without_markup_symbols_is_only_escaped(): void
     {
         $input = "Hello there, it's 5 o'clock & 2 + 2 = 4.\nSecond line; done!";
