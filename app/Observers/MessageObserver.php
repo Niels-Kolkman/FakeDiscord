@@ -9,7 +9,7 @@ use App\Support\AuditLog;
 use Illuminate\Support\Facades\Auth;
 
 /**
- * Audit log (ISSUE-30): a server message deleted by someone other than its
+ * Audit log: a server message deleted by someone other than its
  * author (Manage Messages), like Discord. Deleting your own message and
  * anything in DMs is not logged. A ban's message purge is not logged per
  * message (BanMember pauses the log).

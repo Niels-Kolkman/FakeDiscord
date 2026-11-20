@@ -9,7 +9,7 @@ use PHPUnit\Framework\TestCase;
 use Tests\Concerns\DocumentsKnownBugs;
 
 /**
- * ISSUE-36: message markdown (App\Support\Markdown). The cases come from
+ * Message markdown (App\Support\Markdown). The cases come from
  * tests/fixtures/markdown.json, which tests/js/markdown.test.js checks
  * resources/js/markdown.js against too, so both render the same.
  */

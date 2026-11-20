@@ -7,7 +7,7 @@ use Illuminate\Broadcasting\Broadcasters\PusherBroadcaster;
 use Illuminate\Contracts\Broadcasting\Factory as BroadcastFactory;
 
 /**
- * Closes a user's websocket connections on the Reverb server (ISSUE-29).
+ * Closes a user's websocket connections on the Reverb server.
  *
  * Channel authorization (routes/channels.php) only runs when a browser
  * subscribes, so someone who is kicked or banned would otherwise keep

@@ -1,5 +1,5 @@
 /**
- * Mention autocomplete in the composer (ISSUE-33).
+ * Mention autocomplete in the composer.
  *
  * Typing "@" and a few characters in a channel's composer lists who that
  * could be, from data-mentions-url (App\Http\Controllers\MentionSuggestionController):

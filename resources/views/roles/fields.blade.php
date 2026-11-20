@@ -1,5 +1,5 @@
 {{--
-    Shared role form fields (ISSUE-26). @everyone ($role->is_default) only
+    Shared role form fields. @everyone ($role->is_default) only
     shows the permission checkboxes.
 
     @var \App\Models\Role|null $role

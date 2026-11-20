@@ -7,7 +7,7 @@ use App\Models\Invite;
 use App\Support\AuditLog;
 
 /**
- * Audit log (ISSUE-30): invites created and revoked. Uses are not logged.
+ * Audit log: invites created and revoked. Uses are not logged.
  */
 class InviteObserver
 {

@@ -24,7 +24,7 @@ use Tests\Concerns\GivesPermissions;
 use Tests\TestCase;
 
 /**
- * ISSUE-30 edge cases: cascades that must not flood the log, the actions
+ * Edge cases: cascades that must not flood the log, the actions
  * AuditLogTest does not walk through, failed requests that must leave no
  * trace, AuditLog's own contract and the details of the page.
  */

@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Group DMs (ISSUE-24): create one, add and remove participants, leave and
+ * Group DMs: create one, add and remove participants, leave and
  * rename it.
  *
  * Like Discord, a group DM has at most Conversation::MAX_PARTICIPANTS

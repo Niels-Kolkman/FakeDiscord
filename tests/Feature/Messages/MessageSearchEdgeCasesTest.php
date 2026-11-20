@@ -19,7 +19,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Tests\TestCase;
 
 /**
- * ISSUE-21: edge cases of message search on top of MessageSearchTest.
+ * Edge cases of message search on top of MessageSearchTest.
  */
 class MessageSearchEdgeCasesTest extends TestCase
 {
@@ -164,7 +164,7 @@ class MessageSearchEdgeCasesTest extends TestCase
      * The docblocks say "newest first". Scout's database engine orders by
      * id desc, which only gives that order when ids follow created_at.
      *
-     * KNOWN BUG (ISSUE-21 review): MessageSearch::paginate() sets no order,
+     * KNOWN BUG: MessageSearch::paginate() sets no order,
      * so a backdated or imported message is sorted by id. Remove the
      * markTestIncomplete() once it orders by messages.created_at desc.
      */

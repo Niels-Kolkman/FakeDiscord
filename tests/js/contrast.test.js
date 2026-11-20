@@ -1,4 +1,4 @@
-// ISSUE-38: WCAG 2.2 AA contrast of the theme tokens in resources/css/app.css,
+// WCAG 2.2 AA contrast of the theme tokens in resources/css/app.css,
 // in both themes. Text tokens need 4.5:1 on every background token (normal
 // size text, 1.4.3), fg-faint 3:1 (decorative icons only, like non-text
 // contrast in 1.4.11); fg-dim is only for disabled controls, which WCAG

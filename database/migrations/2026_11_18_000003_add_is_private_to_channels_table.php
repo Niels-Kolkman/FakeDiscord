@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Private channels (ISSUE-28): @everyone loses View Channels in them;
+     * Private channels: @everyone loses View Channels in them;
      * only roles with a channel override that allows it can see them (see
      * App\Services\PermissionService).
      */

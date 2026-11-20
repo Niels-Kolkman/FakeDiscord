@@ -21,20 +21,20 @@ use Laravel\Scout\Searchable;
  * Posted in a server channel OR a conversation: exactly one of channel_id /
  * conversation_id is set (enforced in the app layer, see the migration).
  *
- * Deleting a message soft deletes it (ISSUE-16): every query hides it, but
+ * Deleting a message soft deletes it: every query hides it, but
  * the row stays so replies keep pointing at it.
  *
- * Searchable with Laravel Scout's database engine (ISSUE-21): a search is a
+ * Searchable with Laravel Scout's database engine: a search is a
  * LIKE query on the columns of toSearchableArray(), so there is no index to
  * keep in sync. App\Support\MessageSearch adds the server and filters.
  *
- * Replies (ISSUE-20) point at the original with reply_to_id; the payload
+ * Replies point at the original with reply_to_id; the payload
  * carries a short preview of it (replyPreview()). Pinned messages have a
  * pinned_at (and pinned_by_id, who pinned them).
  *
  * @property Carbon|null $edited_at NULL = never edited
  * @property Carbon|null $pinned_at NULL = not pinned
- * @property array{users: list<int>, roles: list<int>, everyone: bool}|null $mentions who it mentions (ISSUE-33), NULL = nobody
+ * @property array{users: list<int>, roles: list<int>, everyone: bool}|null $mentions who it mentions, NULL = nobody
  */
 #[ObservedBy(MessageObserver::class)]
 class Message extends Model
@@ -76,7 +76,7 @@ class Message extends Model
     }
 
     /**
-     * Mentions (ISSUE-33): whenever the content of a channel message is
+     * Mentions: whenever the content of a channel message is
      * written, who it mentions is worked out again (Mentions::resolve())
      * and stored in `mentions`. Not fillable: nobody can make a message
      * mention someone it does not name.
@@ -130,7 +130,7 @@ class Message extends Model
     }
 
     /**
-     * Leaves out the messages of everyone $viewer blocked (ISSUE-25), like
+     * Leaves out the messages of everyone $viewer blocked, like
      * Discord hides them in shared servers. Messages of deleted accounts
      * (no author) stay. Used for server channels only: a DM with someone
      * you blocked keeps its history.
@@ -147,7 +147,7 @@ class Message extends Model
     /**
      * The private broadcast channel (without "private-") its events go out
      * on: "channel.{id}" for a server channel, "conversation.{id}" for a
-     * DM (ISSUE-23). Both are authorised in routes/channels.php.
+     * DM. Both are authorised in routes/channels.php.
      */
     public function broadcastChannel(): string
     {
@@ -294,11 +294,11 @@ class Message extends Model
      *
      * `reactions` are the grouped reactions (App\Support\Reactions::groups());
      * with a $viewer each group also says whether they reacted (`me`).
-     * `attachments` (ISSUE-19) carry signed URLs (MessageAttachment::toPayload()).
-     * `reply_to` (ISSUE-20) is replyPreview(); `pinned_at` is NULL unless pinned.
+     * `attachments` carry signed URLs (MessageAttachment::toPayload()).
+     * `reply_to` is replyPreview(); `pinned_at` is NULL unless pinned.
      *
-     * `conversation_id` (ISSUE-23) is set instead of `channel_id` for a DM.
-     * `mentions` (ISSUE-33) is who it mentions (Mentions::resolve()), NULL
+     * `conversation_id` is set instead of `channel_id` for a DM.
+     * `mentions` is who it mentions (Mentions::resolve()), NULL
      * for nobody; resources/js/unread.js counts the badges from it.
      *
      * @return array{id: int, channel_id: int|null, conversation_id: int|null, content: string, mentions: array<string, mixed>|null, created_at: string|null, edited_at: string|null, pinned_at: string|null, author: array{id: int, name: string, username: string, avatar_url: string, profile_url: string}|null, reply_to: array<string, mixed>|null, reactions: list<array<string, mixed>>, attachments: list<array<string, mixed>>}

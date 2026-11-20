@@ -12,7 +12,7 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 
 /**
- * A moderator acted on the recipient in a server (ISSUE-29). Sent to the
+ * A moderator acted on the recipient in a server. Sent to the
  * recipient only, on their private "App.Models.User.{id}" channel, which
  * they keep after leaving the server. resources/js/moderation.js listens
  * for ".member.moderated".

@@ -21,7 +21,7 @@ class ReactionRequest extends FormRequest
     /**
      * Removing needs MessagePolicy::react. Adding needs
      * MessagePolicy::addReaction, which also wants Add Reactions for an
-     * emoji nobody reacted with yet (ISSUE-27).
+     * emoji nobody reacted with yet.
      */
     public function authorize(): bool
     {

@@ -1,5 +1,5 @@
 {{--
-    The signed-in user's status (ISSUE-31): online, idle or do not disturb,
+    The signed-in user's status: online, idle or do not disturb,
     shown while they are connected. A plain form (PUT /settings/status);
     resources/js/presence.js saves it as soon as it changes, hides the
     button and keeps it in step with the user's other tabs.

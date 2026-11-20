@@ -16,7 +16,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
- * ISSUE-13 edge cases for the member sidebar: group keys, statuses,
+ * Edge cases for the member sidebar: group keys, statuses,
  * stale role rows, highest-role data and the rendered markup.
  */
 class MemberListEdgeCasesTest extends TestCase

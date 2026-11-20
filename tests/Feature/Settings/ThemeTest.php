@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
- * ISSUE-37: the dark / light theme, saved per user (users.theme) and put
+ * The dark / light theme, saved per user (users.theme) and put
  * on <html data-theme> by both layouts; <x-theme-toggle> switches it.
  */
 class ThemeTest extends TestCase

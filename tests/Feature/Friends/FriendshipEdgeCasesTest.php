@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Event;
 use Tests\TestCase;
 
 /**
- * ISSUE-22: edge cases around friend requests that FriendRequestTest and
+ * Edge cases around friend requests that FriendRequestTest and
  * FriendsPageTest do not reach: input limits, the duplicate-insert race,
  * the action-level guards, the model scopes, the counts carried by
  * FriendshipChanged, and the lifecycle after a request is gone.

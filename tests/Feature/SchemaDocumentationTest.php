@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 /**
- * ISSUE-3: the committed ERD (docs/database-schema.md) matches the migrated
+ * The committed ERD (docs/database-schema.md) matches the migrated
  * schema, and the migrations stay portable / SQLite-safe.
  */
 class SchemaDocumentationTest extends TestCase

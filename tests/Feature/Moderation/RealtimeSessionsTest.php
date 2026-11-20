@@ -13,7 +13,7 @@ use Pusher\Pusher;
 use Tests\TestCase;
 
 /**
- * ISSUE-29: closing a kicked or banned user's websocket connections through
+ * Closing a kicked or banned user's websocket connections through
  * Reverb's Pusher-compatible "terminate user connections" API.
  */
 class RealtimeSessionsTest extends TestCase

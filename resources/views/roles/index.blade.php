@@ -1,5 +1,5 @@
 {{--
-    The server's roles (ISSUE-26), highest first; @everyone is always last.
+    The server's roles, highest first; @everyone is always last.
 
     @var \App\Models\Server $server
     @var \Illuminate\Support\Collection<int, \App\Models\Role> $roles  with users_count
@@ -24,7 +24,7 @@
     <ul class="mb-6 space-y-2" aria-label="Roles">
         @foreach ($roles as $role)
             @php($index = $movable->search(fn ($r) => $r->is($role)))
-            {{-- The role hierarchy (ISSUE-27): only roles below your own highest role can be opened or moved, and not past it. --}}
+            {{-- The role hierarchy: only roles below your own highest role can be opened or moved, and not past it. --}}
             @php($canManage = auth()->user()?->can('manage', $role) ?? false)
             <li class="flex items-center gap-3 rounded bg-surface-3 px-3 py-2 text-sm" data-role="{{ $role->id }}">
                 <span class="h-3 w-3 shrink-0 rounded-full" aria-hidden="true"

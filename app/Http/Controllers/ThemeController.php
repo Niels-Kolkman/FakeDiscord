@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 /**
- * The theme toggle (ISSUE-37, <x-theme-toggle>): dark or light, saved on
+ * The theme toggle (<x-theme-toggle>): dark or light, saved on
  * the user so it follows them to every browser. A plain form redirects
  * back; resources/js/theme.js switches the page at once and sends it with
  * Accept: JSON, getting {theme} instead.

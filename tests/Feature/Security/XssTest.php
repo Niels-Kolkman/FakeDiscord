@@ -1,7 +1,7 @@
 <?php
 
 /**
- * ISSUE-41: XSS review of the pages that show what users typed. Message
+ * XSS review of the pages that show what users typed. Message
  * markdown itself is covered by MarkdownTest / MessageMarkdownTest (the
  * renderer only writes its own tags and escapes everything else); these
  * put a payload in every other user-controlled string on the main pages

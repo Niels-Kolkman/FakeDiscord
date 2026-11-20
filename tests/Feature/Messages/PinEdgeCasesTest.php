@@ -23,7 +23,7 @@ use RuntimeException;
 use Tests\TestCase;
 
 /**
- * ISSUE-20 edge cases around pinning that PinTest does not cover: stale
+ * Edge cases around pinning that PinTest does not cover: stale
  * models (two moderators at once), the pin limit when nothing changes, a
  * broadcaster that is down, toOthers(), scoped bindings across servers,
  * what the pinned list carries, and how pins survive edits.

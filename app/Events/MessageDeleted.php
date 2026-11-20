@@ -10,11 +10,11 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 
 /**
- * A message was deleted (ISSUE-16). Only the ids go out, never the
+ * A message was deleted. Only the ids go out, never the
  * content: the browser removes the message with that id. It listens for
  * ".message.deleted" (resources/js/channel-messages.js).
  *
- * A channel message goes out on "channel.{id}"; a DM (ISSUE-23), with a
+ * A channel message goes out on "channel.{id}"; a DM, with a
  * $conversationId and no $channelId, on "conversation.{id}".
  */
 class MessageDeleted implements ShouldBroadcast

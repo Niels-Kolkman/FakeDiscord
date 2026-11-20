@@ -31,7 +31,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         // One per request, so AuditLog::withoutRecording() covers every
-        // observer that fires inside it (ISSUE-30).
+        // observer that fires inside it.
         $this->app->scoped(AuditLog::class);
 
         // Per request / queue job: it keeps values in memory (ISSUE-42).

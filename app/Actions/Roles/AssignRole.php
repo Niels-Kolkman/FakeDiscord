@@ -81,8 +81,8 @@ class AssignRole
     }
 
     /**
-     * The audit log (ISSUE-30) is written here, for both the plain insert
-     * and the detach.
+     * role_user is a pivot without model events, so the audit log is
+     * written here, for both the plain insert and the detach.
      */
     private function record(Role $role, User $user, string $action): void
     {

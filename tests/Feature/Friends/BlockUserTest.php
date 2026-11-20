@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Event;
 use Tests\TestCase;
 
 /**
- * ISSUE-25: blocking someone (POST /friends/block, App\Actions\Friends\BlockUser)
+ * Blocking someone (POST /friends/block, App\Actions\Friends\BlockUser)
  * ends any request or friendship between the two, stops friend requests
  * and DMs both ways, and never tells the blocked person about it.
  */

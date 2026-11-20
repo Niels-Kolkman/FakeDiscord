@@ -1,5 +1,5 @@
 /**
- * Browser end-to-end tests (ISSUE-40): `npm run test:e2e`.
+ * Browser end-to-end tests: `npm run test:e2e`.
  *
  * Playwright starts the app (tests/e2e/support/serve.js: a fresh
  * database/e2e.sqlite on :8001) and Reverb, unless Reverb is already

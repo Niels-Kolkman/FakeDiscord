@@ -12,7 +12,7 @@ use App\Support\RealtimeSessions;
 use Illuminate\Auth\Access\AuthorizationException;
 
 /**
- * Removes a member from the server (ISSUE-29). They can rejoin with an
+ * Removes a member from the server. They can rejoin with an
  * invite. Who may kick whom is ServerPolicy::kick.
  *
  * The membership and the member's roles on the server go the same way as
@@ -37,7 +37,7 @@ class KickMember
         $this->members->leave($server, $member);
 
         // Leaving and being kicked delete the same row, so the audit log
-        // (ISSUE-30) cannot tell them apart from a model event: recorded here.
+        // cannot tell them apart from a model event: recorded here.
         $this->log->record($server, AuditLogEntry::MEMBER_KICK, $member, $member->name);
 
         MemberModerated::dispatchFor(MemberModerated::KICKED, $server, $member);

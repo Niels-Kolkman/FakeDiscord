@@ -16,7 +16,7 @@ use Tests\Concerns\GivesPermissions;
 use Tests\TestCase;
 
 /**
- * ISSUE-33: what "@q" in a channel's composer could become.
+ * What "@q" in a channel's composer could become.
  */
 class MentionSuggestionsTest extends TestCase
 {

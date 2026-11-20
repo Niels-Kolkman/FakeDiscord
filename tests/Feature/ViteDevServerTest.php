@@ -6,9 +6,9 @@ use Illuminate\Support\Facades\Vite;
 use Tests\TestCase;
 
 /**
- * ISSUE-1: with `npm run dev` running, pages load their CSS/JS from the
+ * With `npm run dev` running, pages load their CSS/JS from the
  * Vite dev server. Checked on the login page, which is where `/` sends
- * guests since the welcome page was removed (ISSUE-44).
+ * guests since the welcome page was removed.
  */
 class ViteDevServerTest extends TestCase
 {

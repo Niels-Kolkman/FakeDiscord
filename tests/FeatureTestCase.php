@@ -7,9 +7,9 @@ use Tests\Concerns\GivesPermissions;
 use Tests\Concerns\RunsTheQueueWorker;
 
 /**
- * The base of the function-style Pest feature tests (ISSUE-39, bound in
+ * The base of the function-style Pest feature tests (bound in
  * tests/Pest.php): a fresh database, the permission helpers, the queue
- * worker (ISSUE-42) and no Vite manifest needed to render pages.
+ * worker and no Vite manifest needed to render pages.
  *
  * tests/stubs/pest.stub tells PHPStan that $this inside it(), test() and
  * beforeEach() closures is this class.

@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * How far a user has read in a server channel (ISSUE-32). Written by
+ * How far a user has read in a server channel. Written by
  * App\Actions\Channels\MarkChannelRead, read by App\Support\UnreadState.
  *
  * @property int $last_read_message_id

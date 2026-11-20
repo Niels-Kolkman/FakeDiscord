@@ -14,7 +14,7 @@ use RuntimeException;
 use Tests\TestCase;
 
 /**
- * ISSUE-22: the friends page and its All / Pending / Blocked tabs, the
+ * The friends page and its All / Pending / Blocked tabs, the
  * request badges, the FriendshipChanged payload, and two clicks at once.
  */
 class FriendsPageTest extends TestCase

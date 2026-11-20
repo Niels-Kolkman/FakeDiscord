@@ -1,4 +1,4 @@
-// ISSUE-33: the notification inbox (bell and panel), live mention badges
+// The notification inbox (bell and panel), live mention badges
 // from the payload's `mentions`, and highlighting messages that mention
 // you. Run with `npm test` (node --test, no deps). The server side is
 // covered by tests/Feature/Notifications; the scripts are checked here
@@ -206,7 +206,7 @@ test('the close button, Escape and a click elsewhere close the panel', async () 
     assert.equal(panel.hidden, true);
 });
 
-test('opening moves focus into the panel and Tab stays in it (ISSUE-38)', async () => {
+test('opening moves focus into the panel and Tab stays in it', async () => {
     const { panel, readAll, list, doc, handle } = setup({ items: [item()] });
     for (const node of [panel, readAll]) {
         node.focused = 0;

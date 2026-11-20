@@ -1,8 +1,8 @@
 {{--
-    Right-hand member sidebar (ISSUE-13): online members under their highest
+    Right-hand member sidebar: online members under their highest
     role or "Online", everyone else under "Offline". See App\Support\MemberList.
 
-    Online presence (ISSUE-31): who is online comes from the server's Reverb
+    Online presence: who is online comes from the server's Reverb
     presence channel, and resources/js/presence.js keeps the list live. For
     that every possible group is rendered (empty ones hidden), each role
     group carries its colour in data-role-color, and each member carries

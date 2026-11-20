@@ -14,7 +14,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Tests\TestCase;
 
 /**
- * ISSUE-14: routes/channels.php lets only members of the channel's server
+ * Routes/channels.php lets only members of the channel's server
  * subscribe to "private-channel.{id}".
  */
 class MessageChannelAuthTest extends TestCase

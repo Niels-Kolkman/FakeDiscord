@@ -9,7 +9,7 @@ use Illuminate\Contracts\Broadcasting\Factory as BroadcastFactory;
 use Throwable;
 
 /**
- * Who is connected to a server right now (ISSUE-31).
+ * Who is connected to a server right now.
  *
  * Every page of a signed-in user joins the presence channel
  * "server.{id}" of each server they are in (resources/js/presence.js,

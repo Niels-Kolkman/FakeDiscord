@@ -1,8 +1,8 @@
 {{--
     One list on the friends page with its count, and the actions for its
     kind: friend (Message / Remove), incoming (Accept / Decline), outgoing
-    (Cancel), blocked (Unblock). Every kind but blocked also gets Block
-    (ISSUE-25). Removing and blocking ask for confirmation first
+    (Cancel), blocked (Unblock). Every kind but blocked also gets Block.
+    Removing and blocking ask for confirmation first
     (data-confirm, handled in resources/js/channel-sidebar.js).
 
     @var string $heading
@@ -56,7 +56,7 @@
                                 <button type="submit" class="{{ $button }} bg-[#4e5058] text-white hover:bg-[#6d6f78]" aria-label="Cancel friend request to {{ $person->name }}">Cancel</button>
                             </form>
                         @elseif ($kind === 'friend')
-                            {{-- Opens (or creates) the 1:1 DM (ISSUE-23). --}}
+                            {{-- Opens (or creates) the 1:1 DM. --}}
                             <form method="POST" action="{{ route('dms.store') }}">
                                 @csrf
                                 <input type="hidden" name="user_id" value="{{ $person->id }}">
@@ -70,7 +70,7 @@
                         @endif
 
                         @if ($kind !== 'blocked')
-                            {{-- Blocking (ISSUE-25) ends the request or friendship too. --}}
+                            {{-- Blocking ends the request or friendship too. --}}
                             <form method="POST" action="{{ route('friends.block') }}" data-confirm="Block {{ $person->name }}? You will not see their messages, and they cannot message you or send you friend requests.">
                                 @csrf
                                 <input type="hidden" name="user_id" value="{{ $person->id }}">

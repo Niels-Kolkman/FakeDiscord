@@ -13,7 +13,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
- * ISSUE-8: pixel-level checks of the avatar crop/resize and the file
+ * Pixel-level checks of the avatar crop/resize and the file
  * lifecycle in UpdateUserAvatar, beyond "the output is 256x256".
  */
 class AvatarProcessingTest extends TestCase

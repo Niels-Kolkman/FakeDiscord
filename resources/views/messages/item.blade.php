@@ -2,27 +2,27 @@
     One message in a channel or DM. resources/js/channel-messages.js builds the
     same markup for messages that arrive live; keep the two in sync.
 
-    The Edit / Delete buttons (ISSUE-16) are only a hint: MessagePolicy
+    The Edit / Delete buttons are only a hint: MessagePolicy
     decides on the server. They use values worked out once per page by
     servers/show.blade.php, so the list costs no query per message:
     $viewerId (the signed-in user) and $canManageMessages (moderator).
     Edit needs JavaScript (the script unhides it); Delete is a form that
     also works without it.
 
-    Reactions (ISSUE-18): every member can react, so every message gets
+    Reactions: every member can react, so every message gets
     the "Add reaction" picker (a <details>, works without JavaScript) and
     one toggle form per emoji: POST adds the viewer's reaction, DELETE
     (when they already reacted, aria-pressed) takes it back. The tooltip
     names the first reactors (App\Support\Reactions::tooltip()). The
     reactions are eager loaded by App\Support\MessageFeed.
 
-    Attachments (ISSUE-19): PNG / JPEG / GIF / WebP show as an inline
+    Attachments: PNG / JPEG / GIF / WebP show as an inline
     preview sized by MessageAttachment::previewSize() (so the scroll
     position does not jump while it loads); other files as a card with a
     download link. All links are temporary signed URLs. Eager loaded by
     App\Support\MessageFeed too.
 
-    Replies (ISSUE-20): a reply quotes its original above the header
+    Replies: a reply quotes its original above the header
     (Message::replyPreview()); the quote links to #message-{id}, and the
     script scrolls to it, loading older pages when it is not on screen.
     "Reply" needs the script (it fills the composer's reply_to_id), so it
@@ -30,12 +30,12 @@
     Pins: 📌 marks a pinned message; moderators ($canManageMessages) get a
     Pin / Unpin form that also works without JavaScript.
 
-    Markdown (ISSUE-36): the content is rendered by App\Support\Markdown
+    Markdown: the content is rendered by App\Support\Markdown
     (bold, italic, underline, strike, code, code blocks, quotes, links),
     which escapes all text itself, so {{ }} prints its HtmlString as is.
     data-source keeps the raw text for editing.
 
-    Used for channel messages and DMs (ISSUE-23) alike, from
+    Used for channel messages and DMs alike, from
     messages/panel.blade.php; every URL is built from $messagesUrl.
 
     @var \App\Models\Message $message
@@ -52,7 +52,7 @@
     $pinUrl = $messageUrl.'/pin';
     $reply = $message->replyPreview();
     $toolButton = 'rounded px-2 py-0.5 text-xs text-fg-muted hover:bg-active hover:text-fg-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2]';
-    // Mentions (ISSUE-33): by name, a role the viewer holds or @everyone.
+    // Mentions: by name, a role the viewer holds or @everyone.
     $mentionsViewer = ! $isOwn && $message->mentionsUser((int) ($viewerId ?? 0), $viewerRoleIds ?? []);
 @endphp
 <li
@@ -74,7 +74,7 @@
             @if ($reply['deleted'])
                 <span class="italic text-fg-subtle" data-reply-deleted>Original message was deleted</span>
             @elseif (in_array($reply['author']['id'] ?? null, $blockedUserIds ?? [], true))
-                {{-- The original is by someone the viewer blocked (ISSUE-25). --}}
+                {{-- The original is by someone the viewer blocked. --}}
                 <span class="italic text-fg-subtle" data-reply-blocked>Blocked message</span>
             @else
                 <a
@@ -106,7 +106,7 @@
             >{{ $message->created_at?->format('Y-m-d H:i') }}</time>
             <span class="shrink-0 text-xs" title="Pinned" data-message-pinned @unless ($message->isPinned()) hidden @endunless><span aria-hidden="true">📌</span><span class="sr-only">Pinned</span></span>
         </p>
-        {{-- Markdown (ISSUE-36): a <div>, since a code block or quote cannot sit in a <p>. --}}
+        {{-- Markdown: a <div>, since a code block or quote cannot sit in a <p>. --}}
         <div class="message-markdown whitespace-pre-wrap break-words text-fg" data-message-body><span data-message-content data-source="{{ $message->content }}">{{ \App\Support\Markdown::toHtml($message->content) }}</span><span
             class="ml-1 text-xs text-fg-subtle"
             data-message-edited

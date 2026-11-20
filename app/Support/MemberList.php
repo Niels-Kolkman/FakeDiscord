@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\DB;
  * - online members with no role besides @everyone go under "Online";
  * - every offline member goes under "Offline", whatever their roles.
  *
- * Who is online (ISSUE-31): with $connectedUserIds (from
+ * Who is online: with $connectedUserIds (from
  * App\Support\ServerPresence) a member is online when they are connected,
  * shown with the status they picked (online, idle or dnd). Without it
  * (null: presence unknown, e.g. no websocket broadcaster) the stored

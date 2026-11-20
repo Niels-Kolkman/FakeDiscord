@@ -22,7 +22,7 @@ use Tests\Concerns\GivesPermissions;
 use Tests\TestCase;
 
 /**
- * ISSUE-29: kicking, banning and timing out members, the role hierarchy
+ * Kicking, banning and timing out members, the role hierarchy
  * that limits who may do it, invites for banned users, and telling the
  * affected user's browser (MemberModerated) and closing their sockets
  * (RealtimeSessions).

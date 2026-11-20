@@ -34,6 +34,6 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::resetPasswordView(fn (Request $request) => view('auth.reset-password', ['request' => $request]));
         Fortify::verifyEmailView(fn () => view('auth.verify-email'));
 
-        // The "login" rate limiter is App\Support\RateLimits::LOGIN (ISSUE-41).
+        // The "login" rate limiter is App\Support\RateLimits::LOGIN.
     }
 }

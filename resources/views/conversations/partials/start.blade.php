@@ -1,4 +1,4 @@
-{{-- "Start of the conversation" header of a DM's message panel (ISSUE-23). @var \App\Models\User|null $other --}}
+{{-- "Start of the conversation" header of a DM's message panel. @var \App\Models\User|null $other --}}
 @if ($other)
     <x-user-avatar :user="$other" :size="80" class="mb-2" />
     <h2 class="text-3xl font-bold text-fg-strong">{{ $other->name }}</h2>

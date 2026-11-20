@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 /**
- * ISSUE-3 acceptance: `php artisan migrate:fresh` succeeds on a real SQLite
+ * `php artisan migrate:fresh` succeeds on a real SQLite
  * file, and every migration's down() reverses its up().
  *
  * This runs against a temp file instead of RefreshDatabase, because

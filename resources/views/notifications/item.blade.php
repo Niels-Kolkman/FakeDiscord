@@ -1,5 +1,5 @@
 {{--
-    One entry of the notification inbox (ISSUE-33): the page
+    One entry of the notification inbox: the page
     (notifications/index.blade.php). renderNotification() in
     resources/js/notifications.js builds the same markup for the panel;
     keep the two in sync.

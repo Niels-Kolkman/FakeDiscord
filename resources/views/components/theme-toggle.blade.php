@@ -1,5 +1,5 @@
 {{--
-    The theme toggle (ISSUE-37): switches between the dark and the light
+    The theme toggle: switches between the dark and the light
     theme and saves the choice on the user (PUT /settings/theme), so every
     browser they sign in on gets it. A plain form that sends the other
     theme; resources/js/theme.js switches the page at once instead of

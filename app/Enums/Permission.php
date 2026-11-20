@@ -3,14 +3,14 @@
 namespace App\Enums;
 
 /**
- * Server permission flags (ISSUE-26), stored OR-ed together in
+ * Server permission flags, stored OR-ed together in
  * roles.permissions. The values are Discord's bits, so the masks read the
  * same as Discord's; every flag stays within bits 0-62 (SQLite stores the
  * column as a signed 64-bit INTEGER).
  *
  * Storing flags is all this does: which flags a member effectively has is
  * App\Services\PermissionService, and what each one allows is in the
- * policies (ISSUE-27).
+ * policies.
  */
 enum Permission: int
 {
@@ -85,7 +85,7 @@ enum Permission: int
     }
 
     /**
-     * The flags a channel override can allow or deny for a role (ISSUE-28).
+     * The flags a channel override can allow or deny for a role.
      *
      * @return list<self>
      */

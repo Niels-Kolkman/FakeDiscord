@@ -19,7 +19,7 @@ use Tests\Concerns\DocumentsKnownBugs;
 use Tests\TestCase;
 
 /**
- * ISSUE-9: deleting an account anonymises the user's messages instead of
+ * Deleting an account anonymises the user's messages instead of
  * removing them.
  */
 class DeleteAccountTest extends TestCase

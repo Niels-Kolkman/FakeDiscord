@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 
 /**
- * The ban list of a server and lifting bans (ISSUE-29): Ban Members
+ * The ban list of a server and lifting bans: Ban Members
  * (ServerPolicy::manageBans). Banning is MemberModerationController::ban.
  * A lifted ban lets the user join again with an invite; they are not
  * added back.

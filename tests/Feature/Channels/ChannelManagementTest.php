@@ -16,7 +16,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
- * ISSUE-12: creating, opening, renaming and deleting text channels, and the
+ * Creating, opening, renaming and deleting text channels, and the
  * channel topic.
  */
 class ChannelManagementTest extends TestCase

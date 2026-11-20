@@ -14,7 +14,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
- * ISSUE-12: edge cases for channels, categories and the reorder endpoint
+ * Edge cases for channels, categories and the reorder endpoint
  * that the main channel tests do not cover.
  */
 class ChannelEdgeCasesTest extends TestCase

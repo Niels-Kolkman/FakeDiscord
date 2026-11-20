@@ -23,23 +23,23 @@ use Throwable;
  * the channel. The sender gets the message in the HTTP response, so the
  * broadcast skips their socket (toOthers(), using the X-Socket-ID header).
  *
- * Attachments (ISSUE-19) are written to MessageAttachment::disk() under
+ * Attachments are written to MessageAttachment::disk() under
  * attachments/{channel}/ with a random name; the original name is only
  * kept in the database. Files go first and the rows in one transaction
  * with the message, so a failure leaves neither a half message nor
  * stray files behind.
  *
- * A reply (ISSUE-20) stores reply_to_id; the payload quotes the original.
+ * A reply stores reply_to_id; the payload quotes the original.
  *
- * Direct messages (ISSUE-23) work the same way with a Conversation as the
+ * Direct messages work the same way with a Conversation as the
  * target: the message broadcasts on "conversation.{id}", its files go
  * under attachments/conversations/{id}/, and the conversation's
  * last_message_at moves, so it rises to the top of the DM list. Every
  * participant hears about that through ConversationActivity, and the
- * others get DirectMessageReceived for a browser notification (ISSUE-34,
- * App\Support\DirectMessageNotifier).
+ * others get DirectMessageReceived for a browser notification
+ * (App\Support\DirectMessageNotifier).
  *
- * In a server channel, the message's mentions (ISSUE-33, stored on save by
+ * In a server channel, the message's mentions (stored on save by
  * App\Support\Mentions) notify the people mentioned
  * (App\Support\MentionNotifier).
  */
@@ -105,10 +105,10 @@ class SendMessage
                 broadcast(new ConversationActivity($target));
             });
 
-            // Browser notifications (ISSUE-34) for the other participants.
+            // Browser notifications for the other participants.
             $this->directMessages->notify($message, $target);
         } else {
-            // Mention notifications (ISSUE-33) for whoever it mentions.
+            // Mention notifications for whoever it mentions.
             $this->mentions->sync($message);
         }
 

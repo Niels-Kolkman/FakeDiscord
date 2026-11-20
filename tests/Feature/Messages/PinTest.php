@@ -16,7 +16,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Tests\TestCase;
 
 /**
- * ISSUE-20: moderators (ServerPolicy::manageMessages, the owner for now)
+ * Moderators (ServerPolicy::manageMessages: Manage Messages)
  * pin and unpin messages; every member sees a channel's pinned list,
  * newest pin first. MessagePinned broadcasts the change on "channel.{id}".
  */

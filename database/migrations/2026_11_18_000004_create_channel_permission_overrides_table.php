@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Per-channel role overrides (ISSUE-28), like Discord's permission
+     * Per-channel role overrides, like Discord's permission
      * overwrites: `allow` and `deny` are App\Enums\Permission masks that
      * replace the role's server permissions in that one channel. A flag in
      * neither mask is inherited. At most one row per channel and role; a

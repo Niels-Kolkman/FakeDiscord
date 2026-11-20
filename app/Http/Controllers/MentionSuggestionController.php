@@ -15,7 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
 /**
- * Mention autocomplete (ISSUE-33): what "@{q}" in the composer of a
+ * Mention autocomplete: what "@{q}" in the composer of a
  * channel could become, for resources/js/mention-autocomplete.js.
  *
  * - users: members who can see the channel whose username, server

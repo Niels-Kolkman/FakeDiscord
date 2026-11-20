@@ -18,7 +18,7 @@ use Tests\Concerns\GivesPermissions;
 use Tests\TestCase;
 
 /**
- * ISSUE-28: private channels and role overrides over HTTP and the
+ * Private channels and role overrides over HTTP and the
  * websocket auth endpoint, and the channel permissions page.
  */
 class PrivateChannelsTest extends TestCase

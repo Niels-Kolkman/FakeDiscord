@@ -21,7 +21,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Tests\TestCase;
 
 /**
- * ISSUE-21: GET /servers/{id}/search finds a server's messages through
+ * GET /servers/{id}/search finds a server's messages through
  * Laravel Scout's database engine, filtered by channel, author and date.
  */
 class MessageSearchTest extends TestCase

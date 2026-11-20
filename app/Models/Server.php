@@ -111,8 +111,8 @@ class Server extends Model
      * The sidebar: uncategorised channels first, then each category with its
      * channels, all in display order.
      *
-     * With a $viewer, only the channels they can see (ChannelPolicy::view,
-     * ISSUE-27), and a category whose channels are all hidden from them is
+     * With a $viewer, only the channels they can see (ChannelPolicy::view),
+     * and a category whose channels are all hidden from them is
      * left out too. Without one, everything (for the settings pages).
      */
     public function channelLayout(?User $viewer = null): ChannelLayout
@@ -150,7 +150,7 @@ class Server extends Model
 
     /**
      * The member sidebar, grouped by highest role and online status. Who is
-     * online comes from the server's Reverb presence channel (ISSUE-31);
+     * online comes from the server's Reverb presence channel;
      * the viewer (default: the signed-in user) always counts as online.
      */
     public function memberList(?User $viewer = null): MemberList
@@ -231,7 +231,7 @@ class Server extends Model
     }
 
     /**
-     * The audit log (ISSUE-30).
+     * The audit log.
      *
      * @return HasMany<AuditLogEntry, $this>
      */

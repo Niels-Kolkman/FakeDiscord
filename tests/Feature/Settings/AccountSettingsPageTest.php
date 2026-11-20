@@ -7,7 +7,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 /**
- * ISSUE-9: the account settings page.
+ * The account settings page.
  */
 class AccountSettingsPageTest extends TestCase
 {

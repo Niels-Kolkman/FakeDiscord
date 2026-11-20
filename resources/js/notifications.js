@@ -1,5 +1,5 @@
 /**
- * The notification inbox (ISSUE-33): the bell in the page header
+ * The notification inbox: the bell in the page header
  * (components/inbox.blade.php) and its panel.
  *
  * - The bell opens the panel instead of the inbox page; the first time it
@@ -13,7 +13,7 @@
  *   you see it, and marking the channel read marks it read on the server
  *   too (App\Actions\Channels\MarkChannelRead).
  *
- * - Focus (ISSUE-38): opening moves focus into the panel, Tab stays in it
+ * - Focus: opening moves focus into the panel, Tab stays in it
  *   (focus-trap.js), and Escape or ✕ gives it back to the bell.
  *
  * initInbox() takes its echo, document and request functions as options so
@@ -183,7 +183,7 @@ export function initInbox({
         if (!panel) return null;
         panel.hidden = false;
         toggle?.setAttribute('aria-expanded', 'true');
-        // Focus moves into the dialog (ISSUE-38); Tab then goes to "Mark all read".
+        // Focus moves into the dialog; Tab then goes to "Mark all read".
         if (panel.getAttribute('tabindex') === null) panel.setAttribute('tabindex', '-1');
         panel.focus?.({ preventScroll: true });
         return loaded ? Promise.resolve() : load();

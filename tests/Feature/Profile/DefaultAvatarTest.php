@@ -8,7 +8,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
- * ISSUE-8: users without an uploaded avatar get a generated initials avatar.
+ * Users without an uploaded avatar get a generated initials avatar.
  */
 class DefaultAvatarTest extends TestCase
 {

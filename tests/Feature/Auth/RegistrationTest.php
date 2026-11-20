@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
- * ISSUE-6: visitors register with a username, email and password.
+ * Visitors register with a username, email and password.
  */
 class RegistrationTest extends TestCase
 {

@@ -11,7 +11,7 @@ return [
     | using Laravel Scout. This connection is used when syncing all models
     | to the search service. You should adjust this based on your needs.
     |
-    | Message search (ISSUE-21) uses the "database" engine: LIKE queries on
+    | Message search uses the "database" engine: LIKE queries on
     | the messages table, no external search service and no index to sync.
     |
     | Supported: "algolia", "meilisearch", "typesense", "turbopuffer",

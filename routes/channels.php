@@ -8,31 +8,31 @@ use Illuminate\Support\Facades\Broadcast;
 
 // Every channel here is private or presence, so /broadcasting/auth asks
 // the callback below and refuses guests. The full list and who may join
-// each one is checked in tests/Feature/Security/BroadcastChannelAuthorisationTest.php
-// (ISSUE-41): a new channel must be added there too. The only public
+// each one is checked in tests/Feature/Security/BroadcastChannelAuthorisationTest.php:
+// a new channel must be added there too. The only public
 // channel is "test" (App\Events\TestBroadcast, a tinker smoke test that
 // carries no user data).
 
 // A user's own channel. Friend requests and friendship changes arrive here
-// (App\Events\FriendshipChanged, ISSUE-22), and so does activity in their
-// DMs for the sidebar list (App\Events\ConversationActivity, ISSUE-23).
+// (App\Events\FriendshipChanged), and so does activity in their
+// DMs for the sidebar list (App\Events\ConversationActivity).
 Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
     return (int) $user->id === (int) $id;
 });
 
 // Live messages of a server channel (App\Events\MessageSent). Only members
-// who can see the channel (ChannelPolicy::view, ISSUE-27) may listen, so a
-// private channel or one a role override hides (ISSUE-28) is refused; an
+// who can see the channel (ChannelPolicy::view) may listen, so a
+// private channel or one a role override hides is refused; an
 // unknown channel id is a 403. This is checked when the browser
 // subscribes, so someone who leaves or loses View Channels keeps an open
-// subscription until they reload. Kicked and banned members (ISSUE-29)
+// subscription until they reload. Kicked and banned members
 // have their sockets closed by App\Support\RealtimeSessions, so they are
 // checked again when pusher-js reconnects.
 Broadcast::channel('channel.{channel}', function (User $user, Channel $channel) {
     return $user->can('view', $channel);
 });
 
-// Live messages of a DM (ISSUE-23): MessageSent, MessageUpdated,
+// Live messages of a DM: MessageSent, MessageUpdated,
 // MessageDeleted and ReactionsUpdated for conversation messages. Only the
 // participants may listen; an unknown conversation id is a 403.
 Broadcast::channel('conversation.{conversation}', function (User $user, Conversation $conversation) {
@@ -52,7 +52,7 @@ Broadcast::channel('conversation-typing.{conversation}', function (User $user, C
     ];
 });
 
-// Online presence (ISSUE-31): one presence channel per server
+// Online presence: one presence channel per server
 // (App\Support\ServerPresence::channelName), joined by every page of each
 // member (resources/js/presence.js), so Reverb knows who is online;
 // ServerPresence asks it when a member list renders. Members only, like
@@ -71,7 +71,7 @@ Broadcast::channel('server.{server}', function (User $user, Server $server) {
     ];
 });
 
-// Typing indicators (ISSUE-17): a presence channel per server channel, used
+// Typing indicators: a presence channel per server channel, used
 // only for "client-typing" whispers between the people viewing it. Same
 // rule as "channel.{channel}". The returned array is the member info every
 // other subscriber sees, so the name shown in "X is typing…" comes from

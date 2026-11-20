@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 
 /**
- * Sends the mention notifications of a server channel message (ISSUE-33)
+ * Sends the mention notifications of a server channel message
  * and keeps them in step with it.
  *
  * Who gets one (recipients()): everyone the message mentions
@@ -26,7 +26,7 @@ use Illuminate\Support\Str;
  *
  * - is still a member of the server and can see the channel;
  * - is not the author (mentioning yourself does nothing);
- * - has not blocked the author (ISSUE-25), who stays hidden from them.
+ * - has not blocked the author, who stays hidden from them.
  *
  * One notification per person per message, with the most direct reason:
  * by name, else by role, else @everyone.
@@ -41,8 +41,8 @@ use Illuminate\Support\Str;
  * (so the inbox can mark that row read); a failed broadcast is reported
  * and the rest carry on, like the message events.
  *
- * People who muted the channel or its server (ISSUE-34,
- * NotificationMutes) still get the notification, with `push: false` in
+ * People who muted the channel or its server
+ * (NotificationMutes) still get the notification, with `push: false` in
  * the broadcast: no browser notification pops up for it.
  */
 class MentionNotifier
@@ -68,7 +68,7 @@ class MentionNotifier
             return;
         }
 
-        // Mute settings (ISSUE-34): stored and counted, but no browser notification.
+        // Mute settings: stored and counted, but no browser notification.
         $muted = array_flip(NotificationMutes::mutedUserIds($message->channel, array_keys($new)));
 
         foreach (User::query()->whereKey(array_keys($new))->orderBy('id')->get() as $user) {

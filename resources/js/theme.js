@@ -1,5 +1,5 @@
 /**
- * The theme toggle (ISSUE-37, components/theme-toggle.blade.php).
+ * The theme toggle (components/theme-toggle.blade.php).
  *
  * Without this script each toggle is a plain form that saves the other
  * theme (PUT /settings/theme) and reloads the page. With it the page

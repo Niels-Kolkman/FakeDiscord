@@ -1,7 +1,7 @@
 <?php
 
 /**
- * ISSUE-41: the named rate limiters in App\Support\RateLimits. The
+ * The named rate limiters in App\Support\RateLimits. The
  * per-endpoint limits themselves (30 messages, 20 invites, 30 invite
  * lookups, 5 logins per email) are also covered by the endpoint tests;
  * these check what naming them changed: each limiter has its own budget,

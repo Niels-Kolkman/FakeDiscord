@@ -11,7 +11,7 @@ use Illuminate\Http\Request;
  * Public profile card data shown in the profile popover. Only fields that are
  * safe for any signed-in user to see are exposed (no email address).
  *
- * Blocking (ISSUE-25): `blocked` says whether the viewer blocked this user,
+ * Blocking: `blocked` says whether the viewer blocked this user,
  * with the URLs the popover's Block / Unblock button posts to. Whether this
  * user blocked the viewer is never exposed.
  */

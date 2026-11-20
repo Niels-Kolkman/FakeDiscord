@@ -18,7 +18,7 @@ use Tests\Concerns\GivesPermissions;
 use Tests\TestCase;
 
 /**
- * ISSUE-33: who a message mentions (@username, @role, @everyone) is worked
+ * Who a message mentions (@username, @role, @everyone) is worked
  * out when it is saved (messages.mentions) and counts for the unread
  * mention badges.
  */

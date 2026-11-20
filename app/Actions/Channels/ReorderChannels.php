@@ -16,7 +16,7 @@ use Illuminate\Validation\ValidationException;
  * user added or deleted one in the meantime, the request is rejected and
  * the client reloads, so a stale sidebar never overwrites a newer one.
  *
- * A member who cannot see every channel (ISSUE-28) only has the visible
+ * A member who cannot see every channel only has the visible
  * ones in their sidebar. With a $viewer the layout must then name exactly
  * the channels and categories of Server::channelLayout($viewer); the hidden
  * ones keep their category and position.

@@ -5,7 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * The server audit log (ISSUE-30): who changed what, and when. Rows are
+ * The server audit log: who changed what, and when. Rows are
  * written by App\Support\AuditLog and never updated.
  */
 return new class extends Migration

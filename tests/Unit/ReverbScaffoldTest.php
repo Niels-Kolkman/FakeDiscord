@@ -6,7 +6,7 @@ use Dotenv\Dotenv;
 use PHPUnit\Framework\TestCase;
 
 /**
- * ISSUE-2: checks the Reverb / Echo setup files and the `composer dev` script.
+ * Checks the Reverb / Echo setup files and the `composer dev` script.
  */
 class ReverbScaffoldTest extends TestCase
 {

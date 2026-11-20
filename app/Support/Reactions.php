@@ -7,7 +7,7 @@ use App\Models\Reaction;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 
 /**
- * Emoji reactions on messages (ISSUE-18): which emoji are accepted, how a
+ * Emoji reactions on messages: which emoji are accepted, how a
  * message's reactions are grouped for display, and the tooltip text.
  *
  * A group is one emoji with its count and the first few people who used

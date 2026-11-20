@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 /**
- * ISSUE-8: clicking an avatar opens a profile popover fed by a JSON endpoint.
+ * Clicking an avatar opens a profile popover fed by a JSON endpoint.
  */
 class ProfilePopoverTest extends TestCase
 {

@@ -10,7 +10,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Tests\TestCase;
 
 /**
- * ISSUE-23: routes/channels.php lets only the two participants subscribe
+ * Routes/channels.php lets only the two participants subscribe
  * to a DM's private "conversation.{id}" channel and its typing presence
  * channel "conversation-typing.{id}".
  */

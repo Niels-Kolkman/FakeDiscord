@@ -8,7 +8,7 @@ use App\Models\User;
 use Carbon\CarbonInterface;
 
 /**
- * Times a member out, or ends a timeout early (ISSUE-29). Who may do this
+ * Times a member out, or ends a timeout early. Who may do this
  * to whom is ServerPolicy::timeout.
  *
  * While server_members.timed_out_until is in the future the member keeps
@@ -38,7 +38,7 @@ class TimeoutMember
         $until = now()->addSeconds($seconds)->startOfSecond();
 
         // Saved through the model so ServerMemberObserver writes the audit
-        // log (ISSUE-30).
+        // log.
         $server->membershipOf($member)?->update(['timed_out_until' => $until]);
 
         MemberModerated::dispatchFor(MemberModerated::TIMED_OUT, $server, $member, $until);

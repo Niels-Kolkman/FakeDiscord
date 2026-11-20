@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Block someone (ISSUE-25). The block is a friendships row with
+ * Block someone. The block is a friendships row with
  * user_id = the blocker and status "blocked".
  *
  * - A pending request (either way) or a friendship between the two is

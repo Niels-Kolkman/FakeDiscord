@@ -1,4 +1,4 @@
-// ISSUE-20: reply quotes and the pinned messages panel of the channel page.
+// Reply quotes and the pinned messages panel of the channel page.
 // Run with `npm test` (node --test, no deps). The Blade markup is covered by
 // tests/Feature/Messages/ReplyTest.php and PinTest.php; the renderers are
 // checked here against a minimal fake DOM.
@@ -133,7 +133,7 @@ test('renderReplyPreview names deleted authors', () => withFakeDocument(() => {
     assert.equal(find(row, byData('replyAuthor')).textContent, 'Deleted User');
 }));
 
-// --- Blocking (ISSUE-25) -------------------------------------------------
+// --- Blocking -------------------------------------------------
 
 test('isBlockedAuthor compares ids as strings and never blocks deleted accounts', () => {
     const blocked = new Set(['5']);

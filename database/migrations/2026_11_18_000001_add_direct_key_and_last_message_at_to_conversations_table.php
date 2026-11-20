@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * 1:1 direct messages (ISSUE-23).
+     * 1:1 direct messages.
      *
      * direct_key is "{lower user id}:{higher user id}" for a direct
      * conversation and NULL for group DMs. The unique index makes sure a

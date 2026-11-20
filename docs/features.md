@@ -131,7 +131,7 @@ Users with a verified email address manage servers under `/servers`
 
 ### Roles
 
-Roles (ISSUE-26) have a name (up to 100 characters), an optional `#rrggbb`
+Roles have a name (up to 100 characters), an optional `#rrggbb`
 colour, a `position` (higher is higher in the hierarchy) and a permission
 bitmask in `roles.permissions`. Managing them needs `ServerPolicy::manageRoles`
 (Manage Roles), and an existing role can only be changed by someone above it
@@ -183,7 +183,7 @@ settings page and the channel sidebar ("Roles").
 
 ### Permissions
 
-`App\Services\PermissionService` (ISSUE-27) works out what a member may do, and
+`App\Services\PermissionService` works out what a member may do, and
 the policies ask it; nothing else reads `roles.permissions` to decide.
 
 - **Effective permissions** in a server: none for someone who is not a member;
@@ -229,7 +229,7 @@ the policies ask it; nothing else reads `roles.permissions` to decide.
 
 ### Private channels and overrides
 
-ISSUE-28. A channel can be **private** (`channels.is_private`) and can have
+A channel can be **private** (`channels.is_private`) and can have
 **role overrides** (`channel_permission_overrides`, one row per channel and
 role): `allow` and `deny` masks for **View Channels** and **Send Messages**
 (`Permission::channelOverridable()`). A flag in neither mask is inherited.
@@ -320,7 +320,7 @@ role): `allow` and `deny` masks for **View Channels** and **Send Messages**
 
 ### Moderation
 
-Kicking, banning and timing out members (ISSUE-29). The **Members** page
+Kicking, banning and timing out members. The **Members** page
 (`GET /servers/{id}/members`, linked from the channel sidebar) needs any of
 Kick, Ban or Timeout Members, and shows for each member only the actions you
 may take on them. The **Bans** page (`GET /servers/{id}/bans`) needs Ban
@@ -372,7 +372,7 @@ Members. Every route allows 60 requests a minute.
 ### Audit log
 
 Every moderation and settings change is recorded: who did it, what changed
-and when (ISSUE-30). The **Audit log** page (`GET /servers/{id}/audit-log`,
+and when. The **Audit log** page (`GET /servers/{id}/audit-log`,
 linked from the channel sidebar) is for the **owner only**
 (`ServerPolicy::viewAuditLog`), also when others are Administrators. It
 lists entries newest first, 50 per page, and filters with `?action=` (an
@@ -515,7 +515,7 @@ Voice channels have no messages.
   change. Others see the new text, or see the message disappear. If Reverb is
   down, the change is still saved.
   Both routes are limited to 30 requests per minute.
-- **Reactions** (ISSUE-18): anyone who can see a message can react to it. Hover a
+- **Reactions**: anyone who can see a message can react to it. Hover a
   message and choose 🙂 to pick an emoji, or click an existing reaction to add
   yours or take it back. Reactions are grouped per emoji with a count. The
   tooltip names the first three people ("Alice, Bob, Carol and 2 others reacted
@@ -537,7 +537,7 @@ Voice channels have no messages.
   Its groups have no `me`, so each browser keeps track of its own reactions.
   Without JavaScript the picker (a `<details>`) and the reaction buttons are
   plain forms that redirect back to the channel.
-- **Attachments** (ISSUE-19): click **＋** in the composer, paste, or drop files
+- **Attachments**: click **＋** in the composer, paste, or drop files
   on it to attach up to **5 files** of at most **10 MB** each. The queued files
   are listed above the composer and can be removed before sending. With files
   the text is optional. The composer then posts `multipart/form-data` with
@@ -734,8 +734,8 @@ never past the channel's newest message.
 
 ### Mentions and notifications
 
-ISSUE-33 adds `@user`, `@role` and `@everyone` mentions in server channels,
-with notifications for the people mentioned.
+Server channels support `@user`, `@role` and `@everyone` mentions, with
+notifications for the people mentioned.
 
 - **Syntax** (`App\Support\Mentions`): `@username`, `@Role Name` (spaces are
   fine, any case) or `@everyone`. They are case-insensitive and don't match inside a word or an e-mail
@@ -777,8 +777,7 @@ with notifications for the people mentioned.
 
 ### Desktop notifications and muting
 
-ISSUE-34 adds browser notifications (the Web Notifications API) and per-user
-mute settings.
+Browser notifications (the Web Notifications API) and per-user mute settings.
 
 - **What pops up** (`resources/js/push-notifications.js`): a mention (the
   `MentionedInMessage` broadcast) and every DM or group DM message
@@ -862,7 +861,7 @@ form, so the page also works without JavaScript.
   recipient. **Cancel** (`DELETE /friends/{id}/request`): only the sender.
   **Remove** (`DELETE /friends/{id}`): either friend, with a confirmation.
   **Unblock** (`DELETE /friends/{id}/block`): only the one who blocked.
-- **Block** (`POST /friends/block`, field `user_id`, ISSUE-25): **Block** on
+- **Block** (`POST /friends/block`, field `user_id`): **Block** on
   the friends and pending lists, and in the profile popover (which also has
   **Unblock**), both with a confirmation. `App\Actions\Friends\BlockUser`
   turns a pending request (either way) or a friendship into a block row
@@ -904,7 +903,7 @@ form, so the page also works without JavaScript.
 
 ## Direct messages
 
-1:1 DMs (ISSUE-23) and group DMs (ISSUE-24) live under `/dms`, in the
+1:1 DMs and group DMs live under `/dms`, in the
 `['auth', 'verified']` group.
 
 - **Opening a DM**: **Message** on the friends list posts `user_id` to
@@ -1028,7 +1027,7 @@ stay the same in both themes.
 
 ### Accessibility
 
-ISSUE-38 brought the app in line with WCAG 2.2 AA. The checks below run in CI.
+The app targets WCAG 2.2 AA. The checks below run in CI.
 
 - **Keyboard navigation** (`resources/js/keyboard-shortcuts.js`), like Discord:
   <kbd>Alt</kbd>+<kbd>↑</kbd>/<kbd>↓</kbd> moves to the previous or next channel

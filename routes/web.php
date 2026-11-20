@@ -35,7 +35,7 @@ use App\Http\Controllers\UserStatusController;
 use App\Support\RateLimits;
 use Illuminate\Support\Facades\Route;
 
-// There is no landing page (ISSUE-44): guests go to the login page,
+// There is no landing page: guests go to the login page,
 // signed-in users straight to the dashboard.
 Route::get('/', function () {
     return redirect()->route(auth()->check() ? 'dashboard' : 'login');
@@ -45,7 +45,7 @@ Route::get('/', function () {
 // are registered by Fortify.
 Route::view('/dashboard', 'dashboard')->middleware('auth')->name('dashboard');
 
-// Message attachments (ISSUE-19). Only reachable through the temporary
+// Message attachments. Only reachable through the temporary
 // signed links in Message::toPayload() and messages/item.blade.php; the
 // signature is the access check, so no session is needed (like a CDN
 // link). {filename} is only there so saved files get a sensible name.
@@ -57,7 +57,7 @@ Route::get('/attachments/{id}/{filename}', [AttachmentController::class, 'show']
     ->where(['id' => '[0-9]+', 'filename' => '[^/]+'])
     ->name('attachments.show');
 
-// Account settings (ISSUE-9). Only `auth`, not `verified`: a user with a
+// Account settings. Only `auth`, not `verified`: a user with a
 // mistyped address must be able to fix it. Every change re-asks for the
 // current password; the password form uses Fortify's PUT /user/password.
 Route::middleware('auth')->prefix('settings/account')->group(function () {
@@ -71,7 +71,7 @@ Route::middleware('auth')->prefix('settings/account')->group(function () {
         ->name('settings.account.destroy');
 });
 
-// Profile settings and the profile popover JSON (ISSUE-8).
+// Profile settings and the profile popover JSON.
 Route::middleware('auth')->group(function () {
     Route::get('/settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/settings/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -79,18 +79,18 @@ Route::middleware('auth')->group(function () {
     // JSON for the profile popover.
     Route::get('/users/{user:username}/profile', [UserProfileController::class, 'show'])->name('users.profile');
 
-    // The status picker (ISSUE-31): online, idle or dnd.
+    // The status picker: online, idle or dnd.
     Route::put('/settings/status', [UserStatusController::class, 'update'])
         ->middleware('throttle:30,1')
         ->name('status.update');
 
-    // The theme toggle (ISSUE-37): dark or light, saved per user.
+    // The theme toggle: dark or light, saved per user.
     Route::put('/settings/theme', [ThemeController::class, 'update'])
         ->middleware('throttle:30,1')
         ->name('theme.update');
 });
 
-// Friends (ISSUE-22): the page has ?tab=all|pending|blocked. Like servers,
+// Friends: the page has ?tab=all|pending|blocked. Like servers,
 // this needs a verified email address. App\Policies\FriendshipPolicy
 // decides who may answer, cancel, remove or unblock; anyone who is not one
 // of the two users gets a 404. The other person hears about every change
@@ -101,7 +101,7 @@ Route::middleware(['auth', 'verified'])->prefix('friends')->group(function () {
         ->middleware('throttle:20,1')
         ->name('friends.store');
 
-    // Blocking (ISSUE-25), field `user_id`: App\Actions\Friends\BlockUser.
+    // Blocking, field `user_id`: App\Actions\Friends\BlockUser.
     Route::post('/block', [FriendController::class, 'block'])
         ->middleware('throttle:30,1')
         ->name('friends.block');
@@ -115,7 +115,7 @@ Route::middleware(['auth', 'verified'])->prefix('friends')->group(function () {
     });
 });
 
-// The notification inbox (ISSUE-33): your mention notifications. JSON for
+// The notification inbox: your mention notifications. JSON for
 // the bell's panel, a page without JavaScript. open marks one read and
 // goes to the message. {notification} is a uuid of your own (a 404 for
 // anyone else's), looked up by NotificationController.
@@ -129,14 +129,14 @@ Route::middleware(['auth', 'verified', 'throttle:60,1'])->prefix('notifications'
     });
 });
 
-// Notification settings (ISSUE-34): browser notifications for this browser
+// Notification settings: browser notifications for this browser
 // (resources/js/push-notifications.js) and your muted servers and channels.
 // The mute routes themselves are with the server routes below.
 Route::get('/settings/notifications', [NotificationSettingsController::class, 'edit'])
     ->middleware(['auth', 'verified'])
     ->name('settings.notifications');
 
-// 1:1 direct messages (ISSUE-23). POST /dms opens (or creates) the DM with
+// 1:1 direct messages. POST /dms opens (or creates) the DM with
 // `user_id`: friends and people you share a server with, never across a
 // block. Only participants see a conversation (ConversationPolicy, a 404
 // for anyone else). The message routes mirror the channel ones, so
@@ -147,7 +147,7 @@ Route::middleware(['auth', 'verified'])->prefix('dms')->group(function () {
         ->middleware('throttle:30,1')
         ->name('dms.store');
 
-    // Group DMs (ISSUE-24): `user_ids[]` (friends only) and an optional
+    // Group DMs: `user_ids[]` (friends only) and an optional
     // `name`; at most Conversation::MAX_PARTICIPANTS people.
     Route::post('/groups', [GroupConversationController::class, 'store'])
         ->middleware('throttle:20,1')
@@ -158,7 +158,7 @@ Route::middleware(['auth', 'verified'])->prefix('dms')->group(function () {
     Route::whereNumber('conversation')->scopeBindings()->middleware('can:view,conversation')->group(function () {
         Route::get('/{conversation}', [DirectMessageController::class, 'show'])->name('dms.show');
 
-        // Group DMs (ISSUE-24): any participant renames and adds friends;
+        // Group DMs: any participant renames and adds friends;
         // the owner removes people, anyone removes themselves (leaving).
         // {user} is scoped to the participants, so anyone else is a 404.
         Route::middleware('throttle:30,1')->group(function () {
@@ -201,7 +201,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/servers/{server}', [ServerController::class, 'show'])->name('servers.show');
     Route::get('/servers/{server}/settings', [ServerController::class, 'edit'])->name('servers.edit');
 
-    // Message search (ISSUE-21): ?q= plus the channel / author / from / to
+    // Message search: ?q= plus the channel / author / from / to
     // filters, through Laravel Scout's database engine. Members only.
     Route::get('/servers/{server}/search', [MessageSearchController::class, 'index'])
         ->middleware('throttle:60,1')
@@ -209,7 +209,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('/servers/{server}', [ServerController::class, 'update'])->name('servers.update');
     Route::delete('/servers/{server}', [ServerController::class, 'destroy'])->name('servers.destroy');
 
-    // Leaving and ownership (ISSUE-13). The owner cannot leave until they
+    // Leaving and ownership. The owner cannot leave until they
     // have transferred ownership to another member (ServerPolicy::leave).
     Route::get('/servers/{server}/leave', [ServerMembershipController::class, 'create'])->name('servers.leave.confirm');
     Route::delete('/servers/{server}/leave', [ServerMembershipController::class, 'destroy'])->name('servers.leave');
@@ -217,7 +217,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('throttle:6,1')
         ->name('servers.owner.update');
 
-    // Channels and categories (ISSUE-12). Members can open channels; the
+    // Channels and categories. Members can open channels; the
     // rest needs ServerPolicy::manageChannels. Scoped bindings make a
     // channel or category of another server a 404.
     Route::scopeBindings()->group(function () {
@@ -228,31 +228,31 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::patch('/servers/{server}/channels/{channel}', [ChannelController::class, 'update'])->name('channels.update');
         Route::delete('/servers/{server}/channels/{channel}', [ChannelController::class, 'destroy'])->name('channels.destroy');
 
-        // Messages (ISSUE-14): any member can post; MessageSent broadcasts
+        // Messages: any member can post; MessageSent broadcasts
         // the message on the private "channel.{id}" channel. History
-        // (ISSUE-15) is cursor paginated: ?before={cursor} for older pages.
+        // is cursor paginated: ?before={cursor} for older pages.
         Route::get('/servers/{server}/channels/{channel}/messages', [MessageController::class, 'index'])
             ->middleware('throttle:60,1')
             ->name('messages.index');
-        // Named limiter (ISSUE-41): its own bucket, shared with DM sends.
+        // Named limiter: its own bucket, shared with DM sends.
         Route::post('/servers/{server}/channels/{channel}/messages', [MessageController::class, 'store'])
             ->middleware('throttle:'.RateLimits::MESSAGES)
             ->name('messages.store');
 
-        // Mention autocomplete (ISSUE-33): ?q= after "@" in the composer.
+        // Mention autocomplete: ?q= after "@" in the composer.
         // Members who can send in the channel.
         Route::get('/servers/{server}/channels/{channel}/mentions', [MentionSuggestionController::class, 'index'])
             ->middleware('throttle:120,1')
             ->name('mentions.index');
 
-        // Unread tracking (ISSUE-32): opening a channel marks it read; this
+        // Unread tracking: opening a channel marks it read; this
         // moves the marker for messages that arrive while it is open.
         // Optional field `message_id`.
         Route::post('/servers/{server}/channels/{channel}/read', [ChannelReadController::class, 'store'])
             ->middleware('throttle:120,1')
             ->name('channels.read');
 
-        // Editing and deleting (ISSUE-16): MessagePolicy decides; the
+        // Editing and deleting: MessagePolicy decides; the
         // MessageUpdated / MessageDeleted events go out on "channel.{id}".
         Route::patch('/servers/{server}/channels/{channel}/messages/{message}', [MessageController::class, 'update'])
             ->middleware('throttle:30,1')
@@ -261,7 +261,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->middleware('throttle:30,1')
             ->name('messages.destroy');
 
-        // Reactions (ISSUE-18): field `emoji`; any member may react
+        // Reactions: field `emoji`; any member may react
         // (MessagePolicy::react). ReactionsUpdated goes out on "channel.{id}".
         Route::post('/servers/{server}/channels/{channel}/messages/{message}/reactions', [ReactionController::class, 'store'])
             ->middleware('throttle:60,1')
@@ -270,7 +270,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->middleware('throttle:60,1')
             ->name('reactions.destroy');
 
-        // Pinned messages (ISSUE-20): any member sees the list (JSON for the
+        // Pinned messages: any member sees the list (JSON for the
         // panel, a page without JavaScript); pinning needs MessagePolicy::pin.
         // MessagePinned goes out on "channel.{id}".
         Route::get('/servers/{server}/channels/{channel}/pins', [PinController::class, 'index'])
@@ -283,7 +283,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->middleware('throttle:30,1')
             ->name('pins.destroy');
 
-        // Mute settings (ISSUE-34): PUT mutes, DELETE unmutes, for you only.
+        // Mute settings: PUT mutes, DELETE unmutes, for you only.
         // Members who can see the channel. Muted places send no browser
         // notifications (App\Support\NotificationMutes).
         Route::middleware('throttle:60,1')->group(function () {
@@ -305,7 +305,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/servers/{server}/categories/{category}', [ChannelCategoryController::class, 'destroy'])->name('categories.destroy');
     });
 
-    // Channel permissions (ISSUE-28): private toggle and per-role overrides.
+    // Channel permissions: private toggle and per-role overrides.
     // Not scope-bound ({role} would be looked up on the channel), so the
     // controller checks that the channel and role belong to {server}: 404
     // if not.
@@ -317,7 +317,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->whereNumber('role')
         ->name('channels.permissions.update');
 
-    // Roles (ISSUE-26): ServerPolicy::manageRoles (owner only for now) on
+    // Roles: ServerPolicy::manageRoles (the Manage Roles permission) on
     // every route. Scoped bindings make another server's role a 404, and
     // {user} on the members route must hold the role. @everyone can only
     // have its permissions changed.
@@ -344,7 +344,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             });
         });
 
-    // Moderation (ISSUE-29). The members page needs any of Kick, Ban or
+    // Moderation. The members page needs any of Kick, Ban or
     // Timeout Members (ServerPolicy::moderateMembers); each action checks
     // ServerPolicy::kick / ban / timeout for that {user}, which must be a
     // member below the moderator in the role hierarchy (a non-member is a
@@ -365,13 +365,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         });
     });
 
-    // Audit log (ISSUE-30): owner only (ServerPolicy::viewAuditLog).
+    // Audit log: owner only (ServerPolicy::viewAuditLog).
     // Filters ?action= (an AuditLogEntry::ACTIONS key) and ?user= (actor id).
     Route::get('/servers/{server}/audit-log', [AuditLogController::class, 'index'])
         ->middleware(['can:viewAuditLog,server', 'throttle:60,1'])
         ->name('audit-log.index');
 
-    // Invites (ISSUE-11). Any member can create one; the owner and the
+    // Invites. Any member can create one; the owner and the
     // inviter can revoke it (App\Policies\InvitePolicy).
     Route::get('/servers/{server}/invites', [InviteController::class, 'index'])->name('servers.invites.index');
     Route::post('/servers/{server}/invites', [InviteController::class, 'store'])

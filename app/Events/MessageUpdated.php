@@ -10,7 +10,7 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 
 /**
- * A channel message was edited (ISSUE-16). Same channel and payload as
+ * A channel message was edited. Same channel and payload as
  * MessageSent, so the browser can re-render it; it listens for
  * ".message.updated" (resources/js/channel-messages.js).
  */

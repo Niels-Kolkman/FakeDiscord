@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Deleted messages are soft deleted (ISSUE-16): hidden from everyone,
+     * Deleted messages are soft deleted: hidden from everyone,
      * but the row stays so replies keep their reply_to_id.
      */
     public function up(): void

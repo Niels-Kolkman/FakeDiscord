@@ -1,5 +1,5 @@
 {{--
-    The inbox bell (ISSUE-33) for page headers: the unread mention count
+    The inbox bell for page headers: the unread mention count
     (App\Support\NotificationInbox) and, with resources/js/notifications.js,
     a panel that loads the inbox from data-inbox-url (JSON) and keeps the
     count live from App\Notifications\MentionedInMessage broadcasts.

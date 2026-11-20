@@ -1,5 +1,5 @@
 {{--
-    Confirm leaving a server (ISSUE-13). The owner is told to transfer
+    Confirm leaving a server. The owner is told to transfer
     ownership first instead.
 
     @var \App\Models\Server $server

@@ -6,7 +6,7 @@ use Symfony\Component\Finder\Finder;
 use Tests\TestCase;
 
 /**
- * ISSUE-38: text colours in the views and scripts stay readable (WCAG AA)
+ * Text colours in the views and scripts stay readable (WCAG AA)
  * in both themes. The token values themselves are checked by
  * tests/js/contrast.test.js.
  */

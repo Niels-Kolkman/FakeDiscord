@@ -10,7 +10,7 @@ use Illuminate\Http\JsonResponse;
 
 /**
  * Saves the sidebar order after a drag and drop (resources/js/channel-sidebar.js).
- * The sidebar only lists what the member can see (ISSUE-28), so the order
+ * The sidebar only lists what the member can see, so the order
  * is checked against that and hidden channels stay where they are.
  */
 class ChannelLayoutController extends Controller

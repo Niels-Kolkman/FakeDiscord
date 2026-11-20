@@ -7,7 +7,7 @@ use App\Models\User;
 use InvalidArgumentException;
 
 /**
- * Sets the status a user shows while connected (ISSUE-31): online, idle or
+ * Sets the status a user shows while connected: online, idle or
  * dnd (User::ONLINE_STATUSES). Picking the status you already have saves
  * nothing and broadcasts nothing.
  */

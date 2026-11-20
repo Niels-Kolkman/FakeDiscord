@@ -1,4 +1,4 @@
-// ISSUE-31: online presence. Run with `npm test` (node --test, no deps).
+// Online presence. Run with `npm test` (node --test, no deps).
 // The server side is covered by tests/Feature/Presence; the script is
 // checked here against a minimal fake DOM, a fake Echo and manual timers.
 import { test } from 'node:test';
@@ -786,7 +786,7 @@ test('a page without a member list still tracks the viewer\'s status', () => {
     assert.equal(presence.tracker.shown(1), 'idle');
 });
 
-// Known bug (see the ISSUE-31 test summary): save() rolls back to the
+// Known bug: save() rolls back to the
 // status the page showed when that request started, so an older request
 // failing after a newer one succeeded shows a status the server no longer
 // has. Marked todo so it is reported without failing the suite.

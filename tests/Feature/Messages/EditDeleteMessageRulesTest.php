@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\Event;
 use Tests\TestCase;
 
 /**
- * ISSUE-16 edge cases on top of EditDeleteMessageTest: the policy rules for
+ * Edge cases on top of EditDeleteMessageTest: the policy rules for
  * messages without a channel or author, content boundaries, no-op edits and
  * what an edit or delete must not disturb.
  */

@@ -1,5 +1,5 @@
 /**
- * Live friend requests (ISSUE-22).
+ * Live friend requests.
  *
  * On every page of a signed-in user (the layouts add
  * <meta name="user-id"> and <meta name="friends-url">) this listens on the

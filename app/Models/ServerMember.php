@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 
 /**
- * @property Carbon|null $timed_out_until NULL = never timed out (ISSUE-29)
+ * @property Carbon|null $timed_out_until NULL = never timed out
  */
 #[ObservedBy(ServerMemberObserver::class)]
 class ServerMember extends Model
@@ -57,7 +57,7 @@ class ServerMember extends Model
     }
 
     /**
-     * Is the member timed out right now (ISSUE-29)? A timeout that has run
+     * Is the member timed out right now? A timeout that has run
      * out counts as none; nothing needs to clear the column.
      */
     public function isTimedOut(): bool

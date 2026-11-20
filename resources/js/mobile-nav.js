@@ -1,5 +1,5 @@
 /**
- * Drawers on small screens (ISSUE-37, below 768px; components/layouts/app.blade.php).
+ * Drawers on small screens (below 768px; components/layouts/app.blade.php).
  *
  * The server rail + channel (or friends / DM) sidebar is the "nav" drawer
  * on the left, a server's member list the "members" drawer on the right.
@@ -72,7 +72,7 @@ export function initMobileNav({ document: doc, matchMedia = null, now = () => Da
     const toggles = doc.querySelectorAll('[data-drawer-toggle]');
     const backdrop = doc.querySelector('[data-drawer-backdrop]');
     const main = doc.querySelector('[data-app-main]');
-    // The skip link (ISSUE-38) is outside <main>, but must not be a way out of a drawer either.
+    // The skip link is outside <main>, but must not be a way out of a drawer either.
     const skipLink = doc.querySelector('[data-skip-link]');
     const media = matchMedia ? matchMedia(MOBILE_QUERY) : null;
     const isMobile = () => Boolean(media?.matches);

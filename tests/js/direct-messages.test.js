@@ -1,4 +1,4 @@
-// ISSUE-23: 1:1 direct messages. Run with `npm test` (node --test, no deps).
+// 1:1 direct messages. Run with `npm test` (node --test, no deps).
 // The Blade markup is covered by tests/Feature/DirectMessages; here the
 // script parts: matching events to a DM panel, and reloading the DM list.
 import { test } from 'node:test';

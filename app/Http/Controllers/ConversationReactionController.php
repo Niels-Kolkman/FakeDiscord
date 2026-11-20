@@ -13,7 +13,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 
 /**
- * Add and remove emoji reactions on a DM message (ISSUE-23), like
+ * Add and remove emoji reactions on a DM message, like
  * ReactionController does for channels. Both participants may react
  * (MessagePolicy::react); ReactionsUpdated goes out on "conversation.{id}".
  *

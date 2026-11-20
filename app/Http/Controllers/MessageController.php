@@ -25,7 +25,7 @@ use Illuminate\Validation\ValidationException;
  * and the composer sends JSON and gets the stored message back. Without
  * JavaScript the forms post normally and redirect back to the channel.
  *
- * Editing and deleting (ISSUE-16) follow App\Policies\MessagePolicy: the
+ * Editing and deleting follow App\Policies\MessagePolicy: the
  * author edits, the author or a moderator deletes.
  *
  * Routes use scoped bindings, so a channel id from another server, or a

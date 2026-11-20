@@ -6,7 +6,7 @@ use Dotenv\Dotenv;
 use PHPUnit\Framework\TestCase;
 
 /**
- * ISSUE-1: checks that the scaffold files (.env.example, Vite/Tailwind
+ * Checks that the scaffold files (.env.example, Vite/Tailwind
  * config, npm scripts, .gitignore) stay as the setup docs describe.
  */
 class ProjectScaffoldTest extends TestCase

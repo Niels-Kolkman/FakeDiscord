@@ -8,7 +8,7 @@ use InvalidArgumentException;
 use Tests\TestCase;
 
 /**
- * ISSUE-44: the root URL never shows the default Laravel page.
+ * The root URL never shows the default Laravel page.
  */
 class ExampleTest extends TestCase
 {

@@ -1,5 +1,5 @@
 {{--
-    The server rail (ISSUE-35): the far-left column of the app shell
+    The server rail: the far-left column of the app shell
     (components/layouts/app.blade.php). Home (friends and direct messages)
     on top, then every server you are in, then "Create a server".
 
@@ -10,7 +10,7 @@
     lists they are worked out when the page loads (not live).
 
     It is a 72px column on every screen size: below md it sits in the
-    navigation drawer next to the channel sidebar (ISSUE-37, see the app
+    navigation drawer next to the channel sidebar (see the app
     layout). The theme toggle is at the bottom.
 --}}
 @php
@@ -90,6 +90,6 @@
         </div>
     @endcan
 
-    {{-- Dark / light theme (ISSUE-37), at the bottom. --}}
+    {{-- Dark / light theme, at the bottom. --}}
     <x-theme-toggle variant="rail" class="mt-auto pt-2" />
 </nav>

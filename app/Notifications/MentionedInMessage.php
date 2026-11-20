@@ -8,7 +8,7 @@ use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Notification;
 
 /**
- * "Someone mentioned you" (ISSUE-33): a row in the user's notification
+ * "Someone mentioned you": a row in the user's notification
  * inbox (the database channel) and a live ".mention.created" event on
  * their private "App.Models.User.{id}" channel (the broadcast channel,
  * resources/js/notifications.js).
@@ -36,7 +36,7 @@ class MentionedInMessage extends Notification
         public readonly Message $message,
         public readonly string $reason = self::REASON_USER,
         public readonly ?string $roleName = null,
-        // Browser notifications (ISSUE-34): false when the recipient muted
+        // Browser notifications: false when the recipient muted
         // the channel or its server (App\Support\NotificationMutes).
         public readonly bool $push = true,
     ) {}
@@ -82,7 +82,7 @@ class MentionedInMessage extends Notification
      * the request's host.
      *
      * `push` tells resources/js/push-notifications.js whether it may show
-     * a browser notification (ISSUE-34); it is not stored.
+     * a browser notification; it is not stored.
      */
     public function toBroadcast(object $notifiable): BroadcastMessage
     {

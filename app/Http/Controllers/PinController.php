@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 
 /**
- * Pinned messages (ISSUE-20): a channel's pinned list, and pinning or
+ * Pinned messages: a channel's pinned list, and pinning or
  * unpinning a message (MessagePolicy::pin, moderators only).
  *
  * resources/js/channel-messages.js opens the list as a panel from the
@@ -104,7 +104,7 @@ class PinController extends Controller
     {
         return $channel->messages()
             ->whereNotNull('pinned_at')
-            // Not the messages of people the viewer blocked (ISSUE-25).
+            // Not the messages of people the viewer blocked.
             ->visibleTo($viewer)
             ->with(['author', 'attachments', 'pinnedBy', ...Reactions::relations(), ...Message::replyRelations()])
             ->orderByDesc('pinned_at')

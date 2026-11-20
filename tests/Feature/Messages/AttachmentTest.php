@@ -22,7 +22,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Tests\TestCase;
 
 /**
- * ISSUE-19: up to 5 files per message (10 MB each, allowlisted types),
+ * Up to 5 files per message (10 MB each, allowlisted types),
  * stored on the configured disk and served through temporary signed URLs.
  */
 class AttachmentTest extends TestCase

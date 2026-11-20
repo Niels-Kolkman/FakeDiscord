@@ -1,4 +1,4 @@
-// ISSUE-37: the small-screen drawers (resources/js/mobile-nav.js): the top
+// The small-screen drawers (resources/js/mobile-nav.js): the top
 // bar buttons, swipes, Escape and the backdrop open and close them, the
 // rest of the page is inert meanwhile and focus goes back. Run with
 // `npm test`. The markup is covered by tests/Feature/Layout/MobileLayoutTest.php.
@@ -133,7 +133,7 @@ test('the bar buttons open a drawer, make the page inert and show the backdrop',
     assert.equal(ctx.nav.focused, 1);
 });
 
-test('the skip link is inert while a drawer is open (ISSUE-38)', () => {
+test('the skip link is inert while a drawer is open', () => {
     const ctx = shell();
     click(ctx.navToggle);
     assert.equal(ctx.skipLink.getAttribute('inert'), '');

@@ -20,7 +20,7 @@ use RuntimeException;
 use Tests\TestCase;
 
 /**
- * ISSUE-11: edge cases for invites that InviteTest does not cover (every
+ * Edge cases for invites that InviteTest does not cover (every
  * option value, form defaults, list rendering, the code retry limit, revoke
  * edge cases, the exact expiry second, join races and rate limits).
  */

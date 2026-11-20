@@ -7,7 +7,7 @@ use App\Models\ServerMember;
 use App\Support\AuditLog;
 
 /**
- * Audit log (ISSUE-30): timeouts given and ended early
+ * Audit log: timeouts given and ended early
  * (App\Actions\Moderation\TimeoutMember saves the membership).
  */
 class ServerMemberObserver

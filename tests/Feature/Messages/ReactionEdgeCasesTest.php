@@ -27,7 +27,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
- * ISSUE-18 edge cases not covered by ReactionTest: the emoji limit, the
+ * Edge cases not covered by ReactionTest: the emoji limit, the
  * scope of removing, cross-server URLs, the policy for DM messages, the
  * emoji validator, labels and eager loading.
  */

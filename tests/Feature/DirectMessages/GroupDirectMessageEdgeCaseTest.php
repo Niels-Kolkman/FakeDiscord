@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 /**
- * ISSUE-24: the edges of group DMs that GroupDirectMessageTest leaves out:
+ * The edges of group DMs that GroupDirectMessageTest leaves out:
  * JSON answers of every action, the single-pick branch, ownership when
  * people leave or delete their account, broadcast failures, files of
  * deleted messages, names and the friend pickers.

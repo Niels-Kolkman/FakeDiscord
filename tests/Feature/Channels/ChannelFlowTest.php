@@ -1,7 +1,7 @@
 <?php
 
 /**
- * ISSUE-39: managing channels and categories, private channels and
+ * Managing channels and categories, private channels and
  * unread tracking (Pest).
  */
 

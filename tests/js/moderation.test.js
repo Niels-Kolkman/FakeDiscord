@@ -1,4 +1,4 @@
-// ISSUE-29: kicks, bans and timeouts, live. Run with `npm test`
+// Kicks, bans and timeouts, live. Run with `npm test`
 // (node --test, no deps). The server side is covered by
 // tests/Feature/Moderation; the script is checked here against a minimal
 // fake DOM and a fake Echo.
@@ -161,7 +161,7 @@ test('a ban on the open server leaves its channels, removes the panel and shows 
 
     assert.equal(handle(event('banned', 7, '<b>Mods</b>')), 'leave');
 
-    // The server's presence channel too (ISSUE-31).
+    // The server's presence channel too.
     assert.deepEqual(echo.left, ['server.7', 'channel.3', 'typing.3']);
     assert.equal(document.querySelector('[data-channel-messages]'), null);
     const notice = document.querySelector('[data-moderation-notice]');
@@ -234,7 +234,7 @@ test('events for another server leave the page alone', () => {
     assert.equal(handle(event('banned', 9)), null);
     assert.equal(handle(event('timed_out', 9)), null);
 
-    // Only that server's presence channel (ISSUE-31), which every page joins.
+    // Only that server's presence channel, which every page joins.
     assert.deepEqual(echo.left, ['server.9']);
     assert.equal(location.reloads, 0);
     assert.ok(document.querySelector('[data-channel-messages]'));

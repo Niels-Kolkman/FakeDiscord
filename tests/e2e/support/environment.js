@@ -1,5 +1,5 @@
 /**
- * The environment the browser tests run the app in (ISSUE-40).
+ * The environment the browser tests run the app in.
  *
  * The app gets its own SQLite file and port, so a run never touches the
  * development database or a `composer dev` server on :8000. Everything

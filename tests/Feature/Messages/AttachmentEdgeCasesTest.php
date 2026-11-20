@@ -25,7 +25,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Tests\TestCase;
 
 /**
- * ISSUE-19 edge cases on top of AttachmentTest: case of extensions, every
+ * Edge cases on top of AttachmentTest: case of extensions, every
  * inline image type, voice channels, awkward file names in signed URLs,
  * escaping, broadcast failures, edits, cleanup with a broken disk, the TTL
  * floor and eager loading.

@@ -26,7 +26,7 @@ use Tests\Concerns\RunsTheQueueWorker;
 use Tests\TestCase;
 
 /**
- * ISSUE-18: members add and remove emoji reactions on channel messages.
+ * Members add and remove emoji reactions on channel messages.
  * Reactions are grouped per emoji with a count and the first reactors
  * (tooltip), one per (message, user, emoji), and ReactionsUpdated
  * broadcasts the new counts on the private "channel.{id}" channel.

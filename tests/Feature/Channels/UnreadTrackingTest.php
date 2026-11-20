@@ -21,7 +21,7 @@ use Tests\Concerns\GivesPermissions;
 use Tests\TestCase;
 
 /**
- * ISSUE-32: read markers per user per channel, unread dots and mention
+ * Read markers per user per channel, unread dots and mention
  * badges in the channel sidebar and the server lists, and marking a
  * channel read when it is opened or while it is open.
  */

@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
- * ISSUE-12: channel categories and how the sidebar groups channels under them.
+ * Channel categories and how the sidebar groups channels under them.
  */
 class ChannelCategoryTest extends TestCase
 {

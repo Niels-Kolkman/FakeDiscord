@@ -1,7 +1,7 @@
 <?php
 
 /**
- * ISSUE-41: mass-assignment audit. Every model lists its $fillable columns
+ * Mass-assignment audit. Every model lists its $fillable columns
  * (nothing is unguarded), and the columns that carry trust are not among
  * them: they are only ever set with forceFill() by the code that owns
  * them. The endpoints are covered where they live (RegistrationTest,

@@ -18,7 +18,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Tests\TestCase;
 
 /**
- * ISSUE-20 edge cases around replies that ReplyTest does not cover: odd
+ * Edge cases around replies that ReplyTest does not cover: odd
  * reply_to_id values, reply chains, edits on either side, a hard-deleted
  * original, escaping, originals outside the loaded page, and the exact
  * boundaries of the quoted excerpt.

@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Query\JoinClause;
 
 /**
- * Unread channels and mention counts for one viewer (ISSUE-32): the dots
+ * Unread channels and mention counts for one viewer: the dots
  * and badges in the channel sidebar and in the server lists.
  *
  * A message is unread when it is newer than the viewer's marker in
@@ -21,7 +21,7 @@ use Illuminate\Database\Query\JoinClause;
  * deleted messages and those of people they blocked (Message::visibleTo())
  * never count. A mention is an unread message that mentions them
  * (App\Support\Mentions, stored in messages.mentions): by username, by a
- * role they hold now, or @everyone (ISSUE-33).
+ * role they hold now, or @everyone.
  *
  * One aggregate query for all channels, plus one for the unread messages
  * that mention anyone when anything is unread, plus one for the viewer's

@@ -2,7 +2,7 @@
  * Profile popover: clicking any element with [data-profile-url] (see the
  * <x-user-avatar> Blade component) fetches that user's profile JSON and shows
  * a small card next to it. Closes on outside click, Escape or a second click.
- * Opening focuses the card and Tab stays in it (ISSUE-38, focus-trap.js);
+ * Opening focuses the card and Tab stays in it (focus-trap.js);
  * Escape gives focus back to the avatar or name that opened it.
  *
  * All user-provided text is inserted with textContent, never parsed as HTML.
@@ -60,7 +60,7 @@ function render(profile) {
 }
 
 /**
- * Block / Unblock (ISSUE-25), for anyone but yourself. Blocking posts
+ * Block / Unblock, for anyone but yourself. Blocking posts
  * user_id to profile.block_url (FriendController::block), unblocking
  * DELETEs profile.unblock_url. Either reloads the page, so the blocked
  * person's messages disappear (or come back) everywhere at once.
@@ -157,7 +157,7 @@ async function toggle(trigger) {
     position(card, trigger);
     trigger.setAttribute('aria-expanded', 'true');
     open = { trigger, element: card };
-    // The card is at the end of <body>: move focus to it (ISSUE-38).
+    // The card is at the end of <body>: move focus to it.
     card.focus({ preventScroll: true });
 }
 
@@ -178,7 +178,7 @@ document.addEventListener('keydown', (event) => {
         trigger.focus();
         return;
     }
-    // Tab stays in the card until Escape (ISSUE-38).
+    // Tab stays in the card until Escape.
     if (open && open.element.contains(document.activeElement)) trapTab(open.element, event);
 });
 

@@ -19,7 +19,7 @@ use Tests\Concerns\GivesPermissions;
 use Tests\TestCase;
 
 /**
- * ISSUE-27: the allowed/denied matrix of ServerPolicy, ChannelPolicy,
+ * The allowed/denied matrix of ServerPolicy, ChannelPolicy,
  * MessagePolicy and RolePolicy for the owner, an administrator, a member
  * whose role has the flag, a plain member (only @everyone) and a stranger.
  */

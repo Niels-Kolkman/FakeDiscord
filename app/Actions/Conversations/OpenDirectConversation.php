@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Open the 1:1 DM between two users (ISSUE-23), creating it the first time.
+ * Open the 1:1 DM between two users, creating it the first time.
  *
  * A pair has one conversation: it is looked up by its direct_key, and the
  * unique index on that column makes createOrFirst() return the existing
@@ -17,7 +17,7 @@ use Illuminate\Validation\ValidationException;
  *
  * Like Discord you can message friends and people you share a server
  * with. Nobody can message themselves, and nobody can open a DM across a
- * block in either direction (ISSUE-25 adds blocking). Someone who blocked
+ * block in either direction. Someone who blocked
  * you gets the same error as someone you cannot reach, so this cannot be
  * used to find out about the block.
  */

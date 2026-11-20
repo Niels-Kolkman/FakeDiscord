@@ -11,7 +11,7 @@ use App\Models\ServerMember;
 use App\Models\User;
 
 /**
- * Helpers for permission tests (ISSUE-27): members with roles, and changes
+ * Helpers for permission tests: members with roles, and changes
  * to @everyone.
  */
 trait GivesPermissions
@@ -57,7 +57,7 @@ trait GivesPermissions
     }
 
     /**
-     * A channel override (ISSUE-28) for $role, replacing any existing one.
+     * A channel override for $role, replacing any existing one.
      */
     protected function overrideChannel(Channel $channel, Role $role, int $allow = 0, int $deny = 0): ChannelPermissionOverride
     {

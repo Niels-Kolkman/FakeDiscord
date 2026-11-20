@@ -17,7 +17,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Tests\TestCase;
 
 /**
- * ISSUE-13 edge cases for leaving a server and transferring ownership:
+ * Edge cases for leaving a server and transferring ownership:
  * repeated requests, missing servers, roles, the sole-owner case, input
  * shapes and the transfer rate limit.
  */

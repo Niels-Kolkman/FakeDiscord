@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Send a friend request by username (ISSUE-22).
+ * Send a friend request by username.
  *
  * - "@name", capitals and surrounding spaces are accepted; usernames are
  *   stored lowercase (CreateNewUser).

@@ -23,7 +23,7 @@ class UpdateMessageRequest extends FormRequest
      */
     public function rules(): array
     {
-        // A message with attachments (ISSUE-19) may lose its text, like on
+        // A message with attachments may lose its text, like on
         // Discord; it still shows its files.
         return [
             'content' => [

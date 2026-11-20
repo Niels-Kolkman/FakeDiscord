@@ -11,7 +11,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 /**
- * GET /servers/{server}/audit-log (ISSUE-30): the server's audit log, newest
+ * GET /servers/{server}/audit-log: the server's audit log, newest
  * first, 50 per page, filtered by ?action= and ?user= (who made the change).
  * Owner only; the route checks ServerPolicy::viewAuditLog.
  *

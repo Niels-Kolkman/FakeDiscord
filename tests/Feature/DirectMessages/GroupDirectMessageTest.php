@@ -16,7 +16,7 @@ use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
 /**
- * ISSUE-24: group DMs. Create one with up to 10 people (friends only), add
+ * Group DMs. Create one with up to 10 people (friends only), add
  * and remove participants, leave, rename; the group page, the sidebar and
  * ConversationUpdated for everyone involved.
  */

@@ -12,7 +12,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
- * ISSUE-8: users edit their display name, bio and avatar.
+ * Users edit their display name, bio and avatar.
  */
 class ProfileUpdateTest extends TestCase
 {

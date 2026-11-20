@@ -1,5 +1,5 @@
 /**
- * The emoji offered by the composer's picker (ISSUE-36, emoji-picker.js),
+ * The emoji offered by the composer's picker (emoji-picker.js),
  * by category. Each entry is [emoji, name]; the name is what the search
  * matches and what a screen reader reads out. A hand-picked set of common
  * emoji, not the whole Unicode list.

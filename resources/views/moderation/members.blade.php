@@ -1,5 +1,5 @@
 {{--
-    Member moderation (ISSUE-29): kick, ban and time out members. Each
+    Member moderation: kick, ban and time out members. Each
     member shows only the actions the viewer may take on them
     (ServerPolicy::kick / ban / timeout: the right permission and a member
     below the viewer's highest role; never the owner or yourself).

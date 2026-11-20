@@ -1,5 +1,5 @@
 {{--
-    A group DM (ISSUE-24, App\Http\Controllers\DirectMessageController::show).
+    A group DM (App\Http\Controllers\DirectMessageController::show).
 
     The same message panel as a 1:1 DM, plus the group's settings: its
     people (the owner first, with Remove for the owner), Add friends (any
@@ -37,7 +37,7 @@
             <span aria-hidden="true" class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#5865f2] text-xs text-white">👥</span>
             <h1 class="truncate font-semibold text-fg-strong" data-group-name>{{ $title }}</h1>
             <span class="shrink-0 text-sm text-fg-subtle" data-group-count>{{ trans_choice('{1} 1 member|[2,*] :count members', $members->count(), ['count' => $members->count()]) }}</span>
-            {{-- Mention notifications (ISSUE-33). --}}
+            {{-- Mention notifications. --}}
             <div class="ml-auto"><x-inbox /></div>
         </header>
 

@@ -16,7 +16,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 /**
- * Kicking, banning and timing out members (ISSUE-29). The page needs
+ * Kicking, banning and timing out members. The page needs
  * ServerPolicy::moderateMembers; each action needs ServerPolicy::kick,
  * ::ban or ::timeout for that member, which also applies the role
  * hierarchy. Someone who is not a member is a 404.

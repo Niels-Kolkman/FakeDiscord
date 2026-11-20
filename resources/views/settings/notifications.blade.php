@@ -1,5 +1,5 @@
 {{--
-    Notification settings (ISSUE-34, NotificationSettingsController::edit).
+    Notification settings (NotificationSettingsController::edit).
 
     Browser notifications are per browser: resources/js/push-notifications.js
     fills [data-push-settings] (asks for permission, or turns them off here

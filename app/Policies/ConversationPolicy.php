@@ -8,12 +8,12 @@ use App\Models\User;
 use Illuminate\Auth\Access\Response;
 
 /**
- * Discovered automatically for App\Models\Conversation (ISSUE-23).
+ * Discovered automatically for App\Models\Conversation.
  *
  * Only the participants see a conversation; anyone else gets a 404, so
  * conversation ids do not tell anyone who talks to whom.
  *
- * Group DMs (ISSUE-24), like Discord: every participant may write, add
+ * Group DMs, like Discord: every participant may write, add
  * their friends and rename the group; only the owner removes other
  * people; anyone may leave. A 1:1 DM has none of this (a 404).
  */

@@ -11,7 +11,7 @@ use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\View\View;
 
 /**
- * The notification inbox (ISSUE-33, App\Support\NotificationInbox).
+ * The notification inbox (App\Support\NotificationInbox).
  *
  * resources/js/notifications.js opens it as a panel from the bell (JSON);
  * without JavaScript the bell is a link to the notifications page. Each

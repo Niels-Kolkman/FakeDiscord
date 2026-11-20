@@ -1,7 +1,7 @@
 # Hosting on a Raspberry Pi
 
 The app runs on one SQLite file, the file cache and the database queue: no
-Redis, MySQL or other services (ISSUE-42).
+Redis, MySQL or other services.
 
 - **SQLite** (`config/database.php`): WAL journal mode, so pages keep reading
   while someone writes; `busy_timeout` 5000 ms, so a writer waits for the lock

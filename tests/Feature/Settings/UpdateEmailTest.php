@@ -10,7 +10,7 @@ use Tests\Concerns\DocumentsKnownBugs;
 use Tests\TestCase;
 
 /**
- * ISSUE-9: changing the email address from account settings.
+ * Changing the email address from account settings.
  */
 class UpdateEmailTest extends TestCase
 {

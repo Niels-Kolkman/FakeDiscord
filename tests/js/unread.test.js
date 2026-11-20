@@ -1,4 +1,4 @@
-// ISSUE-32: unread dots and mention badges, live. Run with `npm test`
+// Unread dots and mention badges, live. Run with `npm test`
 // (node --test, no deps). The server side is covered by
 // tests/Feature/Channels/UnreadTrackingTest.php; the script is checked here
 // against a minimal fake DOM, a fake Echo, a fake post and fake timers.

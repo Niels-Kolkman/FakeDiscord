@@ -1,4 +1,4 @@
-// ISSUE-22: live friend requests. Run with `npm test` (node --test, no deps).
+// Live friend requests. Run with `npm test` (node --test, no deps).
 // The Blade markup is covered by tests/Feature/Friends/FriendsPageTest.php;
 // the script is checked here against a minimal fake DOM and a fake Echo.
 import { test } from 'node:test';

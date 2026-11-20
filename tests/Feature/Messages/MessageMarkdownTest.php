@@ -14,7 +14,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Tests\TestCase;
 
 /**
- * ISSUE-36: messages show their markdown (App\Support\Markdown) in channels
+ * Messages show their markdown (App\Support\Markdown) in channels
  * and DMs, raw HTML stays text, the raw source is kept for editing, and
  * the composer has the (script-only) emoji picker.
  */

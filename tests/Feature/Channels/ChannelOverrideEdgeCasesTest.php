@@ -17,7 +17,7 @@ use Tests\Concerns\GivesPermissions;
 use Tests\TestCase;
 
 /**
- * ISSUE-28 edge cases not covered by PrivateChannelsTest and
+ * Edge cases not covered by PrivateChannelsTest and
  * ChannelOverridesTest: channels hidden by a role deny rather than by being
  * private, message actions in hidden channels, access changing between
  * requests, combinations of @everyone and role overrides, servers without

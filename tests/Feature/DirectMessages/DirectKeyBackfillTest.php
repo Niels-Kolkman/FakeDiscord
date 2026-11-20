@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
- * ISSUE-23: the migration that adds conversations.direct_key and
+ * The migration that adds conversations.direct_key and
  * last_message_at fills them in for conversations that already exist.
  *
  * Runs against a temp SQLite file (like MigrationRoundTripTest), because

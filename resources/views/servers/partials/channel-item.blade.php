@@ -1,6 +1,6 @@
 {{--
     One sidebar row. Expects $server, $channel, $activeChannel, $canManage
-    and $unread (App\Support\UnreadState, ISSUE-32).
+    and $unread (App\Support\UnreadState).
 
     An unread channel carries data-unread: the name turns bright and bold
     and a dot shows on the left (CSS only, so resources/js/unread.js just
@@ -12,7 +12,7 @@
     $active = $activeChannel?->is($channel) ?? false;
     $isUnread = ! $active && $unread->isUnread($channel);
     $mentionCount = $active ? 0 : $unread->mentions($channel);
-    // Mute settings (ISSUE-34): $mutes comes from the sidebar.
+    // Mute settings: $mutes comes from the sidebar.
     $channelMuted = in_array((int) $channel->id, ($mutes ?? ['channels' => []])['channels'], true);
 @endphp
 

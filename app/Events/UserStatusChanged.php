@@ -12,7 +12,7 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 
 /**
- * A user picked another status (ISSUE-31): online, idle or dnd.
+ * A user picked another status: online, idle or dnd.
  *
  * Sent on the presence channel "server.{id}" of every server they are in,
  * so open member lists recolour them, and on their own private

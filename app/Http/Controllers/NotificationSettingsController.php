@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 
 /**
- * Notification settings (ISSUE-34): the settings page (browser
+ * Notification settings: the settings page (browser
  * notifications for this browser, muted servers and channels) and the
  * mute / unmute routes used by it and by the channel sidebar.
  *

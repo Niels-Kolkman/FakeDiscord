@@ -17,7 +17,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Bans a member (ISSUE-29): they are removed like a kick and cannot rejoin
+ * Bans a member: they are removed like a kick and cannot rejoin
  * through any invite until the ban is lifted (AcceptInvite checks
  * Server::hasBanned()). Who may ban whom is ServerPolicy::ban.
  *

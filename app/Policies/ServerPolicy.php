@@ -12,7 +12,7 @@ use Illuminate\Auth\Access\Response;
  * Discovered automatically for App\Models\Server.
  *
  * Server-wide abilities, decided by the member's effective permissions
- * (App\Services\PermissionService, ISSUE-27): the owner can do everything,
+ * (App\Services\PermissionService): the owner can do everything,
  * Administrator gives every permission, and everyone else has what their
  * roles and the default role (@everyone) give them. Deleting the server and
  * handing it to someone else stay owner only, like on Discord.
@@ -113,7 +113,7 @@ class ServerPolicy
     }
 
     /**
-     * Open the member moderation page (ISSUE-29): any of Kick, Ban or
+     * Open the member moderation page: any of Kick, Ban or
      * Timeout Members. Which members they can act on is kick(), ban() and
      * timeout().
      */
@@ -161,7 +161,7 @@ class ServerPolicy
     }
 
     /**
-     * See the audit log (ISSUE-30). Owner only, also for administrators:
+     * See the audit log. Owner only, also for administrators:
      * it shows what they did too.
      */
     public function viewAuditLog(User $user, Server $server): bool

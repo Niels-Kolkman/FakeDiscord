@@ -5,7 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Collapsible groups of channels in a server's sidebar (ISSUE-12).
+ * Collapsible groups of channels in a server's sidebar.
  */
 return new class extends Migration
 {

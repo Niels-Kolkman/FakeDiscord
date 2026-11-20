@@ -22,7 +22,7 @@ use Tests\Concerns\GivesPermissions;
 use Tests\TestCase;
 
 /**
- * ISSUE-33 edge cases: mention parsing boundaries, role scoping, kicks and
+ * Edge cases: mention parsing boundaries, role scoping, kicks and
  * bans, edits that keep their mentions, snapshots, deleted authors and
  * servers, and the inbox / suggestion routes' odd inputs.
  */

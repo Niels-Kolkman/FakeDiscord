@@ -16,7 +16,7 @@ use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Collection;
 
 /**
- * Works out what a member may do in a server (ISSUE-27). ServerPolicy,
+ * Works out what a member may do in a server. ServerPolicy,
  * ChannelPolicy, MessagePolicy, RolePolicy and InvitePolicy ask this
  * service; nothing else reads roles.permissions to make a decision.
  *
@@ -27,10 +27,10 @@ use Illuminate\Support\Collection;
  * - everyone else has the @everyone role's flags OR-ed with the flags of
  *   every role they hold;
  * - Administrator in that mask turns into every permission;
- * - a timed-out member (ISSUE-29) keeps only View Channels until the
+ * - a timed-out member keeps only View Channels until the
  *   timeout runs out.
  *
- * Channel permissions (ISSUE-28) start from the server permissions and
+ * Channel permissions start from the server permissions and
  * apply the channel's role overrides (App\Models\ChannelPermissionOverride),
  * in Discord's order:
  *
@@ -44,7 +44,7 @@ use Illuminate\Support\Collection;
  *
  * The owner and Administrator skip the overrides and see every channel.
  *
- * A timed-out member (ISSUE-29) keeps only View Channels in channels too:
+ * A timed-out member keeps only View Channels in channels too:
  * the channel overrides are applied first, then the result is cut down to
  * TIMED_OUT_MASK, so a channel that hides from them stays hidden.
  *
@@ -71,7 +71,7 @@ class PermissionService
     {
         $standing = $this->standing($user, $server);
 
-        // A timed-out member (ISSUE-29) keeps only TIMED_OUT_MASK: reading.
+        // A timed-out member keeps only TIMED_OUT_MASK: reading.
         // standing() never reports a timeout for the owner or an
         // Administrator, like on Discord.
         return $standing['timedOutUntil'] === null ? $standing['mask'] : $standing['mask'] & self::TIMED_OUT_MASK;
@@ -83,7 +83,7 @@ class PermissionService
     public const TIMED_OUT_MASK = Permission::ViewChannels->value;
 
     /**
-     * Is the member timed out in the server right now (ISSUE-29)? Never true
+     * Is the member timed out in the server right now? Never true
      * for the owner or an Administrator, whose permissions a timeout does not
      * touch.
      */
@@ -102,7 +102,7 @@ class PermissionService
     }
 
     /**
-     * May $actor kick, ban or time out $target in the server (ISSUE-29)?
+     * May $actor kick, ban or time out $target in the server?
      * Like Discord:
      *
      * - $actor needs $permission (Kick, Ban or Timeout Members);
@@ -259,7 +259,7 @@ class PermissionService
      * user holds. A server without an @everyone row (older data) counts as
      * having the defaults, which Server::defaultRole() would create.
      *
-     * 'timedOutUntil' is when an active timeout (ISSUE-29) ends, null for
+     * 'timedOutUntil' is when an active timeout ends, null for
      * members who are not timed out and for the owner and Administrators,
      * whom a timeout does not touch. It does not change 'mask': permissions()
      * and applyOverrides() cut it down to TIMED_OUT_MASK.
@@ -407,7 +407,7 @@ class PermissionService
 
         $mask = ($mask & ~$deny) | $allow;
 
-        // A timed-out member (ISSUE-29) only keeps reading, whatever the
+        // A timed-out member only keeps reading, whatever the
         // channel allows.
         return $standing['timedOutUntil'] === null ? $mask : $mask & self::TIMED_OUT_MASK;
     }

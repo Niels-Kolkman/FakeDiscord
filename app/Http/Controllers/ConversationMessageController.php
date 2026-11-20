@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Read, post, edit and delete messages in a 1:1 DM (ISSUE-23). The same
+ * Read, post, edit and delete messages in a 1:1 DM. The same
  * JSON and the same actions as MessageController, so
  * resources/js/channel-messages.js drives a DM like a channel.
  *

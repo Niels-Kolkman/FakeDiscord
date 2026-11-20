@@ -27,7 +27,7 @@ use Tests\Concerns\RunsTheQueueWorker;
 use Tests\TestCase;
 
 /**
- * ISSUE-33: mentioning someone stores a database notification for them and
+ * Mentioning someone stores a database notification for them and
  * broadcasts it on their private user channel; edits, deletes and leaving
  * keep the notifications in step.
  */

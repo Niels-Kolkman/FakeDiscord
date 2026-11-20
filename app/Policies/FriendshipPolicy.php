@@ -7,7 +7,7 @@ use App\Models\User;
 use Illuminate\Auth\Access\Response;
 
 /**
- * Discovered automatically for App\Models\Friendship (ISSUE-22).
+ * Discovered automatically for App\Models\Friendship.
  *
  * Someone who is not one of the two users gets a 404, so friendship ids
  * do not tell anyone who is friends with whom. A blocked user gets a 404

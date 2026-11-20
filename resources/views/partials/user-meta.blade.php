@@ -1,7 +1,7 @@
 {{--
-    The signed-in user, for resources/js/friends.js (live friend requests,
-    ISSUE-22), resources/js/unread.js (mentions, ISSUE-32) and
-    resources/js/presence.js (ISSUE-31: the servers whose presence channel
+    The signed-in user, for resources/js/friends.js (live friend requests),
+    resources/js/unread.js (mentions) and
+    resources/js/presence.js (the servers whose presence channel
     every page joins, and the status the user picked). Nothing for guests.
 --}}
 @auth

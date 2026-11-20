@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 /**
- * The status picker (ISSUE-31, <x-status-picker>): online, idle or dnd.
+ * The status picker (<x-status-picker>): online, idle or dnd.
  * A plain form redirects back; resources/js/presence.js sends it with
  * Accept: JSON and gets {status} instead.
  */

@@ -16,7 +16,7 @@ use Illuminate\Support\Str;
 use Tests\TestCase;
 
 /**
- * ISSUE-11: creating, revoking and accepting invites.
+ * Creating, revoking and accepting invites.
  */
 class InviteTest extends TestCase
 {

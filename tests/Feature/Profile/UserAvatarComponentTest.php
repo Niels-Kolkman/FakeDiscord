@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 /**
- * ISSUE-8: the <x-user-avatar> component that renders avatars and opens the profile popover.
+ * The <x-user-avatar> component that renders avatars and opens the profile popover.
  */
 class UserAvatarComponentTest extends TestCase
 {

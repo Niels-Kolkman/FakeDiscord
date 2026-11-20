@@ -1,4 +1,4 @@
-// ISSUE-17: typing indicators. Run with `npm test` (node --test, no deps).
+// Typing indicators. Run with `npm test` (node --test, no deps).
 import { test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 
@@ -198,7 +198,7 @@ test('joins the typing presence channel of the channel', () => {
     assert.equal(echo.joined, 'typing.7');
 });
 
-test('a DM joins the presence channel it is given (ISSUE-23)', () => {
+test('a DM joins the presence channel it is given', () => {
     const { echo } = fakeEcho();
     initTypingIndicator({ echo, channelId: undefined, channelName: 'conversation-typing.12', viewerId: 1, input: null, output: fakeOutput() });
     assert.equal(echo.joined, 'conversation-typing.12');

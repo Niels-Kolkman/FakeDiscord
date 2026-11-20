@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Data only (ISSUE-26). Before permission flags existed, @everyone roles
+ * Data only. Before permission flags existed, @everyone roles
  * were created with no bits; give them the defaults new servers get, and
  * create @everyone for any server without one.
  */

@@ -7,7 +7,7 @@ use App\Models\Friendship;
 use App\Models\User;
 
 /**
- * Answer, withdraw or end a friendship (ISSUE-22). Who may do what is
+ * Answer, withdraw or end a friendship. Who may do what is
  * App\Policies\FriendshipPolicy; this only makes the change.
  *
  * Each write only matches the row in the state it was checked in, so two

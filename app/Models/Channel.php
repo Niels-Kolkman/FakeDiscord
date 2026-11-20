@@ -99,7 +99,7 @@ class Channel extends Model
     }
 
     /**
-     * Per-role allow/deny overrides in this channel (ISSUE-28).
+     * Per-role allow/deny overrides in this channel.
      *
      * @return HasMany<ChannelPermissionOverride, $this>
      */

@@ -10,7 +10,7 @@ use Tests\Support\ServerScene;
 
 /*
 |--------------------------------------------------------------------------
-| Pest configuration (ISSUE-39)
+| Pest configuration
 |--------------------------------------------------------------------------
 |
 | Function-style Pest tests under tests/Feature run on Tests\FeatureTestCase:

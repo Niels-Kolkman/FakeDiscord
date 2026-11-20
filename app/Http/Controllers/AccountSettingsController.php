@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 /**
- * Account settings (ISSUE-9): email, password and account deletion.
+ * Account settings: email, password and account deletion.
  * The password form posts to Fortify's PUT /user/password.
  */
 class AccountSettingsController extends Controller

@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 
 /**
- * Writes the server audit log (ISSUE-30). Most entries come from the model
+ * Writes the server audit log. Most entries come from the model
  * observers in App\Observers (settings, channels, roles, bans, timeouts,
  * deleted messages); a kick and handing out a role change no model with
  * events of its own, so KickMember and AssignRole call record() directly.

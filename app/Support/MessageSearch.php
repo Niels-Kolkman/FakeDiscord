@@ -12,7 +12,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\HtmlString;
 
 /**
- * Message search within one server (ISSUE-21), newest first.
+ * Message search within one server, newest first.
  *
  * The text goes through Laravel Scout's database engine (Message::search()),
  * which is a LIKE '%text%' on messages.content. Scout does not escape "%"
@@ -61,9 +61,9 @@ final readonly class MessageSearch
                 /** @var Builder<Message> $query */
                 $query
                     ->whereIn('messages.channel_id', Channel::query()->select('id')->where('server_id', $server->id))
-                    // Only channels the viewer can see (ISSUE-27).
+                    // Only channels the viewer can see.
                     ->when($channelIds !== null, fn (Builder $query) => $query->whereIn('messages.channel_id', $channelIds))
-                    // Not the messages of people the viewer blocked (ISSUE-25).
+                    // Not the messages of people the viewer blocked.
                     ->when($viewer !== null, fn (Builder $query) => $query->visibleTo($viewer))
                     ->when($this->text !== null, fn (Builder $query) => $query->whereRaw(
                         "messages.content LIKE ? ESCAPE '!'",

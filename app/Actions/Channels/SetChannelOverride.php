@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
 /**
- * Allow, deny or inherit flags for one role in one channel (ISSUE-28).
+ * Allow, deny or inherit flags for one role in one channel.
  * Only Permission::channelOverridable() flags can be set; flags left out of
  * $states keep their current state. An override that ends up allowing and
  * denying nothing is deleted, so "all inherit" leaves no row behind.

@@ -1,5 +1,5 @@
 {{--
-    The server audit log (ISSUE-30), from AuditLogController: who changed
+    The server audit log, from AuditLogController: who changed
     what, and when, newest first. Owner only. A plain GET form filters by
     action and by the user who made the change, so every filter has its own
     URL and works without JavaScript.

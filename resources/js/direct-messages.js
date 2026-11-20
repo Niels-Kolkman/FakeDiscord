@@ -1,5 +1,5 @@
 /**
- * Live DM list in the sidebar (ISSUE-23).
+ * Live DM list in the sidebar.
  *
  * On every page of a signed-in user (<meta name="user-id">) this listens
  * on the private "App.Models.User.{id}" channel for
@@ -18,7 +18,7 @@
 
 export const DM_ACTIVITY_EVENT = '.conversation.activity';
 
-/** App\Events\ConversationUpdated: a group DM changed (ISSUE-24). */
+/** App\Events\ConversationUpdated: a group DM changed. */
 export const DM_UPDATED_EVENT = '.conversation.updated';
 
 /**
@@ -45,7 +45,7 @@ export async function refreshDmList({ document, fetch, parse, url, isCurrent = (
 }
 
 /**
- * A group DM changed (ISSUE-24, App\Events\ConversationUpdated): renamed,
+ * A group DM changed (App\Events\ConversationUpdated): renamed,
  * or people were added, removed or left.
  *
  * On any page the DM list is reloaded. On the page of that group

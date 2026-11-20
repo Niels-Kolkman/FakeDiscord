@@ -7,7 +7,7 @@ use App\Models\Server;
 use App\Models\User;
 
 /**
- * A server as most feature tests need it (ISSUE-39): its owner, its
+ * A server as most feature tests need it: its owner, its
  * #general channel and one plain member. Made by serverScene() in
  * tests/Pest.php.
  */

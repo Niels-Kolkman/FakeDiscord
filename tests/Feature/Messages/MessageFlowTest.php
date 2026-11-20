@@ -1,7 +1,7 @@
 <?php
 
 /**
- * ISSUE-39: sending, editing, deleting, reacting to and pinning channel
+ * Sending, editing, deleting, reacting to and pinning channel
  * messages, with the realtime broadcasts asserted through Event::fake (Pest).
  */
 

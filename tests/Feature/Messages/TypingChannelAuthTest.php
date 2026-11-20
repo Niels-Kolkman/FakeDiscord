@@ -14,7 +14,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Tests\TestCase;
 
 /**
- * ISSUE-17: routes/channels.php lets only members of the channel's server
+ * Routes/channels.php lets only members of the channel's server
  * join the "presence-typing.{id}" channel used for typing whispers, and
  * hands the browser {id, name} as their member info.
  */

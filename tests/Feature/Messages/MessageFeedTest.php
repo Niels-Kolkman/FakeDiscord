@@ -13,7 +13,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
- * ISSUE-15: App\Support\MessageFeed on its own, the paging and cursor
+ * App\Support\MessageFeed on its own, the paging and cursor
  * decoding behind GET /servers/{id}/channels/{channel}/messages.
  */
 class MessageFeedTest extends TestCase

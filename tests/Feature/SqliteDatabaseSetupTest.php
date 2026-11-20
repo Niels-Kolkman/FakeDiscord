@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 /**
- * ISSUE-1: the app runs on SQLite everywhere, and `php artisan migrate`
+ * The app runs on SQLite everywhere, and `php artisan migrate`
  * creates and fills the SQLite file.
  */
 class SqliteDatabaseSetupTest extends TestCase

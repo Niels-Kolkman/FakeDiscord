@@ -7,7 +7,7 @@ use App\Models\ChannelCategory;
 use App\Support\AuditLog;
 
 /**
- * Audit log (ISSUE-30): categories created, renamed and deleted.
+ * Audit log: categories created, renamed and deleted.
  */
 class ChannelCategoryObserver
 {

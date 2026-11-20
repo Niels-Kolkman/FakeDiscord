@@ -16,7 +16,7 @@ use Symfony\Component\Mime\Email;
 use Tests\TestCase;
 
 /**
- * ISSUE-7: edge cases around email verification that the main
+ * Edge cases around email verification that the main
  * EmailVerificationTest does not cover (replayed/tampered links, changed
  * addresses, throttling, real mail rendering and local mail setup).
  */

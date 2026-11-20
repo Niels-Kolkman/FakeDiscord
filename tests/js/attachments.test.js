@@ -1,4 +1,4 @@
-// ISSUE-19: attachment helpers of the channel page. Run with `npm test`
+// Attachment helpers of the channel page. Run with `npm test`
 // (node --test, no deps). The Blade markup is covered by
 // tests/Feature/Messages/AttachmentTest.php; renderAttachments() is
 // checked here against a minimal fake DOM.

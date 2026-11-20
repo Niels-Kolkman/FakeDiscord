@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * One row per pair of users. user_id sent the request, friend_id received
- * it. For a block (ISSUE-25), user_id is the one who blocked.
+ * it. For a block, user_id is the one who blocked.
  *
  * The pair is unique in both directions (A->B and B->A never both exist);
  * App\Actions\Friends\SendFriendRequest looks up the pair with between()
@@ -128,7 +128,7 @@ class Friendship extends Model
     }
 
     /**
-     * Ids of the users $user blocked (ISSUE-25), as a subquery. People who
+     * Ids of the users $user blocked, as a subquery. People who
      * blocked $user are not in it.
      *
      * @return Builder<self>

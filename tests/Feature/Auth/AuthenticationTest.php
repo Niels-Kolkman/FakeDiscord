@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Tests\TestCase;
 
 /**
- * ISSUE-6: users log in with email + password and can log out.
+ * Users log in with email + password and can log out.
  */
 class AuthenticationTest extends TestCase
 {
