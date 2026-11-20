@@ -1,6 +1,6 @@
 # Security
 
-The hardening pass (ISSUE-41) is pinned down by the tests in `tests/Feature/Security`.
+The hardening pass is pinned down by the tests in `tests/Feature/Security`.
 
 - **Rate limits.** Named limiters live in `App\Support\RateLimits`. Each one counts in
   its own bucket. An inline `throttle:30,1` shares one bucket per user with every other

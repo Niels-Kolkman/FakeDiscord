@@ -339,7 +339,7 @@ database, so these rules live in the app layer (validation, model events or poli
   `ManageGroupConversation`). Its `owner_id` is one of them. When the owner
   leaves, ownership passes to the longest-standing participant, and a group
   whose last participant leaves is deleted.
-- `messages.mentions` (ISSUE-33) is who a server channel message mentions,
+- `messages.mentions` is who a server channel message mentions,
   worked out by `App\Support\Mentions::resolve()` whenever its content is
   saved: `{"users": [ids], "roles": [ids], "everyone": bool}`, or NULL for
   nobody and for DMs. Users are members of the server; `everyone` is only
@@ -347,7 +347,7 @@ database, so these rules live in the app layer (validation, model events or poli
   badges and mention notifications read it, so renames and permission
   changes do not change who an old message mentioned. Messages from before
   the column have NULL: they mention nobody.
-- `notifications` is Laravel's database notifications table (ISSUE-33,
+- `notifications` is Laravel's database notifications table (only
   `App\Notifications\MentionedInMessage` for now). `notifiable` is a
   polymorphic pair with no foreign key. The app removes a message's
   notifications when it is deleted and a server's when someone leaves it;
@@ -356,12 +356,12 @@ database, so these rules live in the app layer (validation, model events or poli
   `channel_id`, `server_id`, `reason` (`user`|`role`|`everyone`),
   `role_name`, `author`, `server_name`, `channel_name` and `excerpt`.
 - `users.status` is the status a user picked: `online`, `idle` or `dnd`
-  (`User::ONLINE_STATUSES`, ISSUE-31). Whether they are connected comes from
+  (`User::ONLINE_STATUSES`). Whether they are connected comes from
   the server's Reverb presence channel, not from this column. The database
   default is still `offline`, from before presence. New users get `online`
   from the model, and a stored `offline` reads as `online` once connected.
 - `users.theme` is the colour theme a user picked: `dark` (the default) or
-  `light` (`User::THEMES`, ISSUE-37). The layouts put it on
+  `light` (`User::THEMES`). The layouts put it on
   `<html data-theme>`; an unknown value reads as `dark`
   (`User::preferredTheme()`).
 - Values in the `status` and `type` columns. These are plain strings, not
