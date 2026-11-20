@@ -13,9 +13,9 @@ use Illuminate\Notifications\Notification;
  * their private "App.Models.User.{id}" channel (the broadcast channel,
  * resources/js/notifications.js).
  *
- * Sent by App\Support\MentionNotifier, which decides who gets one. Not
- * queued, like the app's other broadcasts (ShouldBroadcastNow): it shows
- * up together with the message, without a queue worker (toBroadcast()).
+ * Sent by App\Support\MentionNotifier, which decides who gets one. The
+ * inbox row is written straight away; the broadcast goes through the
+ * queue like the app's other broadcasts (ISSUE-42, toBroadcast()).
  *
  * The stored data is a snapshot (names as they were, a short excerpt);
  * NotificationInbox::present() turns it into what the inbox shows, with
@@ -76,16 +76,17 @@ class MentionedInMessage extends Notification
 
     /**
      * Laravel broadcasts notifications through a queued event
-     * (BroadcastNotificationCreated); the "sync" connection sends it right
-     * away, like the app's ShouldBroadcastNow events, whatever
-     * QUEUE_CONNECTION is.
+     * (BroadcastNotificationCreated) on the default queue connection
+     * (ISSUE-42: the database queue), like the app's other broadcasts. The
+     * data is worked out here, while the request runs, so its links use
+     * the request's host.
      *
      * `push` tells resources/js/push-notifications.js whether it may show
      * a browser notification (ISSUE-34); it is not stored.
      */
     public function toBroadcast(object $notifiable): BroadcastMessage
     {
-        return (new BroadcastMessage([
+        return new BroadcastMessage([
             ...NotificationInbox::present(
                 (string) $this->id,
                 $this->toArray($notifiable),
@@ -94,7 +95,7 @@ class MentionedInMessage extends Notification
                 author: $this->message->author,
             ),
             'push' => $this->push,
-        ]))->onConnection('sync');
+        ]);
     }
 
     public function broadcastType(): string

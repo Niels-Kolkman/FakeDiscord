@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Testing\TestResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Tests\Concerns\GivesPermissions;
+use Tests\Concerns\RunsTheQueueWorker;
 use Tests\TestCase;
 
 /**
@@ -34,6 +35,7 @@ class MentionNotificationsTest extends TestCase
 {
     use GivesPermissions;
     use RefreshDatabase;
+    use RunsTheQueueWorker;
 
     private User $owner;
 
@@ -239,13 +241,18 @@ class MentionNotificationsTest extends TestCase
 
     // --- Broadcasting --------------------------------------------------------------
 
-    public function test_the_notification_is_broadcast_on_the_users_channel_right_away(): void
+    public function test_the_notification_is_stored_at_once_and_broadcast_by_the_worker(): void
     {
-        // A database queue without a worker must not hold it back.
+        // ISSUE-42: the inbox row is written by the request, the broadcast
+        // goes through the database queue.
         config(['queue.default' => 'database']);
         $this->spyBroadcaster();
 
         $this->say($this->owner, 'hey @bob')->assertCreated();
+
+        $this->assertSame(1, $this->bob->notifications()->count());
+        $this->assertSame([], $this->sent);
+        $this->runQueueWorker();
 
         $notifications = array_values(array_filter(
             $this->sent,

@@ -14,7 +14,7 @@ use App\Models\User;
 use App\Support\Reactions;
 use Illuminate\Broadcasting\Broadcasters\Broadcaster as BaseBroadcaster;
 use Illuminate\Broadcasting\BroadcastException;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Event;
@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Testing\TestResponse;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Component\HttpFoundation\Response;
+use Tests\Concerns\RunsTheQueueWorker;
 use Tests\TestCase;
 
 /**
@@ -32,7 +33,7 @@ use Tests\TestCase;
  */
 class ReactionTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, RunsTheQueueWorker;
 
     private User $owner;
 
@@ -460,13 +461,17 @@ class ReactionTest extends TestCase
             && $event->socket === '1234.5678');
     }
 
-    public function test_the_broadcast_reaches_the_broadcaster_right_away(): void
+    public function test_the_request_queues_the_broadcast_and_the_worker_sends_it(): void
     {
+        // ISSUE-42: queued on the database queue, sent by the worker.
         config(['queue.default' => 'database']);
-        $this->assertContains(ShouldBroadcastNow::class, class_implements(ReactionsUpdated::class));
+        $this->assertContains(ShouldBroadcast::class, class_implements(ReactionsUpdated::class));
         $spy = $this->spyBroadcaster();
 
         $this->react($this->alice, '🔥')->assertOk();
+
+        $this->assertCount(0, $spy->sent);
+        $this->runQueueWorker();
 
         $this->assertCount(1, $spy->sent);
         [$channels, $name, $payload] = $spy->sent[0];

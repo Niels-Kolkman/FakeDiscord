@@ -14,7 +14,7 @@ use App\Models\User;
 use App\Support\MessageFeed;
 use Illuminate\Broadcasting\Broadcasters\Broadcaster as BaseBroadcaster;
 use Illuminate\Broadcasting\BroadcastException;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Event;
@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Testing\TestResponse;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Component\HttpFoundation\Response;
+use Tests\Concerns\RunsTheQueueWorker;
 use Tests\TestCase;
 
 /**
@@ -32,7 +33,7 @@ use Tests\TestCase;
  */
 class EditDeleteMessageTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, RunsTheQueueWorker;
 
     private User $owner;
 
@@ -200,14 +201,17 @@ class EditDeleteMessageTest extends TestCase
             ->assertJsonPath('message.edited_at', '2026-03-04T06:00:00+00:00');
     }
 
-    public function test_the_update_broadcast_reaches_the_broadcaster_right_away(): void
+    public function test_the_update_broadcast_is_queued_and_sent_by_the_worker(): void
     {
-        // In dev QUEUE_CONNECTION=database; edits must not wait for a worker.
+        // ISSUE-42: queued on the database queue, sent by the worker.
         config(['queue.default' => 'database']);
-        $this->assertContains(ShouldBroadcastNow::class, class_implements(MessageUpdated::class));
+        $this->assertContains(ShouldBroadcast::class, class_implements(MessageUpdated::class));
         $spy = $this->spyBroadcaster();
 
         $this->edit($this->author, ['content' => 'Live edit'])->assertOk();
+
+        $this->assertCount(0, $spy->sent);
+        $this->runQueueWorker();
 
         $this->assertCount(1, $spy->sent);
         [$channels, $name, $payload] = $spy->sent[0];
@@ -373,10 +377,11 @@ class EditDeleteMessageTest extends TestCase
     public function test_the_delete_broadcast_carries_no_content(): void
     {
         config(['queue.default' => 'database']);
-        $this->assertContains(ShouldBroadcastNow::class, class_implements(MessageDeleted::class));
+        $this->assertContains(ShouldBroadcast::class, class_implements(MessageDeleted::class));
         $spy = $this->spyBroadcaster();
 
         $this->remove($this->author)->assertNoContent();
+        $this->runQueueWorker();
 
         $this->assertCount(1, $spy->sent);
         [$channels, $name, $payload] = $spy->sent[0];

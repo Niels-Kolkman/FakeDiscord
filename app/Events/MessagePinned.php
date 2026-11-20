@@ -2,10 +2,11 @@
 
 namespace App\Events;
 
+use App\Events\Concerns\QueuesBroadcast;
 use App\Models\Message;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 
 /**
@@ -14,15 +15,15 @@ use Illuminate\Foundation\Events\Dispatchable;
  * updates the pin marker and the pinned messages panel. It listens for
  * ".message.pinned" (resources/js/channel-messages.js).
  */
-class MessagePinned implements ShouldBroadcastNow
+class MessagePinned implements ShouldBroadcast
 {
-    use Dispatchable, InteractsWithSockets;
+    use Dispatchable, InteractsWithSockets, QueuesBroadcast;
 
     public const NAME = 'message.pinned';
 
     public function __construct(public Message $message) {}
 
-    public function broadcastOn(): PrivateChannel
+    protected function channels(): PrivateChannel
     {
         return new PrivateChannel(MessageSent::channelName((int) $this->message->channel_id));
     }
@@ -35,7 +36,7 @@ class MessagePinned implements ShouldBroadcastNow
     /**
      * @return array{id: int, channel_id: int, pinned_at: string|null, pinned_by: array{id: int, name: string}|null}
      */
-    public function broadcastWith(): array
+    protected function payload(): array
     {
         $by = $this->message->isPinned() ? $this->message->pinnedBy : null;
 

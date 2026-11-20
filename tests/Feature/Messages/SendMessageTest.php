@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Testing\TestResponse;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Component\HttpFoundation\Response;
+use Tests\Concerns\RunsTheQueueWorker;
 use Tests\TestCase;
 
 /**
@@ -27,7 +28,7 @@ use Tests\TestCase;
  */
 class SendMessageTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, RunsTheQueueWorker;
 
     private User $owner;
 
@@ -167,14 +168,20 @@ class SendMessageTest extends TestCase
         });
     }
 
-    public function test_the_broadcast_reaches_the_broadcaster_right_away(): void
+    public function test_the_request_queues_the_broadcast_and_the_worker_sends_it(): void
     {
-        // In dev QUEUE_CONNECTION=database; messages must not wait for a worker.
+        // ISSUE-42: the sender's request only adds a job to the database
+        // queue; the worker talks to Reverb.
         config(['queue.default' => 'database']);
         /** @var BaseBroadcaster&object{sent: list<array{list<string>, string, array<string, mixed>}>} $spy */
         $spy = $this->spyBroadcaster();
 
         $this->postMessage($this->member, ['content' => 'Instant'])->assertCreated();
+
+        $this->assertCount(0, $spy->sent);
+        $this->assertSame(1, DB::table('jobs')->count());
+
+        $this->runQueueWorker();
 
         $this->assertCount(1, $spy->sent);
         [$channels, $name, $payload] = $spy->sent[0];

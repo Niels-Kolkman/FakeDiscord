@@ -2,10 +2,11 @@
 
 namespace App\Events;
 
+use App\Events\Concerns\QueuesBroadcast;
 use App\Models\Conversation;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 
 /**
@@ -19,9 +20,9 @@ use Illuminate\Foundation\Events\Dispatchable;
  * The recipients are read when the event is made, so a group that was
  * deleted when its last person left still reaches that person.
  */
-class ConversationUpdated implements ShouldBroadcastNow
+class ConversationUpdated implements ShouldBroadcast
 {
-    use Dispatchable, InteractsWithSockets;
+    use Dispatchable, InteractsWithSockets, QueuesBroadcast;
 
     public const NAME = 'conversation.updated';
 
@@ -49,7 +50,7 @@ class ConversationUpdated implements ShouldBroadcastNow
     /**
      * @return list<PrivateChannel>
      */
-    public function broadcastOn(): array
+    protected function channels(): array
     {
         return array_map(fn (int $id): PrivateChannel => new PrivateChannel('App.Models.User.'.$id), $this->recipientIds);
     }
@@ -62,7 +63,7 @@ class ConversationUpdated implements ShouldBroadcastNow
     /**
      * @return array{conversation_id: int}
      */
-    public function broadcastWith(): array
+    protected function payload(): array
     {
         return ['conversation_id' => $this->conversationId];
     }

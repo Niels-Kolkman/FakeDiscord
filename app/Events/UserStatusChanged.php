@@ -2,12 +2,13 @@
 
 namespace App\Events;
 
+use App\Events\Concerns\QueuesBroadcast;
 use App\Models\User;
 use App\Support\ServerPresence;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 
 /**
@@ -22,9 +23,9 @@ use Illuminate\Foundation\Events\Dispatchable;
  * the first tab's), so it can be stale; this event is what keeps open
  * pages right.
  */
-class UserStatusChanged implements ShouldBroadcastNow
+class UserStatusChanged implements ShouldBroadcast
 {
-    use Dispatchable, InteractsWithSockets;
+    use Dispatchable, InteractsWithSockets, QueuesBroadcast;
 
     public const NAME = 'user.status';
 
@@ -49,7 +50,7 @@ class UserStatusChanged implements ShouldBroadcastNow
     /**
      * @return list<PresenceChannel|PrivateChannel>
      */
-    public function broadcastOn(): array
+    protected function channels(): array
     {
         $channels = [new PrivateChannel('App.Models.User.'.$this->user->getKey())];
 
@@ -68,7 +69,7 @@ class UserStatusChanged implements ShouldBroadcastNow
     /**
      * @return array{user_id: int, status: string}
      */
-    public function broadcastWith(): array
+    protected function payload(): array
     {
         return [
             'user_id' => (int) $this->user->getKey(),

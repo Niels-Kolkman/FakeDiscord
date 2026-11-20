@@ -2,12 +2,13 @@
 
 namespace App\Events;
 
+use App\Events\Concerns\QueuesBroadcast;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 
 /**
@@ -21,9 +22,9 @@ use Illuminate\Foundation\Events\Dispatchable;
  * recipient (App\Support\DirectMessageNotifier), because a group DM
  * without a name is called something different for each of them.
  */
-class DirectMessageReceived implements ShouldBroadcastNow
+class DirectMessageReceived implements ShouldBroadcast
 {
-    use Dispatchable, InteractsWithSockets;
+    use Dispatchable, InteractsWithSockets, QueuesBroadcast;
 
     public const NAME = 'dm.received';
 
@@ -36,7 +37,7 @@ class DirectMessageReceived implements ShouldBroadcastNow
     /**
      * @return list<PrivateChannel>
      */
-    public function broadcastOn(): array
+    protected function channels(): array
     {
         return [new PrivateChannel('App.Models.User.'.(int) $this->recipient->getKey())];
     }
@@ -49,7 +50,7 @@ class DirectMessageReceived implements ShouldBroadcastNow
     /**
      * @return array{conversation_id: int, message_id: int, is_group: bool, title: string, author_name: string, avatar_url: string|null, excerpt: string, has_attachments: bool, url: string}
      */
-    public function broadcastWith(): array
+    protected function payload(): array
     {
         $message = $this->message;
         $conversation = $this->conversation;

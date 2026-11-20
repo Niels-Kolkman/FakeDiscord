@@ -28,9 +28,9 @@ export const APP_ENV = {
     DB_DATABASE: DATABASE,
     DB_URL: '',
     BROADCAST_CONNECTION: 'reverb',
-    // Nothing waits for a queue worker: broadcasts are ShouldBroadcastNow,
-    // and anything else that is queued runs during the request.
-    QUEUE_CONNECTION: 'sync',
+    // Like production (ISSUE-42): broadcasts go onto the database queue and
+    // serve.js runs one queue worker next to the app.
+    QUEUE_CONNECTION: 'database',
     MAIL_MAILER: 'log',
     BCRYPT_ROUNDS: '4',
 };
