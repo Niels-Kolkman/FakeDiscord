@@ -1134,6 +1134,8 @@ composer format      # format PHP code (Laravel Pint)
 composer lint        # check code style without changing files
 composer analyse     # static analysis (Larastan / PHPStan, config in phpstan.neon)
 npm run build        # production frontend build
+npm test             # JavaScript unit tests (tests/js)
+npm run test:e2e     # browser tests (Playwright, tests/e2e); see "Browser tests"
 ```
 
 ## Code quality and CI
@@ -1143,7 +1145,8 @@ npm run build        # production frontend build
   Fix new errors in the code instead of adding a baseline or `@phpstan-ignore`.
 - **GitHub Actions** (`.github/workflows/ci.yml`) runs `composer lint`, `composer analyse`
   and `composer test` (on PHP 8.2, 8.3 and 8.4) on every push and pull request, plus
-  `composer test:coverage` with PCOV on PHP 8.3.
+  `composer test:coverage` with PCOV on PHP 8.3, and the Playwright browser tests
+  (`npm run test:e2e`; traces, screenshots and videos are uploaded when they fail).
 
 ## Tests
 
@@ -1177,3 +1180,37 @@ it('broadcasts a new message on its channel', function () {
 ```
 
 Run `composer lint && composer analyse && composer test` before you push.
+
+### Browser tests
+
+`tests/e2e` holds end-to-end tests in real browsers with [Playwright](https://playwright.dev).
+`realtime-messaging.spec.js` covers the critical flow: Alice registers, verifies her email,
+creates a server and an invite link; Bob registers, verifies and accepts the invite; then
+they exchange messages in #general from two separate browser sessions, and each sees the
+other's message arrive over Reverb without a reload.
+
+```bash
+npx playwright install chromium   # once
+npm run build                     # the bundle carries the Reverb host and port from .env
+npm run test:e2e                  # add --headed or --ui to watch it
+```
+
+`playwright.config.js` starts what the test needs:
+
+- **The app** on `http://127.0.0.1:8001` (`tests/e2e/support/serve.js`), on its own
+  database `database/e2e.sqlite`, wiped and migrated on every run. Your development
+  database and a `composer dev` server on :8000 are not touched. The overrides are in
+  `tests/e2e/support/environment.js` (sync queue, log mailer, Reverb broadcasting); the
+  rest, such as `APP_KEY`, comes from `.env`. The script runs `config:clear`, because a
+  cached config would ignore the overrides.
+- **Reverb** on `REVERB_PORT` (8080). Locally an already running Reverb, for example the
+  one from `composer dev`, is reused; it only needs the same app credentials.
+
+The verification email is not parsed out of the log: `tests/e2e/support/verification-url.php`
+prints the link that the app's own `VerifyEmail` notification would send, and the browser
+opens it. Before sending, `waitForRealtime()` waits until each page's websocket is subscribed
+to the channel, so a message can't be missed while the other page is still connecting.
+When a test fails, its trace, screenshots and video are in `storage/framework/testing/e2e-results`
+(`npx playwright show-trace <path>/trace.zip`). Set `E2E_APP_PORT` or `E2E_REVERB_PORT` to use
+other ports (a different Reverb port also needs a rebuild with that `VITE_REVERB_PORT`), and
+`PHP_BINARY` for another PHP.
