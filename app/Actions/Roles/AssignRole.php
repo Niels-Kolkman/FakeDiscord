@@ -6,6 +6,7 @@ use App\Models\AuditLogEntry;
 use App\Models\Role;
 use App\Models\User;
 use App\Support\AuditLog;
+use App\Support\ServerCache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -15,7 +16,10 @@ use Illuminate\Validation\ValidationException;
  */
 class AssignRole
 {
-    public function __construct(private readonly AuditLog $log) {}
+    public function __construct(
+        private readonly AuditLog $log,
+        private readonly ServerCache $cache,
+    ) {}
 
     /**
      * @return bool false when the member already had the role
@@ -50,6 +54,8 @@ class AssignRole
 
             if ($inserted > 0) {
                 $this->record($role, $user, AuditLogEntry::MEMBER_ROLE_ADD);
+                // A plain insert: no RoleUser events (ISSUE-42).
+                $this->cache->forget((int) $role->server_id);
             }
 
             return $inserted > 0;
@@ -75,8 +81,8 @@ class AssignRole
     }
 
     /**
-     * role_user is a pivot without model events, so the audit log
-     * (ISSUE-30) is written here.
+     * The audit log (ISSUE-30) is written here, for both the plain insert
+     * and the detach.
      */
     private function record(Role $role, User $user, string $action): void
     {

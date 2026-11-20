@@ -8,6 +8,7 @@ use App\Models\ChannelPermissionOverride;
 use App\Models\Role;
 use App\Models\Server;
 use App\Models\User;
+use App\Support\ServerCache;
 use Carbon\CarbonInterface;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Database\Eloquent\Builder;
@@ -48,14 +49,21 @@ use Illuminate\Support\Collection;
  * TIMED_OUT_MASK, so a channel that hides from them stays hidden.
  *
  * @phpstan-type Standing array{mask: int, final: bool, everyone: int|null, roles: list<int>, timedOutUntil: CarbonInterface|null}
+ * @phpstan-type Override array{allow: int, deny: int}
  *
- * Nothing is cached: feature tests change roles between requests in one
- * application instance, and a stale answer would be a security bug. Each
- * call is a few small queries (membership, roles, and for channels one more
- * for the overrides).
+ * Cached per server (ISSUE-42, App\Support\ServerCache): each member's
+ * standing (their mask, roles and timeout) and position in the hierarchy,
+ * and the server's channel overrides. Anything that changes them drops
+ * the server's entries once it is committed (App\Observers\ForgetsServerCache),
+ * since a stale answer would be a security bug. A timeout is compared with
+ * the clock on every call, so it still runs out on time. Within a request
+ * the answers are kept in memory, so a page asking about every role or
+ * channel does not query again for each.
  */
 class PermissionService
 {
+    public function __construct(private readonly ServerCache $cache) {}
+
     /**
      * The member's effective permission mask in the server.
      */
@@ -155,7 +163,7 @@ class PermissionService
             return $standing['mask'];
         }
 
-        $overrides = $this->overrides([(int) $channel->getKey()], $standing)->get((int) $channel->getKey(), collect());
+        $overrides = $this->overrides((int) $channel->server_id, [(int) $channel->getKey()], $standing)->get((int) $channel->getKey(), collect());
 
         return $this->applyOverrides($standing, $channel, $overrides);
     }
@@ -185,7 +193,7 @@ class PermissionService
             return Permission::ViewChannels->in($standing['mask']) ? $channels : $channels->take(0);
         }
 
-        $overrides = $this->overrides(array_map('intval', $channels->modelKeys()), $standing);
+        $overrides = $this->overrides((int) $server->getKey(), array_map('intval', $channels->modelKeys()), $standing);
 
         return $channels
             ->filter(fn (Channel $channel): bool => Permission::ViewChannels->in(
@@ -205,16 +213,18 @@ class PermissionService
             return PHP_INT_MAX;
         }
 
-        if (! $server->hasMember($user)) {
-            return -1;
-        }
+        return $this->cache->remember((int) $server->getKey(), 'position:'.$user->getKey(), function () use ($user, $server): int {
+            if (! $server->hasMember($user)) {
+                return -1;
+            }
 
-        $position = $user->roles()
-            ->where('roles.server_id', $server->getKey())
-            ->where('roles.is_default', false)
-            ->max('roles.position');
+            $position = $user->roles()
+                ->where('roles.server_id', $server->getKey())
+                ->where('roles.is_default', false)
+                ->max('roles.position');
 
-        return $position === null ? 0 : (int) $position;
+            return $position === null ? 0 : (int) $position;
+        });
     }
 
     /**
@@ -262,6 +272,26 @@ class PermissionService
             return ['mask' => Permission::all(), 'final' => true, 'everyone' => null, 'roles' => [], 'timedOutUntil' => null];
         }
 
+        $standing = $this->cache->remember((int) $server->getKey(), 'standing:'.$user->getKey(), fn (): array => $this->loadStanding($user, $server));
+
+        // Cached with the stored end of the timeout: compare it with the
+        // clock now, so a timeout runs out on time.
+        if ($standing['timedOutUntil'] !== null && ! $standing['timedOutUntil']->isFuture()) {
+            $standing['timedOutUntil'] = null;
+        }
+
+        return $standing;
+    }
+
+    /**
+     * standing() for anyone but the owner, read from the database, with
+     * the end of any timeout that was ever set ('timedOutUntil' may be in
+     * the past here).
+     *
+     * @return Standing
+     */
+    private function loadStanding(User $user, Server $server): array
+    {
         $membership = $server->membershipOf($user);
 
         if ($membership === null) {
@@ -291,7 +321,7 @@ class PermissionService
             'final' => false,
             'everyone' => $everyone === null ? null : (int) $everyone->getKey(),
             'roles' => $roles->where('is_default', false)->map(fn (Role $role): int => (int) $role->getKey())->values()->all(),
-            'timedOutUntil' => $membership->isTimedOut() ? $membership->timed_out_until : null,
+            'timedOutUntil' => $membership->timed_out_until,
         ];
     }
 
@@ -301,9 +331,9 @@ class PermissionService
      *
      * @param  list<int>  $channelIds
      * @param  Standing  $standing
-     * @return Collection<int, Collection<int, ChannelPermissionOverride>>
+     * @return Collection<int, Collection<int, Override>>
      */
-    private function overrides(array $channelIds, array $standing): Collection
+    private function overrides(int $serverId, array $channelIds, array $standing): Collection
     {
         $roleIds = $standing['roles'];
         if ($standing['everyone'] !== null) {
@@ -314,23 +344,43 @@ class PermissionService
             return collect();
         }
 
-        $rows = ChannelPermissionOverride::query()
-            ->whereIn('channel_id', $channelIds)
-            ->whereIn('role_id', $roleIds)
-            ->get(['channel_id', 'role_id', 'allow', 'deny']);
+        $all = $this->cache->remember($serverId, 'overrides', fn (): array => $this->loadOverrides($serverId));
+        $roles = array_flip($roleIds);
 
-        /** @var array<int, array<int, ChannelPermissionOverride>> $byChannel */
+        /** @var array<int, Collection<int, Override>> $byChannel */
         $byChannel = [];
-        foreach ($rows as $row) {
-            $byChannel[(int) $row->channel_id][(int) $row->role_id] = $row;
+        foreach ($channelIds as $channelId) {
+            $byRole = array_intersect_key($all[$channelId] ?? [], $roles);
+            if ($byRole !== []) {
+                $byChannel[$channelId] = collect($byRole);
+            }
         }
 
-        return collect($byChannel)->map(fn (array $byRole): Collection => collect($byRole));
+        return collect($byChannel);
+    }
+
+    /**
+     * Every channel override of the server: channel id => role id => flags.
+     *
+     * @return array<int, array<int, Override>>
+     */
+    private function loadOverrides(int $serverId): array
+    {
+        $rows = ChannelPermissionOverride::query()
+            ->whereIn('channel_id', Channel::query()->where('server_id', $serverId)->select('id'))
+            ->get(['channel_id', 'role_id', 'allow', 'deny']);
+
+        $byChannel = [];
+        foreach ($rows as $row) {
+            $byChannel[(int) $row->channel_id][(int) $row->role_id] = ['allow' => (int) $row->allow, 'deny' => (int) $row->deny];
+        }
+
+        return $byChannel;
     }
 
     /**
      * @param  Standing  $standing
-     * @param  Collection<int, ChannelPermissionOverride>  $overrides  keyed by role id
+     * @param  Collection<int, Override>  $overrides  keyed by role id
      */
     private function applyOverrides(array $standing, Channel $channel, Collection $overrides): int
     {
@@ -338,7 +388,7 @@ class PermissionService
 
         $everyone = $standing['everyone'] === null ? null : $overrides->get($standing['everyone']);
         if ($everyone !== null) {
-            $mask = ($mask & ~(int) $everyone->deny) | (int) $everyone->allow;
+            $mask = ($mask & ~$everyone['deny']) | $everyone['allow'];
         }
 
         if ($channel->is_private) {
@@ -350,8 +400,8 @@ class PermissionService
         foreach ($standing['roles'] as $roleId) {
             $override = $overrides->get($roleId);
             if ($override !== null) {
-                $allow |= (int) $override->allow;
-                $deny |= (int) $override->deny;
+                $allow |= $override['allow'];
+                $deny |= $override['deny'];
             }
         }
 

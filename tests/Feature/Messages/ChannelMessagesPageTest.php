@@ -190,11 +190,13 @@ class ChannelMessagesPageTest extends TestCase
         }
 
         $this->actingAs($this->member);
+        $this->coldServerCache();
         DB::enableQueryLog();
         $this->get($this->channelUrl())->assertOk();
         $withMessages = count(DB::getQueryLog());
 
         Message::query()->delete();
+        $this->coldServerCache();
         DB::flushQueryLog();
         $this->get($this->channelUrl())->assertOk();
         $without = count(DB::getQueryLog());

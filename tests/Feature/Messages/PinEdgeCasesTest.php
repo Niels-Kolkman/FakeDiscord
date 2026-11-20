@@ -284,6 +284,7 @@ class PinEdgeCasesTest extends TestCase
                 Reaction::factory()->create(['message_id' => $message->id, 'user_id' => $this->alice->id]);
             }
 
+            $this->coldServerCache();
             DB::flushQueryLog();
             DB::enableQueryLog();
             $this->actingAs($this->alice)->getJson($this->pinsUrl())->assertOk()->assertJsonCount($pins, 'pins');

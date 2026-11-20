@@ -34,7 +34,9 @@ class InviteController extends Controller
             ->unless($user->can('manageInvites', $server), fn ($q) => $q->where('inviter_id', $user->getKey()))
             ->with('inviter')
             ->latest('id')
-            ->get();
+            ->get()
+            // For the policy check on each one, without a query each (ISSUE-42).
+            ->each->setRelation('server', $server);
 
         return view('invites.index', [
             'server' => $server,

@@ -416,6 +416,7 @@ class ReactionEdgeCasesTest extends TestCase
             $this->addReaction($this->bob, '🔥', $message);
         }
 
+        $this->coldServerCache();
         DB::enableQueryLog();
         $this->actingAs($this->bob)->getJson($historyUrl)->assertOk();
         $few = count(DB::getQueryLog());
@@ -424,6 +425,7 @@ class ReactionEdgeCasesTest extends TestCase
             $this->addReaction($this->alice, '😂', $message);
         }
 
+        $this->coldServerCache();
         DB::flushQueryLog();
         $this->actingAs($this->bob)->getJson($historyUrl)->assertOk();
 

@@ -438,11 +438,13 @@ class AttachmentEdgeCasesTest extends TestCase
         };
 
         $seed(3);
+        $this->coldServerCache();
         DB::enableQueryLog();
         $this->actingAs($this->member)->getJson($this->messagesUrl())->assertOk();
         $few = count(DB::getQueryLog());
 
         $seed(6);
+        $this->coldServerCache();
         DB::flushQueryLog();
         $this->actingAs($this->member)->getJson($this->messagesUrl())
             ->assertOk()

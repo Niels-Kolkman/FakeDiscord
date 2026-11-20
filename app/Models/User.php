@@ -143,11 +143,12 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * @return BelongsToMany<Role, $this>
+     * @return BelongsToMany<Role, $this, RoleUser>
      */
     public function roles(): BelongsToMany
     {
-        return $this->belongsToMany(Role::class)->withTimestamps();
+        // RoleUser: attach/detach fire events (ISSUE-42, ServerCache).
+        return $this->belongsToMany(Role::class)->using(RoleUser::class)->withTimestamps();
     }
 
     /**

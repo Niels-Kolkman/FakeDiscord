@@ -4,6 +4,7 @@ namespace App\Actions\Roles;
 
 use App\Models\Role;
 use App\Models\Server;
+use App\Support\ServerCache;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -76,6 +77,8 @@ class MoveRole
             foreach ($ids as $i => $id) {
                 Role::query()->whereKey($id)->update(['position' => $count - $i]);
             }
+            // Plain query updates: no model events (ISSUE-42).
+            app(ServerCache::class)->forget((int) $role->server_id);
 
             $role->refresh();
 
