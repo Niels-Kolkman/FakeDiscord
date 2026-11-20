@@ -145,11 +145,11 @@ composer lint           # Pint code style
 composer analyse        # Larastan, level 6
 ```
 
-- **PHP tests in `tests/Feature` and `tests/Unit`**: flows end to end (auth, servers,
+- **About 2,200 PHP tests in `tests/Feature` and `tests/Unit`**: flows end to end (auth, servers,
   channels, messages, DMs, friends, permissions, moderation) and the edge cases around
   them. They also check that broadcasts go out on the right channel with the right
   payload.
-- **JavaScript tests in `tests/js`** for every frontend module, run with `node --test`
+- **About 530 JavaScript tests in `tests/js`** for every frontend module, run with `node --test`
   and a small fake DOM (`tests/js/helpers/fake-dom.js`). No browser is needed.
 - **A Playwright test** in which two users register, verify their email, join a server
   through an invite and see each other's messages arrive live.
