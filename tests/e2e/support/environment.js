@@ -32,6 +32,8 @@ export const APP_ENV = {
     // serve.js runs one queue worker next to the app.
     QUEUE_CONNECTION: 'database',
     MAIL_MAILER: 'log',
+    // Debugbar (ISSUE-42) is for looking at pages by hand, not for tests.
+    DEBUGBAR_ENABLED: 'false',
     BCRYPT_ROUNDS: '4',
 };
 
