@@ -454,7 +454,7 @@ Voice channels have no messages.
   `cursorPaginate()` on the message id, so new messages never shift the older
   pages. Pass `?before={next_cursor}` for the page before. `next_cursor` is
   `null` on the page that holds the first message of the channel. Only cursors
-  the API hands out are accepted (others are a `422`). Members only; voice
+  the API hands out are accepted (others are a `422`). Needs View Channels; voice
   channels are a `404`; limited to 60 requests per minute. The channel page
   puts the first cursor in `data-older-cursor`.
 - **Infinite scroll**: `resources/js/channel-messages.js` fetches the next older
