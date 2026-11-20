@@ -14,7 +14,12 @@ use App\Events\MessageSent;
 use App\Models\Conversation;
 use App\Models\User;
 use App\Support\RateLimits;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 
 beforeEach(function () {
     Event::fake([MessageSent::class, ConversationActivity::class, DirectMessageReceived::class]);
@@ -97,6 +102,93 @@ it('limits login attempts per IP across email addresses', function () {
         ->post('/login', ['email' => $user->email, 'password' => 'password'])
         ->assertRedirect('/dashboard');
 });
+
+it('counts login attempts per email whatever its case', function () {
+    User::factory()->create(['email' => 'niels@example.test']);
+
+    foreach (['niels@example.test', 'NIELS@example.test', 'Niels@Example.Test', 'nIeLs@example.TEST', 'NIELS@EXAMPLE.TEST'] as $email) {
+        $this->post('/login', ['email' => $email, 'password' => 'wrong-password']);
+    }
+
+    $this->post('/login', ['email' => 'niels@example.test', 'password' => 'password'])->assertTooManyRequests();
+    $this->assertGuest();
+});
+
+it('locks an email out per IP only, and leaves other emails alone', function () {
+    $user = User::factory()->create();
+    $other = User::factory()->create();
+
+    for ($i = 0; $i < RateLimits::LOGIN_PER_EMAIL; $i++) {
+        $this->post('/login', ['email' => $user->email, 'password' => 'wrong-password']);
+    }
+    $this->post('/login', ['email' => $user->email, 'password' => 'password'])->assertTooManyRequests();
+    $this->post('/login', ['email' => $other->email, 'password' => 'password'])->assertRedirect('/dashboard');
+    $this->post('/logout');
+
+    // Someone guessing a password cannot lock the owner out from their own network.
+    $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.9'])
+        ->post('/login', ['email' => $user->email, 'password' => 'password'])
+        ->assertRedirect('/dashboard');
+});
+
+it('gives the sending budget back after a minute', function () {
+    $scene = serverScene();
+
+    for ($i = 0; $i < RateLimits::MESSAGES_PER_MINUTE; $i++) {
+        $this->actingAs($scene->member)->postJson(messagesUrl($scene->channel), ['content' => "M{$i}"])->assertCreated();
+    }
+    $this->actingAs($scene->member)->postJson(messagesUrl($scene->channel), ['content' => 'Too soon'])->assertTooManyRequests();
+
+    $this->travel(61)->seconds();
+
+    $this->actingAs($scene->member)->postJson(messagesUrl($scene->channel), ['content' => 'Later'])->assertCreated();
+});
+
+it('keeps each named limiter to its own budget', function () {
+    $scene = serverScene();
+    $invites = "/servers/{$scene->server->id}/invites";
+
+    for ($i = 0; $i < RateLimits::INVITES_PER_MINUTE; $i++) {
+        $this->actingAs($scene->member)->post($invites, ['expires_in' => 0, 'max_uses' => 0])->assertRedirect();
+    }
+    $this->actingAs($scene->member)->post($invites, ['expires_in' => 0, 'max_uses' => 0])->assertTooManyRequests();
+
+    // Out of invites, but sending and opening invite codes still work.
+    $this->actingAs($scene->member)->postJson(messagesUrl($scene->channel), ['content' => 'Hi'])->assertCreated();
+    $this->actingAs($scene->member)->get('/invite/unknown')->assertNotFound();
+
+    // And another member can still create invites.
+    $this->actingAs($scene->owner)->post($invites, ['expires_in' => 0, 'max_uses' => 0])->assertRedirect();
+});
+
+it('counts opening and accepting invite codes in one budget', function () {
+    $guesser = User::factory()->create();
+
+    for ($i = 0; $i < RateLimits::INVITE_CODES_PER_MINUTE - 1; $i++) {
+        $this->actingAs($guesser)->get("/invite/guess{$i}")->assertNotFound();
+    }
+    $this->actingAs($guesser)->post('/invite/last-guess')->assertNotFound();
+
+    $this->actingAs($guesser)->post('/invite/one-more')->assertTooManyRequests();
+    $this->actingAs($guesser)->get('/invite/one-more')->assertTooManyRequests();
+});
+
+it('keys the limiters by user, or by IP for a guest', function (string $name) {
+    $user = User::factory()->create();
+    $request = Request::create('/', 'POST', server: ['REMOTE_ADDR' => '198.51.100.7']);
+
+    // Laravel suffixes ":attempts:N:decay:M" when a limiter returns several limits.
+    $keys = fn (): array => collect(Arr::wrap(RateLimiter::limiter($name)($request)))
+        ->map(fn (Limit $limit): string => Str::before((string) $limit->key, ':attempts:'))
+        ->all();
+
+    expect($keys())->toContain('ip|198.51.100.7');
+    expect($keys())->not->toContain("user|{$user->id}");
+
+    $request->setUserResolver(fn () => $user);
+
+    expect($keys())->toContain("user|{$user->id}");
+})->with([RateLimits::MESSAGES, RateLimits::INVITES, RateLimits::INVITE_CODES]);
 
 it('uses the named limiters on the hardened routes', function (string $name, string $limiter) {
     expect(app('router')->getRoutes()->getByName($name)?->gatherMiddleware())

@@ -11,7 +11,9 @@
 use App\Models\Conversation;
 use App\Models\Invite;
 use App\Models\Message;
+use App\Models\Role;
 use App\Models\ServerMember;
+use App\Models\User;
 use Illuminate\Testing\TestResponse;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -92,4 +94,32 @@ it('escapes the server on an invite page', function () {
     $scene->owner->forceFill(['name' => 'Inviter '.XSS_PAYLOAD])->save();
 
     assertNoInjectedMarkup($this->actingAs(memberOf(serverOwnedBy()))->get("/invite/{$invite->code}"));
+});
+
+it('escapes a ban reason on the ban list and in the audit log', function () {
+    $scene = serverScene();
+
+    $this->actingAs($scene->owner)
+        ->post("/servers/{$scene->server->id}/members/{$scene->member->id}/ban", ['reason' => 'Reason '.XSS_PAYLOAD])
+        ->assertRedirect();
+
+    assertNoInjectedMarkup($this->actingAs($scene->owner)->get("/servers/{$scene->server->id}/bans"));
+    assertNoInjectedMarkup($this->actingAs($scene->owner)->get("/servers/{$scene->server->id}/audit-log"));
+});
+
+it('escapes role names on the roles page', function () {
+    $scene = serverScene();
+    Role::factory()->create(['server_id' => $scene->server->id, 'name' => 'Role '.XSS_PAYLOAD]);
+
+    assertNoInjectedMarkup($this->actingAs($scene->owner)->get("/servers/{$scene->server->id}/roles"));
+});
+
+it('keeps a bio inside its textarea on the profile form', function () {
+    $user = User::factory()->create(['bio' => '</textarea>'.XSS_PAYLOAD]);
+
+    $this->actingAs($user)->get('/settings/profile')
+        ->assertOk()
+        ->assertSee('&lt;/textarea&gt;&quot;&gt;&lt;script&gt;', false)
+        ->assertDontSee('</textarea>"><script>', false)
+        ->assertDontSee('<img src=x onerror', false);
 });
