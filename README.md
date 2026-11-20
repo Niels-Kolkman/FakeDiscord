@@ -1128,7 +1128,8 @@ stay the same in both themes.
 ## Useful commands
 
 ```bash
-composer test        # run the PHPUnit test suite
+composer test        # run the test suite (Pest; runs the PHPUnit classes too)
+composer test:coverage  # the same with a coverage report; fails below 80% of app/ (needs PCOV or Xdebug)
 composer format      # format PHP code (Laravel Pint)
 composer lint        # check code style without changing files
 composer analyse     # static analysis (Larastan / PHPStan, config in phpstan.neon)
@@ -1141,6 +1142,38 @@ npm run build        # production frontend build
 - **Larastan** checks `app`, `config`, `database`, `routes` and `tests` at level 6 (`phpstan.neon`).
   Fix new errors in the code instead of adding a baseline or `@phpstan-ignore`.
 - **GitHub Actions** (`.github/workflows/ci.yml`) runs `composer lint`, `composer analyse`
-  and `composer test` (on PHP 8.2, 8.3 and 8.4) on every push and pull request.
+  and `composer test` (on PHP 8.2, 8.3 and 8.4) on every push and pull request, plus
+  `composer test:coverage` with PCOV on PHP 8.3.
+
+## Tests
+
+The suite runs on [Pest](https://pestphp.com) 3. Older tests are PHPUnit classes, and
+Pest runs them unchanged. New feature tests are written as Pest functions:
+
+- `tests/Pest.php` binds every function-style test under `tests/Feature` to
+  `Tests\FeatureTestCase`, which gives it a fresh database (`RefreshDatabase`), the
+  permission helpers from `Tests\Concerns\GivesPermissions` (`memberWith()`, `makeRole()`,
+  `giveRole()`, `overrideChannel()`, `revokeFromEveryone()`) and no need for a Vite build.
+  It also defines helpers: `serverOwnedBy()`, `memberOf()`, `generalChannel()`,
+  `messagesUrl()` and `serverScene()` (owner, server, #general and a member as a typed
+  `Tests\Support\ServerScene`).
+- The `*FlowTest.php` files cover auth, servers (invites, moderation), channels,
+  messages, DMs and friends, and permissions end to end. Broadcasts are checked with
+  `Event::fake([...])` and `Event::assertDispatched()`, including the channel each
+  event goes out on (`broadcastOn()`) and its payload (`broadcastWith()`).
+- Keep shared state in local variables or `serverScene()` instead of `$this->foo`:
+  `tests/stubs/pest.stub` tells Larastan that `$this` in `it()`, `test()` and
+  `beforeEach()` is `Tests\FeatureTestCase`, so dynamic properties would fail analysis.
+
+```php
+it('broadcasts a new message on its channel', function () {
+    Event::fake([MessageSent::class]);
+    $s = serverScene();
+
+    $this->actingAs($s->member)->postJson($s->messagesUrl(), ['content' => 'hi'])->assertCreated();
+
+    Event::assertDispatched(MessageSent::class, fn (MessageSent $e) => $e->broadcastOn()->name === "private-channel.{$s->channel->id}");
+});
+```
 
 Run `composer lint && composer analyse && composer test` before you push.

@@ -88,3 +88,35 @@ jobs:
       - name: Annotate failing tests
         if: failure()
         run: php .github/scripts/annotate-junit.php junit.xml
+
+  coverage:
+    name: Coverage (app/ at least 80%)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, pdo_sqlite, sqlite3, fileinfo, gd
+          coverage: pcov
+
+      - uses: ramsey/composer-install@v3
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Build frontend assets
+        run: |
+          npm ci
+          npm run build
+
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      # phpunit.xml's <source> limits the report to app/.
+      - run: composer test:coverage

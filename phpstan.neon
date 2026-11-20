@@ -17,4 +17,8 @@ parameters:
         - routes
         - tests
 
+    # Pest's test closures run as Tests\FeatureTestCase (tests/Pest.php).
+    stubFiles:
+        - tests/stubs/pest.stub
+
     tmpDir: storage/framework/cache/phpstan
