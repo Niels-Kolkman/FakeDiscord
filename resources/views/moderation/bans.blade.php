@@ -1,5 +1,5 @@
 {{--
-    The server's bans (ISSUE-29), newest first, with who banned them and
+    The server's bans, newest first, with who banned them and
     why. Ban Members only (ServerPolicy::manageBans). Unbanning lets the
     user join again with an invite.
 

@@ -19,11 +19,11 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 /**
- * Server roles (ISSUE-26): list, create, edit, reorder and delete. Every
+ * Server roles: list, create, edit, reorder and delete. Every
  * route needs ServerPolicy::manageRoles (the `can` middleware in
  * routes/web.php); scoped bindings make another server's role a 404.
  *
- * The role hierarchy (ISSUE-27): an existing role can only be opened,
+ * The role hierarchy: an existing role can only be opened,
  * changed, moved or deleted by someone who outranks it (RolePolicy::manage),
  * and a move cannot take it past their own highest role. A member who is not
  * the owner creates roles just below their own highest role, and only turns

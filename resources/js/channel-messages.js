@@ -10,66 +10,66 @@
  *   de-duplicated by id in case one arrives both ways.
  * - The list sticks to the bottom when a message arrives, unless you have
  *   scrolled up to read older ones.
- * - History (ISSUE-15): close to the top, the next older page is fetched
+ * - History: close to the top, the next older page is fetched
  *   from GET data-history-url?before={cursor} (MessageController::index)
  *   and prepended. The scroll position is kept by restoring the distance
  *   from the bottom, so what you were reading stays where it was. When
  *   next_cursor is null the "start of the channel" header is shown.
  * - "Jump to latest" appears once you are more than a screen away from the
  *   bottom, and counts the messages that arrived meanwhile.
- * - Edit and delete (ISSUE-16): authors get "Edit" (inline, Enter saves,
+ * - Edit and delete: authors get "Edit" (inline, Enter saves,
  *   Escape cancels, PATCH data-message-url); authors and moderators
  *   (data-can-manage-messages) get "Delete" (asks first, DELETE
  *   data-message-url). Edits from others arrive as ".message.updated" and
  *   replace the content and show "(edited)"; ".message.deleted" removes
  *   the message. The buttons are only a hint, MessagePolicy decides.
  *
- *  - Typing indicators (ISSUE-17): see typing-indicator.js. The composer
+ *  - Typing indicators: see typing-indicator.js. The composer
  *   whispers while you type; [data-typing-indicator] shows who else is.
  * 
- *  * - Reactions (ISSUE-18): "Add reaction" (🙂) in the hover toolbar opens a
+ *  * - Reactions: "Add reaction" (🙂) in the hover toolbar opens a
  *   picker of data-reaction-emoji; clicking a reaction adds yours or takes
  *   it back (POST / DELETE data-reactions-url, field emoji). The response
  *   and ".reactions.updated" carry the grouped reactions; the tooltip
  *   names the first reactors (reactionTooltip()). Broadcasts have no `me`,
  *   so the viewer's own state is kept from the page. The buttons are plain
  *   forms, so they also work without this script.
- * - Attachments (ISSUE-19): ＋ in the composer, pasting or dropping files
+ * - Attachments: ＋ in the composer, pasting or dropping files
  *   queues up to data-max-files files (data-max-file-bytes each), listed in
  *   [data-attachment-list] with a remove button. With files the composer
  *   posts multipart (attachments[]) and the text is optional. Messages
  *   show image previews (sized by previewSize(), like
  *   MessageAttachment::previewSize()) and file cards; every link is a
  *   temporary signed URL from the payload.
- * - Replies (ISSUE-20): "Reply" fills the composer's reply_to_id and shows
+ * - Replies: "Reply" fills the composer's reply_to_id and shows
  *   "Replying to …" (✕ or Escape cancels). A reply quotes its original
  *   (payload `reply_to`); clicking the quote scrolls to the original and
  *   highlights it, loading older pages (at most MAX_JUMP_PAGES) when it is
  *   not on screen. Quotes follow edits and deletes of the original.
- * - Pins (ISSUE-20): moderators get Pin / Unpin (POST / DELETE
+ * - Pins: moderators get Pin / Unpin (POST / DELETE
  *   data-pin-url); 📌 marks pinned messages. "📌 Pinned" in the header
  *   opens [data-pins-panel] with the list from data-pins-url, newest pin
  *   first, with Jump (and Unpin for moderators). ".message.pinned" updates
  *   the marker and the open panel.
  *
- * - Direct messages (ISSUE-23): the same panel (messages/panel.blade.php)
+ * - Direct messages: the same panel (messages/panel.blade.php)
  *   drives a 1:1 DM. It carries data-conversation-id instead of
  *   data-channel-id, so payloads are matched on conversation_id
  *   (belongsToTarget()); it subscribes to data-broadcast-channel
  *   ("conversation.{id}") and types on data-typing-channel. A DM has no
  *   data-pins-url and no moderators, so no pins and no Pin buttons.
  *
- * - Blocking (ISSUE-25): a server channel carries data-blocked-user-ids,
+ * - Blocking: a server channel carries data-blocked-user-ids,
  *   the people the viewer blocked. The history already leaves their
  *   messages out (Message::visibleTo()); this skips the ones that arrive
  *   live and shows "Blocked message" instead of quoting them in replies.
  *
- * - Markdown and emoji (ISSUE-36): message text is formatted by markdown.js
+ * - Markdown and emoji: message text is formatted by markdown.js
  *   (the same rules as App\Support\Markdown), which builds DOM nodes; the raw
  *   text stays in data-source for editing. emoji-picker.js adds the 😀 picker
  *   to the composer.
  *
- * - Screen readers (ISSUE-38): messages from others that arrive live are
+ * - Screen readers: messages from others that arrive live are
  *   announced as one line in [data-message-announcer] (live-announcer.js);
  *   the list itself is not a live region.
  *
@@ -338,7 +338,7 @@ export function previewText(reply) {
 }
 
 /**
- * Whether a payload's author is someone the viewer blocked (ISSUE-25).
+ * Whether a payload's author is someone the viewer blocked.
  * blockedUserIds is a Set of id strings (data-blocked-user-ids); messages
  * of deleted accounts (no author) are never blocked.
  */
@@ -564,7 +564,7 @@ export function renderMessage(message, context = {}) {
     item.dataset.reactionsUrl = url ? `${url}/reactions` : '';
     item.dataset.pinUrl = url ? `${url}/pin` : '';
 
-    // Mentions (ISSUE-33), like $mentionsViewer in messages/item.blade.php.
+    // Mentions, like $mentionsViewer in messages/item.blade.php.
     // Only from the payload's `mentions`: no guessing from the content here.
     const own = message.author && String(message.author.id) === String(context.viewerId ?? '');
     if (!own && message.mentions !== undefined && mentionsViewer(message, { userId: context.viewerId ?? null, roleIds: context.viewerRoleIds ?? new Set() })) {
@@ -669,8 +669,8 @@ function socketHeaders() {
 }
 
 /**
- * Whether a message payload or event belongs to the panel's channel or DM
- * (ISSUE-23): a DM panel (conversationId) compares conversation_id, a
+ * Whether a message payload or event belongs to the panel's channel or DM:
+ * a DM panel (conversationId) compares conversation_id, a
  * channel panel channel_id. Ids are compared as strings.
  */
 export function belongsToTarget(payload, { channelId = null, conversationId = null } = {}) {
@@ -696,9 +696,9 @@ function initChannel(root) {
         messagesUrl: root.dataset.historyUrl ?? '',
         csrfToken: document.querySelector('meta[name="csrf-token"]')?.content ?? '',
         quickEmoji: parseJson(root.dataset.reactionEmoji, []),
-        // People the viewer blocked (ISSUE-25), only on server channels.
+        // People the viewer blocked, only on server channels.
         blockedUserIds: new Set(parseJson(root.dataset.blockedUserIds, []).map(String)),
-        // Roles the viewer holds (ISSUE-33), for highlighting role mentions.
+        // Roles the viewer holds, for highlighting role mentions.
         viewerRoleIds: new Set(parseJson(root.dataset.viewerRoleIds, []).map(String)),
     };
     const blockedAuthor = (message) => isBlockedAuthor(message?.author, context.blockedUserIds);
@@ -845,7 +845,7 @@ function initChannel(root) {
         if (!belongs(message)) return;
         if (!own) typing?.messageArrived(message.author?.id);
         const id = String(message.id);
-        // The server leaves them out of the history; live ones too (ISSUE-25).
+        // The server leaves them out of the history; live ones too.
         if (seen.has(id) || (!own && blockedAuthor(message))) return;
 
         const stick = own || nearBottom();
@@ -864,7 +864,7 @@ function initChannel(root) {
         updateJump();
     };
 
-    // --- Edit and delete (ISSUE-16) ---------------------------------------
+    // --- Edit and delete ---------------------------------------
     const findItem = (id) => list.querySelector(`[data-message][data-message-id="${CSS.escape(String(id))}"]`);
 
     // When you are at the bottom, stay there. Otherwise a message above the
@@ -881,7 +881,7 @@ function initChannel(root) {
         updateJump();
     };
 
-    // Quotes of a message in the replies to it (ISSUE-20).
+    // Quotes of a message in the replies to it.
     const quotesOf = (id) => [...list.querySelectorAll(`[data-reply-preview][data-reply-to-id="${CSS.escape(String(id))}"]`)];
 
     const applyUpdate = (message) => {
@@ -916,7 +916,7 @@ function initChannel(root) {
         removedListeners.forEach((listener) => listener(String(id)));
     };
 
-    // --- Jump to a message (replies and pins, ISSUE-20) -------------------
+    // --- Jump to a message (replies and pins) -------------------
     const highlight = (item) => {
         item.classList.add(...HIGHLIGHT);
         window.setTimeout(() => item.classList.remove(HIGHLIGHT[0]), 1500);
@@ -948,7 +948,7 @@ function initChannel(root) {
         if (id) jumpTo(id);
     });
 
-    // --- Pins (ISSUE-20) --------------------------------------------------
+    // --- Pins --------------------------------------------------
     const pinsPanel = root.querySelector('[data-pins-panel]');
     const pinsList = pinsPanel?.querySelector('[data-pins-list]');
     const pinsStatus = pinsPanel?.querySelector('[data-pins-status]');
@@ -1010,7 +1010,7 @@ function initChannel(root) {
                 event.preventDefault();
                 closePins(true);
             }
-            // Tab stays in the open panel (ISSUE-38).
+            // Tab stays in the open panel.
             trapTab(pinsPanel, event);
         });
         document.addEventListener('click', (event) => {
@@ -1200,7 +1200,7 @@ function initChannel(root) {
             });
     });
 
-    // --- Reactions (ISSUE-18) -------------------------------------------
+    // --- Reactions -------------------------------------------
     const myReactions = (item) => new Set(
         [...item.querySelectorAll('[data-reaction][aria-pressed="true"]')].map((button) => button.dataset.emoji),
     );
@@ -1297,7 +1297,7 @@ function initChannel(root) {
             .finally(() => pendingReactions.delete(key));
     });
 
-    // "channel.{id}", or "conversation.{id}" for a DM (ISSUE-23).
+    // "channel.{id}", or "conversation.{id}" for a DM.
     window.Echo?.private(root.dataset.broadcastChannel || `channel.${channelId}`)
         .listen('.message.sent', (message) => append(message))
         .listen('.message.updated', (message) => applyUpdate(message))
@@ -1333,7 +1333,7 @@ function initChannel(root) {
 
     input.addEventListener('input', resize);
 
-    // --- Mention autocomplete (ISSUE-33) ---------------------------------
+    // --- Mention autocomplete ---------------------------------
     // Set up before the Enter / Escape handler below: while the list is
     // open it takes those keys (choose / close) and stops them there.
     initMentionAutocomplete({
@@ -1343,14 +1343,14 @@ function initChannel(root) {
         fetchSuggestions: (url, query) => window.axios.get(url, { params: { q: query } }).then((response) => response.data),
     });
 
-    // --- Emoji picker (ISSUE-36) -----------------------------------------
+    // --- Emoji picker -----------------------------------------
     initEmojiPicker({
         toggle: form.querySelector('[data-emoji-picker-toggle]'),
         panel: form.querySelector('[data-emoji-picker]'),
         input,
     });
 
-    // --- Replying (ISSUE-20) ---------------------------------------------
+    // --- Replying ---------------------------------------------
     const replyInput = form.querySelector('[data-reply-input]');
     const replyBar = form.querySelector('[data-reply-bar]');
     const replyAuthor = form.querySelector('[data-reply-bar-author]');
@@ -1399,7 +1399,7 @@ function initChannel(root) {
         }
     });
 
-    // --- Attachments (ISSUE-19) -----------------------------------------
+    // --- Attachments -----------------------------------------
     const fileInput = form.querySelector('[data-attachment-input]');
     const fileList = form.querySelector('[data-attachment-list]');
     const limits = {

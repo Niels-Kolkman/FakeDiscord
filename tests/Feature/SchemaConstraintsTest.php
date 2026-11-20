@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
- * ISSUE-3: column defaults, NOT NULL / unique constraints and the delete paths
+ * Column defaults, NOT NULL / unique constraints and the delete paths
  * not covered by DatabaseSchemaTest, exercised against SQLite with real rows.
  */
 class SchemaConstraintsTest extends TestCase

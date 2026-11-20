@@ -11,7 +11,7 @@ use Illuminate\Support\Collection;
 
 /**
  * One page of a channel's message history, oldest first. A DM's history
- * (ISSUE-23) pages the same way, from ConversationMessageController::index.
+ * pages the same way, from ConversationMessageController::index.
  *
  * The channel page shows the newest page; scrolling up loads older pages
  * from GET /servers/{id}/channels/{channel}/messages?before={cursor}
@@ -50,7 +50,7 @@ final readonly class MessageFeed
      * The newest page, or the page right before $before.
      *
      * With a $viewer, a server channel leaves out the messages of the
-     * people they blocked (ISSUE-25, Message::visibleTo()). A DM always
+     * people they blocked (Message::visibleTo()). A DM always
      * shows its whole history.
      */
     public static function for(Channel|Conversation|null $channel, int $limit = self::LIMIT, ?Cursor $before = null, ?User $viewer = null): self

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * ISSUE-41: authorisation review of every broadcast channel in
+ * Authorisation review of every broadcast channel in
  * routes/channels.php, through /broadcasting/auth on the Reverb driver.
  *
  * The list of channels is pinned, so a new one fails here until it is

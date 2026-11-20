@@ -14,7 +14,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 
 /**
- * Add and remove emoji reactions on a channel message (ISSUE-18).
+ * Add and remove emoji reactions on a channel message.
  *
  * resources/js/channel-messages.js sends JSON and redraws the message's
  * reactions from {"reactions": [...]} (Reactions::groups() for the

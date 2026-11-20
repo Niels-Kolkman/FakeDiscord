@@ -1,5 +1,5 @@
 /**
- * Browser notifications (ISSUE-34), with the Web Notifications API.
+ * Browser notifications, with the Web Notifications API.
  *
  * - What: a mention (App\Notifications\MentionedInMessage, Echo's
  *   .notification() on "App.Models.User.{id}") and a DM or group DM

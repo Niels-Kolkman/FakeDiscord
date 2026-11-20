@@ -18,7 +18,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Tests\TestCase;
 
 /**
- * ISSUE-15: GET /servers/{id}/channels/{channel}/messages pages through a
+ * GET /servers/{id}/channels/{channel}/messages pages through a
  * channel's history with cursorPaginate(); ?before={cursor} gives the page
  * before the one that handed out the cursor.
  */
@@ -353,7 +353,7 @@ class MessageHistoryTest extends TestCase
             ->status();
 
         if ($status === 429) {
-            // Known bug, reported on ISSUE-15: plain throttle:N,1 middleware
+            // Known bug, reported on Plain throttle:N,1 middleware
             // keys on the user only, so messages.index, messages.store and
             // channels.layout share one counter per user. This test turns
             // into a regular assertion once the limiters are separated.

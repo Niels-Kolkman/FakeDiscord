@@ -20,7 +20,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Tests\TestCase;
 
 /**
- * ISSUE-13: leaving a server, and transferring ownership so the owner can leave.
+ * Leaving a server, and transferring ownership so the owner can leave.
  */
 class LeaveServerTest extends TestCase
 {

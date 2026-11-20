@@ -36,7 +36,7 @@ class User extends Authenticatable implements MustVerifyEmail
     ];
 
     /**
-     * New users show as online while connected (ISSUE-31). The column's
+     * New users show as online while connected. The column's
      * database default is still "offline", from before presence; a stored
      * "offline" reads as "online" through chosenStatus().
      *
@@ -71,7 +71,7 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * The statuses a user can pick (ISSUE-31), which are also the ones that
+     * The statuses a user can pick, which are also the ones that
      * count as online. Anything else ("offline" or an unknown value) is
      * listed as offline.
      */
@@ -99,7 +99,7 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * The colour themes a user can pick (ISSUE-37), the first one being the
+     * The colour themes a user can pick, the first one being the
      * default. The layouts put the choice on <html data-theme>.
      */
     public const THEMES = ['dark', 'light'];

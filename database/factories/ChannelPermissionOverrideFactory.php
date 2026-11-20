@@ -9,7 +9,7 @@ use App\Models\Role;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * A role override in a channel (ISSUE-28). By default a new role of the
+ * A role override in a channel. By default a new role of the
  * channel's server that may not send messages there.
  *
  * @extends Factory<ChannelPermissionOverride>

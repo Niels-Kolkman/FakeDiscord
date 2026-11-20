@@ -14,7 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         // CSRF stays on for every web route: there is deliberately no
-        // validateCsrfTokens(except: ...) (ISSUE-41, tests/Feature/Security).
+        // validateCsrfTokens(except: ...) (tests/Feature/Security).
         $middleware->web(append: [SecurityHeaders::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

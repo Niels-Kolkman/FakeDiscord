@@ -1,7 +1,7 @@
 <?php
 
 /**
- * ISSUE-39: friends, one-to-one and group DMs, with the realtime
+ * Friends, one-to-one and group DMs, with the realtime
  * broadcasts asserted through Event::fake (Pest).
  */
 

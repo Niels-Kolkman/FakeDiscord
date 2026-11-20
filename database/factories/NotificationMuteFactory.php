@@ -9,7 +9,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * A muted server (ISSUE-34); forChannel() mutes one channel instead.
+ * A muted server; forChannel() mutes one channel instead.
  *
  * @extends Factory<NotificationMute>
  */

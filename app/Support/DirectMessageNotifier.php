@@ -9,10 +9,10 @@ use App\Models\Message;
 use App\Models\User;
 
 /**
- * Browser notifications for DMs (ISSUE-34): after a DM or group DM
+ * Browser notifications for DMs: after a DM or group DM
  * message is sent, every other participant gets DirectMessageReceived on
  * their own channel, except people who blocked the author (they don't see
- * those messages, ISSUE-25). Nothing is stored: DMs are not in the inbox.
+ * those messages). Nothing is stored: DMs are not in the inbox.
  *
  * A failed broadcast is reported and the others still go out, like the
  * message events.

@@ -1,5 +1,5 @@
 {{--
-    The notification inbox as a page (ISSUE-33): where the bell leads
+    The notification inbox as a page: where the bell leads
     without JavaScript (NotificationController::index). Newest first, at
     most App\Support\NotificationInbox::LIMIT.
 

@@ -16,7 +16,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Tests\TestCase;
 
 /**
- * ISSUE-12: PUT /servers/{server}/layout, which saves the sidebar order
+ * PUT /servers/{server}/layout, which saves the sidebar order
  * after a drag and drop.
  */
 class ChannelReorderTest extends TestCase

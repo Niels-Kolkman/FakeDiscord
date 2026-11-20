@@ -1,4 +1,4 @@
-// ISSUE-33: mention autocomplete in the composer. Run with `npm test`
+// Mention autocomplete in the composer. Run with `npm test`
 // (node --test, no deps). The suggestions endpoint is covered by
 // tests/Feature/Notifications/MentionSuggestionsTest.php; the script is
 // checked here against a fake DOM, a fake fetch and fake timers.

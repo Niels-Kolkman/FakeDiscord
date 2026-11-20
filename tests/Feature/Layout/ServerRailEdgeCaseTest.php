@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
- * ISSUE-35 edge cases for the server rail (components/server-rail.blade.php)
+ * Edge cases for the server rail (components/server-rail.blade.php)
  * and the app shell around it; the basics are in AppLayoutTest.
  */
 class ServerRailEdgeCaseTest extends TestCase
@@ -217,7 +217,7 @@ class ServerRailEdgeCaseTest extends TestCase
         $this->assertStringNotContainsString('data-channel-sidebar', $html);
     }
 
-    /** ISSUE-37: on small screens the rail is in the navigation drawer, still a column. */
+    /** On small screens the rail is in the navigation drawer, still a column. */
     public function test_the_rail_is_a_72px_column_on_every_screen_size(): void
     {
         $rail = $this->rail($this->page($this->alice, route('friends.index')));
@@ -237,7 +237,7 @@ class ServerRailEdgeCaseTest extends TestCase
      * and mentions) are batched. Not covered: the permission lookups
      * (server_members, roles, channel_permission_overrides) still run once
      * per server you do not own, because UnreadState::forServers calls
-     * PermissionService::visibleChannels per server (ISSUE-32, shared with
+     * PermissionService::visibleChannels per server (shared with
      * the dashboard). That is a known N+1 and is excluded here.
      */
     public function test_rail_list_and_unread_queries_do_not_grow_with_the_number_of_servers(): void

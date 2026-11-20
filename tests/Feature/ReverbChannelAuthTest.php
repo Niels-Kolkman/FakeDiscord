@@ -13,7 +13,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Tests\TestCase;
 
 /**
- * ISSUE-2: end-to-end checks of the Reverb (Pusher-protocol) broadcaster:
+ * End-to-end checks of the Reverb (Pusher-protocol) broadcaster:
  * channel authorization through /broadcasting/auth and synchronous delivery
  * of the tinker smoke-test event.
  */

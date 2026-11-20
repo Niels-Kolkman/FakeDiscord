@@ -31,7 +31,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Tests\TestCase;
 
 /**
- * ISSUE-23: 1:1 direct messages. One conversation per pair of users,
+ * 1:1 direct messages. One conversation per pair of users,
  * opened from the friends page, with the channel message features (send,
  * history, edit, delete, reactions, replies, attachments), events on the
  * private "conversation.{id}" channel and a DM list in the sidebar ordered
@@ -459,7 +459,7 @@ class DirectMessageTest extends TestCase
         $this->assertSame([
             [["private-conversation.{$conversation->id}"], MessageSent::NAME],
             [["private-App.Models.User.{$this->alice->id}", "private-App.Models.User.{$this->bob->id}"], ConversationActivity::NAME],
-            // Browser notifications (ISSUE-34): only the other person.
+            // Browser notifications: only the other person.
             [["private-App.Models.User.{$this->bob->id}"], DirectMessageReceived::NAME],
         ], array_map(fn (array $sent): array => [$sent[0], $sent[1]], $spy->sent));
     }

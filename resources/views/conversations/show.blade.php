@@ -1,5 +1,5 @@
 {{--
-    A 1:1 direct message (ISSUE-23, App\Http\Controllers\DirectMessageController).
+    A 1:1 direct message (App\Http\Controllers\DirectMessageController).
 
     The same message panel as a channel (messages/panel.blade.php, driven
     by resources/js/channel-messages.js), with the DM's routes and its
@@ -33,7 +33,7 @@
         @if ($other)
             <span class="truncate text-sm text-fg-subtle">{{ '@'.$other->username }}</span>
         @endif
-        {{-- Mention notifications (ISSUE-33). --}}
+        {{-- Mention notifications. --}}
         <div class="ml-auto"><x-inbox /></div>
     </header>
 

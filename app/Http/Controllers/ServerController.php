@@ -58,7 +58,7 @@ class ServerController extends Controller
 
         // Opens on the first text channel the member can see, like Discord.
         // The URL stays /servers/{id} so links and redirects to the server
-        // keep working. That channel is now read (ISSUE-32).
+        // keep working. That channel is now read.
         $layout = $server->channelLayout($user);
         $channel = $layout->defaultChannel();
 

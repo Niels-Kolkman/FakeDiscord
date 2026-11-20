@@ -23,7 +23,7 @@ use Tests\Concerns\GivesPermissions;
 use Tests\TestCase;
 
 /**
- * ISSUE-29 edge cases on top of ModerationTest: timed-out moderators,
+ * Edge cases on top of ModerationTest: timed-out moderators,
  * timeouts that are replaced, expired or outlive a membership, larger
  * message purges, the actions called directly (reason clean-up, re-bans,
  * the owner), and the order of the members and ban lists.

@@ -1,4 +1,4 @@
-{{-- Account settings (ISSUE-9). Every form re-asks for the current password. --}}
+{{-- Account settings. Every form re-asks for the current password. --}}
 @php($user = auth()->user())
 
 <x-layouts.auth title="My Account">

@@ -9,7 +9,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
- * Mute settings (ISSUE-34), stored per user in notification_mutes: whole
+ * Mute settings, stored per user in notification_mutes: whole
  * servers (channel_id NULL) and single channels.
  *
  * A muted server or channel sends no browser notifications: mention

@@ -24,7 +24,7 @@ use Tests\Concerns\GivesPermissions;
 use Tests\TestCase;
 
 /**
- * ISSUE-29, the websocket side end to end: what a kicked, banned or
+ * The websocket side end to end: what a kicked, banned or
  * timed-out user may still subscribe to when pusher-js reconnects
  * (routes/channels.php), and that a moderation action really reaches
  * Reverb (MemberModerated on the user's channel, then terminate

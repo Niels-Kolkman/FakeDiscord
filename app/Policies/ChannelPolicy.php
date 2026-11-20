@@ -8,12 +8,11 @@ use App\Models\User;
 use App\Services\PermissionService;
 
 /**
- * Discovered automatically for App\Models\Channel (ISSUE-27).
+ * Discovered automatically for App\Models\Channel.
  *
  * What a member may do in one channel, from their channel permissions
- * (PermissionService::channelPermissions). Those are the server
- * permissions until ISSUE-28 adds per-channel overrides; then only that
- * service changes. Every ability needs View Channels first: you cannot
+ * (PermissionService::channelPermissions): the server permissions with
+ * the channel's role overrides applied. Every ability needs View Channels first: you cannot
  * post in, react in or moderate a channel you cannot see.
  *
  * Changing the channel itself is ServerPolicy::manageChannels.

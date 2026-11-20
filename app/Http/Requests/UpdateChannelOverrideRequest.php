@@ -9,7 +9,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 /**
- * One role's override in one channel (ISSUE-28):
+ * One role's override in one channel:
  *
  *     permissions[ViewChannels]=allow&permissions[SendMessages]=inherit
  *

@@ -12,7 +12,7 @@ class InvitePolicy
 {
     /**
      * Members who manage the server's invites (ServerPolicy::manageInvites:
-     * the owner and Manage Server, ISSUE-27), and the person who made the
+     * the owner and Manage Server), and the person who made the
      * invite while they are still a member, can revoke it.
      */
     public function delete(User $user, Invite $invite): bool

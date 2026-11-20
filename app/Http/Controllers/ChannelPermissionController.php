@@ -18,7 +18,7 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 /**
- * A channel's permissions (ISSUE-28): make it private and allow or deny
+ * A channel's permissions: make it private and allow or deny
  * View Channels and Send Messages per role.
  *
  * Every route needs Manage Channels and the channel must be one the member

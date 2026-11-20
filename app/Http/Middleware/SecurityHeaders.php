@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Browser hardening headers on every web response (ISSUE-41):
+ * Browser hardening headers on every web response:
  *
  * - no framing by other sites (clickjacking a "Delete server" or "Ban"
  *   button), through both X-Frame-Options and CSP frame-ancestors;

@@ -1,5 +1,5 @@
 {{--
-    Friends (ISSUE-22, App\Http\Controllers\FriendController). The tabs are
+    Friends (App\Http\Controllers\FriendController). The tabs are
     links (?tab=all|pending|blocked) and every action is a plain form, so
     the page works without JavaScript.
 
@@ -23,7 +23,7 @@
     <header class="flex min-h-12 items-center gap-2 border-b border-edge px-4 py-2 shadow-sm">
         <span aria-hidden="true" class="text-xl">👋</span>
         <h1 class="font-semibold text-fg-strong">Friends</h1>
-        {{-- Mention notifications (ISSUE-33). --}}
+        {{-- Mention notifications. --}}
         <div class="ml-auto"><x-inbox /></div>
     </header>
 
@@ -61,11 +61,11 @@
         </section>
 
         @error('user')
-            {{-- "Message" could not open a DM (ISSUE-23). --}}
+            {{-- "Message" could not open a DM. --}}
             <p role="alert" class="mb-4 rounded bg-red-500/10 px-3 py-2 text-sm text-red-300 in-data-[theme=light]:bg-red-100 in-data-[theme=light]:text-red-800" data-dm-error>{{ $message }}</p>
         @enderror
 
-        {{-- Group DMs (ISSUE-24): pick up to MAX_PARTICIPANTS - 1 friends. Only on the All tab, next to the friends list. --}}
+        {{-- Group DMs: pick up to MAX_PARTICIPANTS - 1 friends. Only on the All tab, next to the friends list. --}}
         @php($groupFriends = $tab === 'all' ? \App\Actions\Conversations\ManageGroupConversation::invitableFriends(auth()->user()) : collect())
         @if ($groupFriends->isNotEmpty())
             <details class="mb-6 border-b border-line pb-6" @if ($errors->has('user_ids') || $errors->has('name')) open @endif data-create-group>

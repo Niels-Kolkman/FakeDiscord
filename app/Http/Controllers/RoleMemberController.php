@@ -11,9 +11,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
 /**
- * Give a role to members and take it away again (ISSUE-26). Needs
+ * Give a role to members and take it away again. Needs
  * ServerPolicy::manageRoles, like the rest of the role routes, and the role
- * must be below the actor's own highest role (RolePolicy::manage, ISSUE-27).
+ * must be below the actor's own highest role (RolePolicy::manage).
  */
 class RoleMemberController extends Controller
 {

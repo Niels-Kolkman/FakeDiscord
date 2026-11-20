@@ -1,5 +1,5 @@
 {{--
-    Edit a role (ISSUE-26): its fields, who has it, and deleting it.
+    Edit a role: its fields, who has it, and deleting it.
     @everyone only has its permissions.
 
     @var \App\Models\Server $server

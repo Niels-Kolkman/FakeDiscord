@@ -1,5 +1,5 @@
 /**
- * Starts the app for the browser tests (Playwright's webServer, ISSUE-40):
+ * Starts the app for the browser tests (Playwright's webServer):
  * a fresh database/e2e.sqlite, migrated, then PHP's built-in server on
  * APP_PORT. `php -S` is used instead of `artisan serve` because artisan
  * serve drops environment variables that .env also sets, unless --no-reload.

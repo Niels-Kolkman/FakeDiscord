@@ -25,8 +25,8 @@ use Symfony\Component\HttpFoundation\Response;
 use Tests\TestCase;
 
 /**
- * ISSUE-16: authors edit ("(edited)") and delete their own messages,
- * moderators (ServerPolicy::manageMessages, the owner for now) delete any.
+ * Authors edit ("(edited)") and delete their own messages,
+ * moderators (ServerPolicy::manageMessages: Manage Messages) delete any.
  * Deleting is a soft delete. MessageUpdated / MessageDeleted broadcast on
  * the private "channel.{id}" channel.
  */

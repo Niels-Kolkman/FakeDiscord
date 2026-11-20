@@ -10,7 +10,7 @@
 
     <a href="{{ route('profile.edit') }}" class="mb-3 block w-full rounded bg-[#4e5058] py-2 text-center font-medium text-white hover:bg-[#6d6f78]">Edit profile</a>
 
-    {{-- Friends (ISSUE-22). The badge counts requests waiting for an answer; resources/js/friends.js keeps it live. --}}
+    {{-- Friends. The badge counts requests waiting for an answer; resources/js/friends.js keeps it live. --}}
     @if (auth()->user()?->hasVerifiedEmail())
         @php($friendRequests = \App\Models\Friendship::incomingCount(auth()->user()))
         <a href="{{ route('friends.index', $friendRequests > 0 ? ['tab' => 'pending'] : []) }}" class="mb-3 flex w-full items-center justify-center gap-2 rounded bg-[#4e5058] py-2 font-medium text-white hover:bg-[#6d6f78]">
@@ -18,7 +18,7 @@
             <span data-friend-request-badge @if ($friendRequests === 0) hidden @endif class="rounded-full bg-[#da373c] px-1.5 text-xs font-semibold">{{ $friendRequests }}</span>
         </a>
 
-        {{-- Mention notifications (ISSUE-33). Not live here; the bell on the app pages is. --}}
+        {{-- Mention notifications. Not live here; the bell on the app pages is. --}}
         @php($inboxUnread = \App\Support\NotificationInbox::unreadCount(auth()->user()))
         <a href="{{ route('notifications.index') }}" class="mb-3 flex w-full items-center justify-center gap-2 rounded bg-[#4e5058] py-2 font-medium text-white hover:bg-[#6d6f78]" data-dashboard-inbox>
             Inbox
@@ -49,7 +49,7 @@
         @if ($servers->isEmpty())
             <p class="mb-3 text-sm text-fg-muted">You are not in any servers yet.</p>
         @else
-            {{-- Unread dots and mention badges (ISSUE-32). --}}
+            {{-- Unread dots and mention badges. --}}
             @php($serverUnread = \App\Support\UnreadState::forServers(auth()->user(), $servers))
             <ul class="mb-3 space-y-1">
                 @foreach ($servers as $server)
@@ -77,7 +77,7 @@
         @endif
     </p>
 
-    {{-- Dark / light theme (ISSUE-37); also at the bottom of the server rail. --}}
+    {{-- Dark / light theme; also at the bottom of the server rail. --}}
     <x-theme-toggle class="mb-3" />
 
     <form method="POST" action="{{ route('logout') }}">

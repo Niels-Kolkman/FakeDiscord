@@ -9,7 +9,7 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 
 /**
- * Someone wrote in a DM (ISSUE-23). Goes to every participant's own
+ * Someone wrote in a DM. Goes to every participant's own
  * "App.Models.User.{id}" channel, so the DM list in their sidebar can move
  * the conversation to the top, or show it for the first time, wherever
  * they are in the app. Only ids and the time go out, never the content.

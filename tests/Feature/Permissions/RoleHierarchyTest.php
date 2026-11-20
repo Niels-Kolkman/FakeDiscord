@@ -12,7 +12,7 @@ use Tests\Concerns\GivesPermissions;
 use Tests\TestCase;
 
 /**
- * ISSUE-27: members with Manage Roles manage the roles below their own
+ * Members with Manage Roles manage the roles below their own
  * highest role, and only hand out flags they have. The owner manages all.
  *
  * Hierarchy here: Above (3) > Managers (2, Manage Roles + Manage Messages)

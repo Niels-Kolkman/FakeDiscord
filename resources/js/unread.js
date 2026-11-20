@@ -1,5 +1,5 @@
 /**
- * Unread channels and mention badges, live (ISSUE-32).
+ * Unread channels and mention badges, live.
  *
  * The server renders the state when the page loads (App\Support\UnreadState,
  * servers/partials/channel-item.blade.php); this keeps the channel sidebar
@@ -11,7 +11,7 @@
  *   arrives in another channel, the row gets data-unread (the CSS shows
  *   the dot and the bold name) and, if the message mentions you
  *   (mentionsViewer(): by name, a role in data-viewer-role-ids or
- *   @everyone, ISSUE-33), its badge counts up.
+ *   @everyone), its badge counts up.
  * - In the open channel ([data-channel-messages][data-read-url]) a message
  *   from someone else is marked read (POST data-read-url, field
  *   message_id, ChannelReadController) once you have seen it: right away
@@ -44,7 +44,7 @@ export function mentionsUser(content, username) {
 }
 
 /**
- * Whether a message payload mentions the viewer (ISSUE-33). The server
+ * Whether a message payload mentions the viewer. The server
  * works out who a message mentions when it is saved (App\Support\Mentions,
  * `mentions`: { users, roles, everyone }): by id, a role they hold
  * (roleIds) or @everyone. A payload without `mentions` (an older server)

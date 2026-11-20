@@ -45,7 +45,7 @@ return [
     | Message Attachments
     |--------------------------------------------------------------------------
     |
-    | Disk that files attached to messages are stored on (ISSUE-19). It does
+    | Disk that files attached to messages are stored on. It does
     | not need to be public: files are only served through signed URLs
     | (App\Http\Controllers\AttachmentController), which expire after
     | attachment_url_ttl minutes. Each file keeps the name of its disk, so
@@ -75,7 +75,7 @@ return [
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),
-            // Off (ISSUE-41): this disk holds private attachments, which
+            // Off: this disk holds private attachments, which
             // AttachmentController serves. `serve` would add Laravel's own
             // GET and PUT /storage/{path} routes for signed temporary
             // URLs, an upload endpoint outside the web group that nothing

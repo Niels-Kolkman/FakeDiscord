@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Mentions (ISSUE-33): who a server channel message mentions, worked
+     * Mentions: who a server channel message mentions, worked
      * out when it is saved (App\Support\Mentions::resolve()) as JSON
      * {"users": [ids], "roles": [ids], "everyone": bool}. NULL when it
      * mentions nobody, and for DMs. The unread mention badges, the live

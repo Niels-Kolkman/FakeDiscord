@@ -12,7 +12,7 @@ use Mockery;
 use Tests\TestCase;
 
 /**
- * ISSUE-2: Reverb is the broadcaster and App\Events\TestBroadcast reaches
+ * Reverb is the broadcaster and App\Events\TestBroadcast reaches
  * the public "test" channel that the browser listens on.
  */
 class ReverbBroadcastingTest extends TestCase

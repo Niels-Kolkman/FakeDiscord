@@ -7,7 +7,7 @@ use App\Models\User;
 use App\Services\PermissionService;
 
 /**
- * Discovered automatically for App\Models\Role (ISSUE-27).
+ * Discovered automatically for App\Models\Role.
  *
  * Opening the role settings and creating roles is ServerPolicy::manageRoles.
  * This decides which existing role a member may edit, delete, move or give

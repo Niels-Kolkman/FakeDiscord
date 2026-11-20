@@ -7,13 +7,13 @@
     @var \App\Support\ChannelLayout $layout
     @var \App\Models\Channel|null $activeChannel
 
-    Unread channels (ISSUE-32, App\Support\UnreadState) get a dot and a
+    Unread channels (App\Support\UnreadState) get a dot and a
     mention badge; resources/js/unread.js keeps them live.
 --}}
 @php
     $canManage = auth()->user()?->can('manageChannels', $server) ?? false;
     $unread ??= auth()->user() ? \App\Support\UnreadState::forChannels(auth()->user(), $layout->channels()) : new \App\Support\UnreadState;
-    // Mute settings (ISSUE-34): the 🔕 toggles in the header and on each channel.
+    // Mute settings: the 🔕 toggles in the header and on each channel.
     $mutes ??= auth()->user() ? \App\Support\NotificationMutes::forUser(auth()->user()) : ['servers' => [], 'channels' => []];
     $serverMuted = in_array((int) $server->id, $mutes['servers'], true);
 @endphp
@@ -25,7 +25,7 @@
     data-channel-sidebar
     data-server-id="{{ $server->id }}"
     @auth data-blocked-user-ids="{{ json_encode(array_values(\App\Models\Friendship::blockedIds(auth()->user()))) }}" @endauth
-    {{-- Role mentions (ISSUE-33) count for the roles the viewer holds here. --}}
+    {{-- Role mentions count for the roles the viewer holds here. --}}
     @auth data-viewer-role-ids="{{ json_encode(\App\Support\Mentions::roleIdsOf(auth()->user(), $server)) }}" @endauth
     @if ($canManage) data-layout-url="{{ route('channels.layout', $server) }}" @endif
 >
@@ -45,7 +45,7 @@
         @endauth
     </div>
 
-    {{-- Keyboard shortcuts (ISSUE-38, resources/js/keyboard-shortcuts.js). --}}
+    {{-- Keyboard shortcuts (resources/js/keyboard-shortcuts.js). --}}
     <p id="channel-shortcuts-help" class="sr-only">Alt+Up and Alt+Down switch channels, Alt+Shift+Up and Alt+Shift+Down go to unread channels.</p>
 
     <div class="flex-1 overflow-y-auto px-2 py-3">
@@ -97,7 +97,7 @@
     </div>
 
     <div class="space-y-1 border-t border-edge p-2 text-sm">
-        {{-- Online presence (ISSUE-31). --}}
+        {{-- Online presence. --}}
         <x-status-picker />
         @if ($canManage)
             <a href="{{ route('channels.create', $server) }}" class="block rounded px-2 py-1 text-fg-muted hover:bg-hover hover:text-fg-strong">Create channel</a>
@@ -112,14 +112,14 @@
         @can('manageRoles', $server)
             <a href="{{ route('roles.index', $server) }}" class="block rounded px-2 py-1 text-fg-muted hover:bg-hover hover:text-fg-strong">Roles</a>
         @endcan
-        {{-- Moderation (ISSUE-29): Kick, Ban or Timeout Members. --}}
+        {{-- Moderation: Kick, Ban or Timeout Members. --}}
         @can('moderateMembers', $server)
             <a href="{{ route('members.index', $server) }}" class="block rounded px-2 py-1 text-fg-muted hover:bg-hover hover:text-fg-strong">Members</a>
         @endcan
         @can('manageBans', $server)
             <a href="{{ route('bans.index', $server) }}" class="block rounded px-2 py-1 text-fg-muted hover:bg-hover hover:text-fg-strong">Bans</a>
         @endcan
-        {{-- Audit log (ISSUE-30): owner only. --}}
+        {{-- Audit log: owner only. --}}
         @can('viewAuditLog', $server)
             <a href="{{ route('audit-log.index', $server) }}" class="block rounded px-2 py-1 text-fg-muted hover:bg-hover hover:text-fg-strong">Audit log</a>
         @endcan

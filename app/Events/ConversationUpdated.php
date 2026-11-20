@@ -9,7 +9,7 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 
 /**
- * A group DM changed (ISSUE-24): it was created or renamed, or people were
+ * A group DM changed: it was created or renamed, or people were
  * added, removed or left. Goes to the "App.Models.User.{id}" channel of
  * every participant and of the people who just left or were removed, so
  * resources/js/direct-messages.js can reload the DM list and, on the

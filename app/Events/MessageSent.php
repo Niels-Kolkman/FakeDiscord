@@ -10,8 +10,8 @@ use Illuminate\Foundation\Events\Dispatchable;
 
 /**
  * A new message in a server channel or a DM. Goes out on the private
- * "channel.{id}" channel, or "conversation.{id}" for a DM (ISSUE-23,
- * Message::broadcastChannel()); routes/channels.php only lets server
+ * "channel.{id}" channel, or "conversation.{id}" for a DM
+ * (Message::broadcastChannel()); routes/channels.php only lets server
  * members / participants subscribe. The browser listens for ".message.sent"
  * (resources/js/channel-messages.js).
  *

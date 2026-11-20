@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Mute settings (ISSUE-34): servers and channels a user muted. A row
+     * Mute settings: servers and channels a user muted. A row
      * with channel_id NULL mutes the whole server; with a channel_id it
      * mutes that channel (server_id is still its server, so leaving the
      * server clears both kinds in one go). Muted places send no browser

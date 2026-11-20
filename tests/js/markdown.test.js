@@ -1,4 +1,4 @@
-// ISSUE-36: message markdown (resources/js/markdown.js). Run with `npm test`.
+// Message markdown (resources/js/markdown.js). Run with `npm test`.
 // The same cases as tests/Feature/Messages/MarkdownTest.php, read from
 // tests/fixtures/markdown.json, so the browser builds exactly what
 // App\Support\Markdown renders on the server. The DOM nodes are built in

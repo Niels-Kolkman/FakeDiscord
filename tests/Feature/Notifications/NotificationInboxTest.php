@@ -17,7 +17,7 @@ use Tests\Concerns\GivesPermissions;
 use Tests\TestCase;
 
 /**
- * ISSUE-33: the notification inbox: the bell and its count, the JSON for
+ * The notification inbox: the bell and its count, the JSON for
  * the panel, the page, opening and marking read, and dropping entries
  * that no longer lead anywhere.
  */

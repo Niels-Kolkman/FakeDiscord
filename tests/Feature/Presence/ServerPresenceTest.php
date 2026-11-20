@@ -19,7 +19,7 @@ use Pusher\Pusher;
 use Tests\TestCase;
 
 /**
- * ISSUE-31: who is online comes from the server's Reverb presence channel
+ * Who is online comes from the server's Reverb presence channel
  * (App\Support\ServerPresence), and the member list shows connected
  * members with the status they picked.
  */

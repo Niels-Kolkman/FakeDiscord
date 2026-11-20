@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\URL;
 use Tests\TestCase;
 
 /**
- * ISSUE-7: users must verify their email address before joining servers.
+ * Users must verify their email address before joining servers.
  */
 class EmailVerificationTest extends TestCase
 {
@@ -29,7 +29,7 @@ class EmailVerificationTest extends TestCase
     }
 
     /**
-     * Stand-in for the server-join routes (ISSUE-11), which will use the same
+     * Stand-in for the server-join routes, which will use the same
      * `auth` + `verified` middleware as the group in routes/web.php.
      */
     private function registerVerifiedOnlyRoute(): void

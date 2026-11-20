@@ -13,7 +13,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 /**
- * ISSUE-13: the right-hand member sidebar, grouped by role and online status.
+ * The right-hand member sidebar, grouped by role and online status.
  */
 class MemberListTest extends TestCase
 {
@@ -218,7 +218,7 @@ class MemberListTest extends TestCase
         $mod = $this->role('Moderator', 1, '#123456');
         $mod->users()->attach($this->member('Dave', 'offline'));
 
-        // The role's section carries the colour for presence.js (ISSUE-31),
+        // The role's section carries the colour for presence.js,
         // but Dave's name is not painted with it.
         $this->actingAs($this->owner)
             ->get("/servers/{$this->server->id}")
@@ -228,7 +228,7 @@ class MemberListTest extends TestCase
 
     public function test_a_role_color_that_is_not_a_hex_value_is_not_put_in_the_style_attribute(): void
     {
-        // Role colours are not validated until roles can be edited (ISSUE-26).
+        // Role colours are not validated until roles can be edited.
         $role = $this->role('Evil', 1, 'red;x');
         $role->users()->attach($this->member('Alice', 'online'));
 

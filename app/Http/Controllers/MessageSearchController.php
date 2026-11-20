@@ -16,7 +16,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 /**
- * GET /servers/{server}/search (ISSUE-21): search a server's messages, with
+ * GET /servers/{server}/search: search a server's messages, with
  * the text in ?q= and the filters ?channel={id}, ?author={user id},
  * ?from=Y-m-d and ?to=Y-m-d. Members only.
  *
@@ -32,8 +32,8 @@ class MessageSearchController extends Controller
         /** @var User $user */
         $user = $request->user();
 
-        // Only the text channels the member can see (ChannelPolicy::view,
-        // ISSUE-27): the filter offers them and the search stays inside them.
+        // Only the text channels the member can see (ChannelPolicy::view):
+        // the filter offers them and the search stays inside them.
         $channels = app(PermissionService::class)->visibleChannels($user, $server, $server->channels()
             ->where('type', '!=', Channel::TYPE_VOICE)
             ->orderBy('position')

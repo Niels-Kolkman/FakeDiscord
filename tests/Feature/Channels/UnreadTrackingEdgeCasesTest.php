@@ -21,7 +21,7 @@ use Tests\Concerns\GivesPermissions;
 use Tests\TestCase;
 
 /**
- * ISSUE-32 edge cases on top of UnreadTrackingTest: markers on deleted
+ * Edge cases on top of UnreadTrackingTest: markers on deleted
  * messages, clamping, marker versus join date, viewers who are not (or no
  * longer) members, query counts when little is unread, mentions from
  * deleted / blocked authors and in deleted messages, dotted usernames,
@@ -257,7 +257,7 @@ class UnreadTrackingEdgeCasesTest extends TestCase
 
         $this->assertTrue($state->isUnread($this->random));
         $this->assertSame(0, $state->mentions($this->random));
-        // ISSUE-33: roles and @everyone can mention anyone, so the mention
+        // Roles and @everyone can mention anyone, so the mention
         // query always runs once something is unread; no role lookup.
         $this->assertSame(2, $queries);
     }

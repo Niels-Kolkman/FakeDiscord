@@ -1,4 +1,4 @@
-// ISSUE-38: Alt+arrows switch channels and DMs, Alt+Shift+arrows go to
+// Alt+arrows switch channels and DMs, Alt+Shift+arrows go to
 // unread channels (resources/js/keyboard-shortcuts.js). Run with
 // `npm test`. The sidebar markup and help text are covered by
 // tests/Feature/Layout/AccessibilityTest.php.
@@ -215,7 +215,7 @@ test('arriving on a page without a composer focuses main', () => {
     assert.equal(main.focused, 1);
 });
 
-// --- Further edge cases (ISSUE-38 test pass) ---
+// --- Further edge cases ---
 
 /** A friends / DM page: a DM list and main, no channel sidebar. */
 function dmPage(rows) {

@@ -1,4 +1,4 @@
-// A small fake DOM for the ISSUE-33 script tests (mention-autocomplete and
+// A small fake DOM for the script tests (mention-autocomplete and
 // notifications): elements with dataset, attributes, children, events and
 // the selectors those scripts use ([data-foo], [data-foo][data-bar]).
 // innerHTML throws, so a test fails loudly if user text were parsed as HTML.

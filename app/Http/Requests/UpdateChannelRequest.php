@@ -10,8 +10,8 @@ use App\Models\Channel;
 class UpdateChannelRequest extends StoreChannelRequest
 {
     /**
-     * Manage Channels, and the channel must be one the member can see
-     * (ISSUE-28): a hidden channel's settings are closed too.
+     * Manage Channels, and the channel must be one the member can see:
+     * a hidden channel's settings are closed too.
      */
     public function authorize(): bool
     {

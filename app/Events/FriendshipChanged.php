@@ -10,7 +10,7 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 
 /**
- * Something changed between two users (ISSUE-22). Sent to the other person
+ * Something changed between two users. Sent to the other person
  * only, on their private "App.Models.User.{id}" channel; the one who acted
  * gets the change in the HTTP response.
  *

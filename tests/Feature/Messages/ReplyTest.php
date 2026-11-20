@@ -21,7 +21,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Tests\TestCase;
 
 /**
- * ISSUE-20: replying to a message. A reply stores reply_to_id, quotes the
+ * Replying to a message. A reply stores reply_to_id, quotes the
  * original (author and a one-line excerpt) in its payload and on the
  * page, and links to #message-{id} so the script can jump to it.
  */

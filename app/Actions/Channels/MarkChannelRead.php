@@ -8,7 +8,7 @@ use App\Models\User;
 use App\Support\NotificationInbox;
 
 /**
- * Moves a user's read marker in a channel forward (ISSUE-32). Opening a
+ * Moves a user's read marker in a channel forward. Opening a
  * channel marks everything in it as read; while it stays open,
  * resources/js/unread.js marks the messages that arrive live
  * (ChannelReadController).
@@ -17,7 +17,7 @@ use App\Support\NotificationInbox;
  * channel, so a made-up id cannot hide messages that are still to come.
  * Authorisation is the caller's job (ChannelPolicy::view).
  *
- * Mention notifications (ISSUE-33) of the channel up to the marker are
+ * Mention notifications of the channel up to the marker are
  * marked read with it: the user has seen those messages.
  */
 class MarkChannelRead
@@ -43,7 +43,7 @@ class MarkChannelRead
 
         $marker = max($target, $read->last_read_message_id);
 
-        // Seen in the channel, so read in the inbox too (ISSUE-33).
+        // Seen in the channel, so read in the inbox too.
         NotificationInbox::markChannelRead($user, $channel, $marker);
 
         return $marker;

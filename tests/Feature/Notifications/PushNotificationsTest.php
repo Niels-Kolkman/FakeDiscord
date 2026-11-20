@@ -21,7 +21,7 @@ use Tests\Concerns\GivesPermissions;
 use Tests\TestCase;
 
 /**
- * ISSUE-34: browser notifications and mute settings. Mutes per server and
+ * Browser notifications and mute settings. Mutes per server and
  * per channel are stored per user; a muted place still stores mention
  * notifications but broadcasts them with `push: false`. DMs send
  * DirectMessageReceived to the other participants for a browser

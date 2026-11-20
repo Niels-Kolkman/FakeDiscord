@@ -1,5 +1,5 @@
 /**
- * Online presence (ISSUE-31).
+ * Online presence.
  *
  * Every page of a signed-in user joins the presence channel "server.{id}"
  * of each server they are in (<meta name="presence-servers">, authorised

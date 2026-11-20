@@ -11,7 +11,7 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 
 /**
- * Someone wrote to you in a DM or group DM (ISSUE-34). Goes to one
+ * Someone wrote to you in a DM or group DM. Goes to one
  * recipient's own "App.Models.User.{id}" channel, so the browser can show
  * a notification wherever they are in the app while the tab is not in
  * focus (resources/js/push-notifications.js, ".dm.received").

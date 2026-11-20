@@ -1,7 +1,7 @@
 <?php
 
 /**
- * ISSUE-41: CSRF, CORS, cookies and browser hardening headers.
+ * CSRF, CORS, cookies and browser hardening headers.
  *
  * Laravel skips the CSRF check while running tests, so these swap in a
  * ValidateCsrfToken that always checks, the way it runs in production.

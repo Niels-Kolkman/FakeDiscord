@@ -1,8 +1,8 @@
 <?php
 
 /*
- * Prints the email verification link for a user of the browser tests
- * (ISSUE-40): `php tests/e2e/support/verification-url.php {email}`.
+ * Prints the email verification link for a user of the browser tests:
+ * `php tests/e2e/support/verification-url.php {email}`.
  *
  * The link comes from the same VerifyEmail notification the app sends, so
  * the browser follows exactly the URL that would be in the email; this only

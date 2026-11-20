@@ -1,5 +1,5 @@
 /**
- * Steps of the browser tests (ISSUE-40), written against what a user sees:
+ * Steps of the browser tests, written against what a user sees:
  * labels, button names and the message list.
  */
 import { execFileSync } from 'node:child_process';

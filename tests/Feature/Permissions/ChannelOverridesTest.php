@@ -17,7 +17,7 @@ use Tests\Concerns\GivesPermissions;
 use Tests\TestCase;
 
 /**
- * ISSUE-28: private channels and per-channel role overrides, as resolved by
+ * Private channels and per-channel role overrides, as resolved by
  * PermissionService and written by SetChannelOverride.
  */
 class ChannelOverridesTest extends TestCase

@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Blade;
 use Tests\TestCase;
 
 /**
- * ISSUE-35: the four-pane app shell (components/layouts/app.blade.php):
+ * The four-pane app shell (components/layouts/app.blade.php):
  * server rail, channel (or friends / DM) sidebar, messages, member list.
  */
 class AppLayoutTest extends TestCase

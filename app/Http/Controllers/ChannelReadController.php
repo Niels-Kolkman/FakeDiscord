@@ -11,7 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
 /**
- * Marks a channel as read while it is open (ISSUE-32). resources/js/unread.js
+ * Marks a channel as read while it is open. resources/js/unread.js
  * calls it when a message arrives live in the channel you are looking at,
  * with that message's `message_id`; without one, the whole channel is read.
  */

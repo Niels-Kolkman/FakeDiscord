@@ -1,7 +1,7 @@
 <?php
 
 /**
- * ISSUE-39: the sign-up / sign-in / sign-out flow end to end (Pest).
+ * The sign-up / sign-in / sign-out flow end to end (Pest).
  */
 
 use App\Models\User;

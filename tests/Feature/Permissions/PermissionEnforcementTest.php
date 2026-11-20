@@ -18,7 +18,7 @@ use Tests\Concerns\GivesPermissions;
 use Tests\TestCase;
 
 /**
- * ISSUE-27: the routes follow the permission flags. A member gets in with
+ * The routes follow the permission flags. A member gets in with
  * the right role and is refused without it.
  */
 class PermissionEnforcementTest extends TestCase

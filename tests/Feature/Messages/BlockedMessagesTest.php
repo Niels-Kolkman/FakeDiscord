@@ -14,7 +14,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 /**
- * ISSUE-25: in a server you share with someone you blocked, their messages
+ * In a server you share with someone you blocked, their messages
  * are left out of the channel page, the history, the pins and search
  * (Message::visibleTo()). Only for the blocker: the blocked person and
  * everyone else still see them. A reply quoting them says "Blocked

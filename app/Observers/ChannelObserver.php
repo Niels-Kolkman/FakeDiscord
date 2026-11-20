@@ -7,7 +7,7 @@ use App\Models\Channel;
 use App\Support\AuditLog;
 
 /**
- * Audit log (ISSUE-30): channels created, changed and deleted. Position and
+ * Audit log: channels created, changed and deleted. Position and
  * category moves (dragging in the sidebar) are left out, like the reorder
  * itself, which does not go through model events.
  */

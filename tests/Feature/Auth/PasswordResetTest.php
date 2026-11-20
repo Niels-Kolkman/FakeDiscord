@@ -11,7 +11,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
- * ISSUE-6: users who forgot their password can reset it via an emailed link.
+ * Users who forgot their password can reset it via an emailed link.
  */
 class PasswordResetTest extends TestCase
 {

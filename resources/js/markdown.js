@@ -1,5 +1,5 @@
 /**
- * Message markdown (ISSUE-36), the same parser as App\Support\Markdown:
+ * Message markdown, the same parser as App\Support\Markdown:
  *
  *   **bold**  *italic* / _italic_  __underline__  ~~strike~~
  *   `code`  ```lang\ncode block```

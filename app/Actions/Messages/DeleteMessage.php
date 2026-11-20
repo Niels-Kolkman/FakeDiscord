@@ -11,7 +11,7 @@ use App\Support\MentionNotifier;
  * remove it. The person deleting it removes it from their own screen
  * after the HTTP response, so their socket is skipped (toOthers()).
  *
- * Its mention notifications (ISSUE-33) are deleted with it.
+ * Its mention notifications are deleted with it.
  */
 class DeleteMessage
 {

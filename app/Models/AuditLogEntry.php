@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 
 /**
- * One line of a server's audit log (ISSUE-30): who (actor) did what
+ * One line of a server's audit log: who (actor) did what
  * (action) to what (target), and when (created_at). Written by
  * App\Support\AuditLog, never changed afterwards.
  *

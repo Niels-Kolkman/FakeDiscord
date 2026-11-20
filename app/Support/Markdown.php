@@ -5,7 +5,7 @@ namespace App\Support;
 use Illuminate\Support\HtmlString;
 
 /**
- * Message markdown (ISSUE-36): a small, Discord-like subset that is safe
+ * Message markdown: a small, Discord-like subset that is safe
  * by construction. Message text is never treated as HTML: parse() turns it
  * into a tree of known nodes, and toHtml() writes only the tags below,
  * escaping every piece of text and every attribute with e(). So "<b>" or

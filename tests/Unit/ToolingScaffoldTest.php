@@ -5,7 +5,7 @@ namespace Tests\Unit;
 use PHPUnit\Framework\TestCase;
 
 /**
- * ISSUE-5: Pint, Larastan and the GitHub Actions CI workflow are wired up.
+ * Pint, Larastan and the GitHub Actions CI workflow are wired up.
  */
 class ToolingScaffoldTest extends TestCase
 {

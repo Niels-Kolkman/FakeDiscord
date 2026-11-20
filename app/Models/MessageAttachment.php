@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 
 /**
- * A file attached to a message (ISSUE-19), stored on `disk` at `path`
+ * A file attached to a message, stored on `disk` at `path`
  * (App\Actions\Messages\SendMessage). Files are never served from the
  * disk directly: url() and downloadUrl() are temporary signed links to
  * App\Http\Controllers\AttachmentController.
@@ -115,7 +115,7 @@ class MessageAttachment extends Model
     }
 
     /**
-     * The same for one conversation (ISSUE-24: a group DM is deleted when
+     * The same for one conversation (a group DM is deleted when
      * its last participant leaves).
      *
      * @return list<array{disk: string, path: string}>

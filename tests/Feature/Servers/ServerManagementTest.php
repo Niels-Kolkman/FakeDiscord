@@ -15,7 +15,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
- * ISSUE-10: create, rename and delete servers.
+ * Create, rename and delete servers.
  */
 class ServerManagementTest extends TestCase
 {

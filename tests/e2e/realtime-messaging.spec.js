@@ -1,5 +1,5 @@
 /**
- * The critical flow in real browsers (ISSUE-40): a new user registers,
+ * The critical flow in real browsers: a new user registers,
  * verifies their email, creates a server and invites a second user, who
  * registers and joins; then the two exchange messages in #general, each
  * in their own browser session, live over Reverb.

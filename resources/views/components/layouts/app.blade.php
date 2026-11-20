@@ -1,11 +1,11 @@
 {{--
-    Full-screen app shell (ISSUE-35), four panes from left to right:
+    Full-screen app shell, four panes from left to right:
     the server rail (components/server-rail.blade.php, for verified users,
     who are the only ones who can open servers), the sidebar slot (a
     server's channels, or friends and DMs), the page content, and the
     optional aside slot (a server's member list).
 
-    Small screens (ISSUE-37, below md / 768px): the rail and the sidebar
+    Small screens (below md / 768px): the rail and the sidebar
     are one drawer ([data-drawer="nav"]) that slides in from the left, the
     member list another ([data-drawer="members"]) from the right. The bar
     on top of the page ([data-mobile-bar]) opens them, and so do swipes
@@ -13,7 +13,7 @@
     Both only apply with JavaScript (the .js class on <html>); without it
     the panes stack, the rail first.
 
-    <html data-theme> is the signed-in user's theme (ISSUE-37, users.theme),
+    <html data-theme> is the signed-in user's theme (users.theme),
     dark for guests.
 --}}
 @props(['title'])
@@ -45,7 +45,7 @@
         @endif
     </head>
     <body class="flex min-h-screen flex-col bg-surface font-sans text-fg antialiased md:h-screen md:flex-row md:overflow-hidden" data-app-shell>
-        {{-- Skip link (ISSUE-38): the first Tab stop, past the rail and the sidebar. --}}
+        {{-- Skip link: the first Tab stop, past the rail and the sidebar. --}}
         <a href="#main-content"
             class="sr-only rounded bg-[#5865f2] px-3 py-2 text-sm font-medium text-white focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
             data-skip-link

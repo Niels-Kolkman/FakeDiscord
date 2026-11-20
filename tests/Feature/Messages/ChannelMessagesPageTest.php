@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Gate;
 use Tests\TestCase;
 
 /**
- * ISSUE-14: an open text channel shows its newest messages and a composer
+ * An open text channel shows its newest messages and a composer
  * wired up for resources/js/channel-messages.js.
  */
 class ChannelMessagesPageTest extends TestCase
@@ -144,7 +144,7 @@ class ChannelMessagesPageTest extends TestCase
 
     public function test_text_channels_have_a_polite_live_typing_indicator(): void
     {
-        // ISSUE-17: typing-indicator.js fills it; empty on page load.
+        // Typing-indicator.js fills it; empty on page load.
         $content = (string) $this->actingAs($this->member)->get($this->channelUrl())->assertOk()->getContent();
 
         $this->assertMatchesRegularExpression('/<p[^>]*aria-live="polite"[^>]*data-typing-indicator><\/p>/', $content);
@@ -157,8 +157,8 @@ class ChannelMessagesPageTest extends TestCase
 
     public function test_viewers_who_cannot_send_still_get_the_typing_indicator(): void
     {
-        // ISSUE-17: the indicator is outside the composer, so it stays once
-        // roles (ISSUE-26) can take "Send Messages" away.
+        // The indicator is outside the composer, so it stays once
+        // roles can take "Send Messages" away.
         Gate::before(fn (User $user, string $ability) => $ability === 'sendMessages' ? false : null);
 
         $this->actingAs($this->member)->get($this->channelUrl())
@@ -199,7 +199,7 @@ class ChannelMessagesPageTest extends TestCase
         $this->get($this->channelUrl())->assertOk();
         $without = count(DB::getQueryLog());
 
-        // Extra queries for the authors, the attachments (ISSUE-19), the
+        // Extra queries for the authors, the attachments, the
         // reactions and the reactors, not one per message.
         $this->assertLessThanOrEqual($without + 4, $withMessages);
     }

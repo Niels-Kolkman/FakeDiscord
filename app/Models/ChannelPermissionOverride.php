@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * What one role may or may not do in one channel (ISSUE-28). `allow` and
+ * What one role may or may not do in one channel. `allow` and
  * `deny` are App\Enums\Permission masks; a flag in neither is inherited from
  * the role's server permissions. How they combine is
  * App\Services\PermissionService::channelPermissions().

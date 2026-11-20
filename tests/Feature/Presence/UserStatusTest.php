@@ -23,7 +23,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Tests\TestCase;
 
 /**
- * ISSUE-31: the "server.{id}" presence channel, the status a user picks
+ * The "server.{id}" presence channel, the status a user picks
  * (online, idle, dnd) and how it reaches other people's member lists.
  */
 class UserStatusTest extends TestCase

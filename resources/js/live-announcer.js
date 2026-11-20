@@ -1,5 +1,5 @@
 /**
- * Screen reader announcements for new messages (ISSUE-38).
+ * Screen reader announcements for new messages.
  *
  * The message list (messages/panel.blade.php) is role="log" but
  * aria-live="off": as a live region it would also read every page of

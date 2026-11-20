@@ -9,7 +9,7 @@ use Tests\Concerns\DocumentsKnownBugs;
 use Tests\TestCase;
 
 /**
- * ISSUE-9: changing the password from account settings (Fortify PUT /user/password).
+ * Changing the password from account settings (Fortify PUT /user/password).
  */
 class UpdatePasswordTest extends TestCase
 {

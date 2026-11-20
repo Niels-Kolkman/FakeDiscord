@@ -1,5 +1,5 @@
 /**
- * Typing indicators (ISSUE-17), used by channel-messages.js.
+ * Typing indicators, used by channel-messages.js.
  *
  * - Everyone viewing a text channel joins the presence channel
  *   "typing.{id}" (authorised in routes/channels.php; the member info is
@@ -129,7 +129,7 @@ export function formatTyping(names) {
  * options: { echo, channelId, viewerId, input (textarea or null),
  *            output (element that shows the text),
  *            channelName (the presence channel; defaults to "typing.{channelId}",
- *            a DM passes "conversation-typing.{id}", ISSUE-23) }
+ *            a DM passes "conversation-typing.{id}") }
  */
 export function initTypingIndicator({ echo, channelId, viewerId, input, output, channelName = null }) {
     if (!echo || !output) return null;

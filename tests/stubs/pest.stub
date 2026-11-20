@@ -1,7 +1,7 @@
 <?php
 
 /*
- * PHPStan stub (phpstan.neon stubFiles, ISSUE-39). Pest types $this in
+ * PHPStan stub (phpstan.neon stubFiles). Pest types $this in
  * test closures as PHPUnit's TestCase; tests/Pest.php binds the feature
  * tests to Tests\FeatureTestCase, so say that instead. Only the PHPDoc
  * matters: the real functions and classes come from vendor/pestphp/pest

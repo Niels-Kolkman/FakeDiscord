@@ -166,10 +166,10 @@ return [
         // /email/verify routes. Routes that need a verified address (joining
         // servers) use the `verified` middleware, see routes/web.php.
         Features::emailVerification(),
-        // PUT /user/password, used by the account settings page (ISSUE-9).
+        // PUT /user/password, used by the account settings page.
         // Changing the email and deleting the account are app routes
         // (routes/web.php), because Fortify's profile-information route
-        // would also change the display name, which ISSUE-8 owns.
+        // would also change the display name, which the profile page owns.
         Features::updatePasswords(),
         // Two-factor auth and passkeys are not planned yet; enabling them
         // needs their migrations.

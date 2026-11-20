@@ -1,5 +1,5 @@
 {{--
-    A channel's permissions (ISSUE-28): the private toggle and, per role,
+    A channel's permissions: the private toggle and, per role,
     allow / inherit / deny for each channel-overridable flag. Roles the
     viewer cannot manage (RolePolicy::manage) are shown read-only.
 

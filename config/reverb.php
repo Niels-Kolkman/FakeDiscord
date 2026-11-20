@@ -83,7 +83,7 @@ return [
                     'useTLS' => env('REVERB_SCHEME', 'https') === 'https',
                 ],
                 // Hosts (not URLs) whose pages may open a websocket, matched
-                // against the Origin header; "*" wildcards work (ISSUE-41).
+                // against the Origin header; "*" wildcards work.
                 // REVERB_ALLOWED_ORIGINS is a comma-separated list; without
                 // it only the APP_URL host is allowed, plus localhost and
                 // 127.0.0.1 in local/testing (`php artisan serve` is on

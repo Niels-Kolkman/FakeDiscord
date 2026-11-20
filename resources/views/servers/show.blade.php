@@ -8,8 +8,8 @@
     appends the ones others send (received over Reverb on "channel.{id}"),
     loads older pages from data-history-url while you scroll up and shows
     the "jump to latest" button when you are far from the bottom.
-    It also shows who else is typing in [data-typing-indicator] (ISSUE-17,
-    resources/js/typing-indicator.js), also for members who cannot send.
+    It also shows who else is typing in [data-typing-indicator]
+    (resources/js/typing-indicator.js), also for members who cannot send.
 --}}
 <x-layouts.app :title="$channel ? '#'.$channel->name.' · '.$server->name : $server->name">
     <x-slot:sidebar>
@@ -30,7 +30,7 @@
             @endif
             <div class="ml-auto flex shrink-0 items-center gap-2">
                 @unless ($channel->isVoice())
-                    {{-- Pinned messages (ISSUE-20): the script opens [data-pins-panel]; without it this is the pins page. --}}
+                    {{-- Pinned messages: the script opens [data-pins-panel]; without it this is the pins page. --}}
                     <a
                         href="{{ route('pins.index', [$server, $channel]) }}"
                         class="shrink-0 rounded px-2 py-1 text-sm text-fg-muted hover:bg-active hover:text-fg-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5865f2] aria-expanded:bg-active aria-expanded:text-fg-strong"
@@ -38,7 +38,7 @@
                         data-pins-toggle
                     ><span aria-hidden="true">📌</span> Pinned<span class="sr-only"> messages</span></a>
                 @endunless
-                {{-- Message search (ISSUE-21) over the whole server; filters are on the results page. --}}
+                {{-- Message search over the whole server; filters are on the results page. --}}
                 <form method="GET" action="{{ route('servers.search', $server) }}" role="search" class="shrink-0" data-header-search>
                     <label for="header-search" class="sr-only">Search {{ $server->name }}</label>
                     <input
@@ -51,7 +51,7 @@
                         class="w-36 rounded bg-surface-3 px-2 py-1 text-sm text-fg-strong placeholder-fg-subtle outline-none transition-[width] focus:w-56 focus:ring-2 focus:ring-[#5865f2]"
                     >
                 </form>
-                {{-- Mention notifications (ISSUE-33). --}}
+                {{-- Mention notifications. --}}
                 <x-inbox />
             </div>
         </header>
@@ -61,16 +61,16 @@
             // and for the script, which shows Reply / Pin / Edit / Delete
             // the same way.
             $viewerId = (int) auth()->id();
-            // Channel permissions (App\Policies\ChannelPolicy, ISSUE-27).
+            // Channel permissions (App\Policies\ChannelPolicy).
             $canManageMessages = (bool) auth()->user()?->can('manageMessages', $channel);
             $canSendMessages = ! $channel->isVoice() && (bool) auth()->user()?->can('sendMessages', $channel);
             $canAttachFiles = $canSendMessages && (bool) auth()->user()?->can('attachFiles', $channel);
-            // People the viewer blocked (ISSUE-25): the history already
+            // People the viewer blocked: the history already
             // leaves their messages out; this hides live ones and quotes.
             $blockedUserIds = auth()->user() ? \App\Models\Friendship::blockedIds(auth()->user()) : [];
-            // Timeouts (ISSUE-29): the composer is replaced by when it ends.
+            // Timeouts: the composer is replaced by when it ends.
             $timedOutUntil = auth()->user() ? app(\App\Services\PermissionService::class)->timedOutUntil(auth()->user(), $server) : null;
-            // Mentions (ISSUE-33): messages that mention the viewer (by
+            // Mentions: messages that mention the viewer (by
             // name, a role they hold, or @everyone) are highlighted.
             $viewerRoleIds = auth()->user() ? \App\Support\Mentions::roleIdsOf(auth()->user(), $server) : [];
         @endphp
@@ -95,7 +95,7 @@
         <section class="flex flex-1 flex-col items-center justify-center p-8 text-center">
             <h1 class="mb-2 text-xl font-semibold text-fg-strong">No text channels</h1>
             <p class="text-fg-muted">
-                {{-- The layout only holds the channels the viewer can see (ISSUE-27). --}}
+                {{-- The layout only holds the channels the viewer can see. --}}
                 This server has no text channels yet.
                 @can('manageChannels', $server)
                     <a href="{{ route('channels.create', $server) }}" class="text-link hover:underline">Create one</a>.

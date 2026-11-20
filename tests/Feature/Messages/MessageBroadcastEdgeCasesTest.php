@@ -20,7 +20,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Tests\TestCase;
 
 /**
- * ISSUE-14 edge cases around the MessageSent broadcast, its payload and the
+ * Edge cases around the MessageSent broadcast, its payload and the
  * initial message feed, complementing SendMessageTest.
  */
 class MessageBroadcastEdgeCasesTest extends TestCase

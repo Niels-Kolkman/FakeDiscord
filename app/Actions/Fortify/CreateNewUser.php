@@ -38,7 +38,7 @@ class CreateNewUser implements CreatesNewUsers
                 'max:32',
                 // Discord-style handles: lowercase letters, digits, "_" and ".".
                 'regex:/^[a-z0-9_.]+$/',
-                // "@everyone" is a mass mention (ISSUE-33), never a user.
+                // "@everyone" is a mass mention, never a user.
                 Rule::notIn(Mentions::RESERVED_USERNAMES),
                 Rule::unique(User::class),
             ],

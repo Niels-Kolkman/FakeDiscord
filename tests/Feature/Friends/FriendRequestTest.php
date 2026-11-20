@@ -12,7 +12,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Tests\TestCase;
 
 /**
- * ISSUE-22: sending a friend request by username, and accepting,
+ * Sending a friend request by username, and accepting,
  * declining, cancelling, removing and unblocking. The other person hears
  * about each change through FriendshipChanged on "App.Models.User.{id}".
  */

@@ -16,7 +16,7 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 /**
- * 1:1 direct messages (ISSUE-23): open the DM with someone ("Message" on
+ * 1:1 direct messages: open the DM with someone ("Message" on
  * the friends page) and show a conversation with its newest messages.
  *
  * The conversation page reuses the channel's message panel
@@ -24,7 +24,7 @@ use Illuminate\View\View;
  * the DM's own routes and its "conversation.{id}" broadcast channel.
  *
  * Only participants see a conversation (ConversationPolicy::view); anyone
- * else gets a 404. A group DM (ISSUE-24) opens on the same route with
+ * else gets a 404. A group DM opens on the same route with
  * conversations/group.blade.php: its people, Add friends, Rename and
  * Leave (GroupConversationController handles those forms).
  */

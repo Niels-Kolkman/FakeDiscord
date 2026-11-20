@@ -8,7 +8,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * A user's read marker in a channel (ISSUE-32). By default a new user who
+ * A user's read marker in a channel. By default a new user who
  * has read nothing (marker 0).
  *
  * @extends Factory<ChannelRead>

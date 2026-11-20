@@ -14,7 +14,7 @@ use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Collection;
 
 /**
- * The notification inbox (ISSUE-33): the bell with its unread count and
+ * The notification inbox: the bell with its unread count and
  * the panel listing the user's recent mentions
  * (App\Notifications\MentionedInMessage), newest first.
  *

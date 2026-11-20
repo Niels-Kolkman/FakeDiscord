@@ -18,7 +18,7 @@ use InvalidArgumentException;
 use Tests\TestCase;
 
 /**
- * ISSUE-26 edge cases: the role actions called directly, colours and names
+ * Edge cases: the role actions called directly, colours and names
  * that must not leak into the HTML, the role limit boundary, renames to
  * the reserved name and the @everyone update rules.
  */

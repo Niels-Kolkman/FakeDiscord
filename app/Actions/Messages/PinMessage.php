@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Pin a message to its channel, or unpin it (ISSUE-20), and tell everyone
+ * Pin a message to its channel, or unpin it, and tell everyone
  * else viewing the channel (toOthers(): the moderator gets the message in
  * the HTTP response).
  *

@@ -9,7 +9,7 @@ use Illuminate\Support\Str;
 use Laravel\Fortify\Fortify;
 
 /**
- * Named rate limiters (ISSUE-41), used as `throttle:<name>` in
+ * Named rate limiters, used as `throttle:<name>` in
  * routes/web.php and by Fortify (config/fortify.php `limiters.login`).
  *
  * Why named: an inline `throttle:30,1` counts in one bucket per user that

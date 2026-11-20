@@ -10,7 +10,7 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 
 /**
- * Someone added or removed a reaction on a channel message (ISSUE-18).
+ * Someone added or removed a reaction on a channel message.
  *
  * Carries the change (who, which emoji, added or removed) and the
  * message's grouped reactions after it, without `me`: the browser keeps

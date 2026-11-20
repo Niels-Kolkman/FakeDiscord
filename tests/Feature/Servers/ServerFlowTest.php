@@ -1,7 +1,7 @@
 <?php
 
 /**
- * ISSUE-39: servers from creation to leaving, through invites and
+ * Servers from creation to leaving, through invites and
  * moderation (Pest). Moderation broadcasts are checked with Event::fake.
  */
 

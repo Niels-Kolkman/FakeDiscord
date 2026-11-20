@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 /**
- * ISSUE-10: edge cases for creating, renaming and deleting servers that
+ * Edge cases for creating, renaming and deleting servers that
  * ServerManagementTest does not cover (mass assignment, authorisation order,
  * icon precedence, cascade scope, configured icon disk).
  */

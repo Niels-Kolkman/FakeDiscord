@@ -13,7 +13,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 /**
- * Create or edit a role (ISSUE-26).
+ * Create or edit a role.
  *
  * Fields: `name`, `color` (#rrggbb) with `no_color` to clear it, and
  * `permissions[]`, the App\Enums\Permission values to turn on (anything not
@@ -23,7 +23,7 @@ class StoreRoleRequest extends FormRequest
 {
     /**
      * ServerPolicy::manageRoles, and for an existing role RolePolicy::manage
-     * (it must be below the actor's highest role, ISSUE-27).
+     * (it must be below the actor's highest role).
      */
     public function authorize(): bool
     {

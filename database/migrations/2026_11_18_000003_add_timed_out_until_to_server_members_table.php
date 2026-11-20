@@ -5,7 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Timeouts (ISSUE-29): until this moment the member can read the server
+ * Timeouts: until this moment the member can read the server
  * but not post, react or invite. Null, or a moment in the past, means no
  * timeout.
  */

@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * A server or channel a user muted (ISSUE-34): channel_id NULL is the
+ * A server or channel a user muted: channel_id NULL is the
  * whole server. Written and read by App\Support\NotificationMutes.
  *
  * @property int $user_id

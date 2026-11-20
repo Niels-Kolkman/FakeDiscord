@@ -6,7 +6,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\GivesPermissions;
 
 /**
- * The base of the function-style Pest feature tests (ISSUE-39, bound in
+ * The base of the function-style Pest feature tests (bound in
  * tests/Pest.php): a fresh database, the permission helpers and no Vite
  * manifest needed to render pages.
  *

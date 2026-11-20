@@ -31,7 +31,7 @@ class CreateServer
     public function create(User $owner, string $name, ?UploadedFile $icon = null): Server
     {
         // The icon is stored inside the transaction so an unreadable image
-        // leaves no half-created server behind. The audit log (ISSUE-30)
+        // leaves no half-created server behind. The audit log
         // starts after this: the default role, channel and icon are not
         // changes anyone made.
         return $this->log->withoutRecording(fn (): Server => DB::transaction(function () use ($owner, $name, $icon): Server {

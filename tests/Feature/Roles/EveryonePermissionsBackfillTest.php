@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
- * ISSUE-26: the data migration gives existing @everyone roles the default
+ * The data migration gives existing @everyone roles the default
  * permissions and creates @everyone for servers without one.
  *
  * Runs against a temp SQLite file (like DirectKeyBackfillTest), because it

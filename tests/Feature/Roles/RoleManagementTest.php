@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
- * ISSUE-26: the owner creates, edits, reorders and deletes roles, and gives
+ * The owner creates, edits, reorders and deletes roles, and gives
  * them to members. @everyone only has its permissions changed.
  */
 class RoleManagementTest extends TestCase

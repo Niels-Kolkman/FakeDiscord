@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Gate;
 use Tests\TestCase;
 
 /**
- * ISSUE-10: ServerPolicy abilities and the server icon fallback.
+ * ServerPolicy abilities and the server icon fallback.
  */
 class ServerPolicyTest extends TestCase
 {
@@ -54,7 +54,7 @@ class ServerPolicyTest extends TestCase
         $server = app(CreateServer::class)->create($owner, 'Policy Test');
         ServerMember::factory()->create(['server_id' => $server->id, 'user_id' => $member->id]);
 
-        // ISSUE-13: the owner must transfer ownership before leaving.
+        // The owner must transfer ownership before leaving.
         $this->assertFalse($owner->can('leave', $server));
         $this->assertSame(
             'Transfer ownership to another member before leaving this server.',

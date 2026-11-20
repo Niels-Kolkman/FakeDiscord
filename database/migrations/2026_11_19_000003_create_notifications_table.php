@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Laravel's database notifications (ISSUE-33), as made by
+     * Laravel's database notifications, as made by
      * `php artisan make:notifications-table`. For now the only kind is
      * App\Notifications\MentionedInMessage: the notification inbox.
      */

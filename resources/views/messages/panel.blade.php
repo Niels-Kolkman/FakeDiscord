@@ -1,6 +1,6 @@
 {{--
     The message panel of a text channel (servers/show.blade.php) or a 1:1
-    DM (conversations/show.blade.php, ISSUE-23): the history, the "jump to
+    DM (conversations/show.blade.php): the history, the "jump to
     latest" button, the composer and the typing indicator.
     resources/js/channel-messages.js drives it the same way for both; only
     the URLs and broadcast channels differ.
@@ -17,9 +17,9 @@
         typingChannel     presence channel for typing indicators
         start             view for the "start of the conversation" header
         readOnlyNotice    shown instead of the composer when you cannot send (optional)
-        readUrl           POST marks messages read (ISSUE-32, resources/js/unread.js; optional)
-        mentionsUrl       GET mention suggestions for the composer (ISSUE-33,
-                          resources/js/mention-autocomplete.js; optional, channels only)
+        readUrl           POST marks messages read (resources/js/unread.js; optional)
+        mentionsUrl       GET mention suggestions for the composer
+                          (resources/js/mention-autocomplete.js; optional, channels only)
 
     $viewerRoleIds (optional): the roles the viewer holds in the server, so
     messages that mention one of them are highlighted like a mention by name.
@@ -27,7 +27,7 @@
     Also $feed (App\Support\MessageFeed), $viewerId, $canManageMessages and
     $canSendMessages, worked out once by the page for every message
     (messages/item.blade.php) and for the script. $canAttachFiles (optional,
-    default true) hides the attach button without Attach Files (ISSUE-27).
+    default true) hides the attach button without Attach Files.
 
     The "start" header is always there but hidden while older pages exist;
     the script shows it once the last page is loaded.
@@ -57,7 +57,7 @@
 >
     @if ($messagesEnabled && $panel['pinsUrl'])
         {{--
-            Pinned messages panel (ISSUE-20), filled by the script from
+            Pinned messages panel, filled by the script from
             data-pins-url (PinController::index), newest pin first.
             "Jump" scrolls to the message in the channel.
         --}}
@@ -97,7 +97,7 @@
                     </span>
                 </div>
 
-                {{-- Not a live region (ISSUE-38): new messages are announced in [data-message-announcer] below. --}}
+                {{-- Not a live region: new messages are announced in [data-message-announcer] below. --}}
                 <ol role="log" aria-live="off" aria-label="Messages in {{ $panel['label'] }}" data-message-list>
                     @foreach ($feed->messages as $message)
                         @include('messages.item')
@@ -119,7 +119,7 @@
 
     @if ($canSendMessages)
         {{--
-            Attachments (ISSUE-19): up to MAX_FILES files in attachments[].
+            Attachments: up to MAX_FILES files in attachments[].
             With files the text is optional, so the textarea is not
             `required`; StoreMessageRequest checks it. The script lists
             the chosen files ([data-attachment-list]) and lets you
@@ -137,7 +137,7 @@
             @if ($panel['mentionsUrl'] ?? null) data-mentions-url="{{ $panel['mentionsUrl'] }}" @endif
         >
             @csrf
-            {{-- Replies (ISSUE-20): "Reply" on a message fills reply_to_id and shows this bar. --}}
+            {{-- Replies: "Reply" on a message fills reply_to_id and shows this bar. --}}
             <input type="hidden" name="reply_to_id" value="" data-reply-input>
             <div class="flex items-center justify-between gap-2 rounded-t-lg bg-surface-2 px-4 py-1.5 text-sm text-fg-muted" data-reply-bar hidden>
                 <span class="truncate">Replying to <span class="font-semibold text-fg-strong" data-reply-bar-author></span></span>
@@ -145,7 +145,7 @@
             </div>
             <ul class="mb-1 flex flex-wrap gap-2" aria-label="Files to upload" data-attachment-list hidden></ul>
             @if ($panel['mentionsUrl'] ?? null)
-                {{-- Mention autocomplete (ISSUE-33), filled by resources/js/mention-autocomplete.js. --}}
+                {{-- Mention autocomplete, filled by resources/js/mention-autocomplete.js. --}}
                 <ul
                     id="mention-suggestions"
                     role="listbox"
@@ -157,7 +157,7 @@
             @endif
             <label for="message-content" class="sr-only">Message {{ $panel['label'] }}</label>
             <div class="flex items-end gap-2 rounded-lg bg-field px-4 py-2">
-                {{-- Attach Files (ISSUE-27); DM pages do not set it, and every participant may attach there. --}}
+                {{-- Attach Files; DM pages do not set it, and every participant may attach there. --}}
                 @if ($canAttachFiles ?? true)
                 <label
                     class="shrink-0 cursor-pointer rounded-full px-1 py-0.5 text-xl leading-none text-fg-muted hover:text-fg-strong has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-[#5865f2]"
@@ -186,7 +186,7 @@
                     class="max-h-64 min-h-6 flex-1 resize-none bg-transparent py-1 text-fg placeholder-fg-subtle focus:outline-none"
                     data-message-input
                 >{{ old('content') }}</textarea>
-                {{-- Emoji picker (ISSUE-36): filled and shown by resources/js/emoji-picker.js. --}}
+                {{-- Emoji picker: filled and shown by resources/js/emoji-picker.js. --}}
                 <div class="relative shrink-0">
                     <button
                         type="button"
@@ -216,7 +216,7 @@
     @if ($messagesEnabled)
         {{-- Filled by typing-indicator.js; empty (but keeping its height) while nobody types. --}}
         <p class="h-6 truncate px-4 pb-1 text-xs leading-5 text-fg-muted" aria-live="polite" data-typing-indicator></p>
-        {{-- New messages from others, one line each, for screen readers (ISSUE-38, resources/js/live-announcer.js). --}}
+        {{-- New messages from others, one line each, for screen readers (resources/js/live-announcer.js). --}}
         <div class="sr-only" aria-live="polite" aria-relevant="additions" data-message-announcer></div>
     @endif
 </section>

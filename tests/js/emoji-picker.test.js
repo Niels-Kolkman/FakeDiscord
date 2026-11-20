@@ -1,4 +1,4 @@
-// ISSUE-36: the composer's emoji picker (resources/js/emoji-picker.js).
+// The composer's emoji picker (resources/js/emoji-picker.js).
 // Run with `npm test`. The markup is covered by MessageMarkdownTest.php;
 // the picker runs here against the shared fake DOM and a fake storage.
 import { test } from 'node:test';

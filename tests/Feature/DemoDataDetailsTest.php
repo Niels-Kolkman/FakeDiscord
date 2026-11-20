@@ -20,7 +20,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
- * ISSUE-4: factory states not covered by FactoriesAndSeedersTest, and the
+ * Factory states not covered by FactoriesAndSeedersTest, and the
  * finer details of the DemoSeeder data set that manual testing relies on.
  */
 class DemoDataDetailsTest extends TestCase

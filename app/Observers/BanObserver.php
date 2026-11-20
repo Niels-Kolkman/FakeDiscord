@@ -7,7 +7,7 @@ use App\Models\Ban;
 use App\Support\AuditLog;
 
 /**
- * Audit log (ISSUE-30): bans, with their reason, and unbans. The member's
+ * Audit log: bans, with their reason, and unbans. The member's
  * removal that goes with a ban is not logged again as a kick.
  */
 class BanObserver

@@ -6,7 +6,7 @@ use App\Enums\Permission;
 use PHPUnit\Framework\TestCase;
 
 /**
- * ISSUE-26: the permission flags and their bitmask helpers.
+ * The permission flags and their bitmask helpers.
  */
 class PermissionTest extends TestCase
 {

@@ -76,7 +76,7 @@ class AssignRole
 
     /**
      * role_user is a pivot without model events, so the audit log
-     * (ISSUE-30) is written here.
+     * is written here.
      */
     private function record(Role $role, User $user, string $action): void
     {

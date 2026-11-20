@@ -12,7 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
 /**
- * Group DMs (ISSUE-24): create one from the friends page, rename it, add
+ * Group DMs: create one from the friends page, rename it, add
  * friends and remove people (or leave). The rules live in
  * App\Actions\Conversations\ManageGroupConversation and ConversationPolicy.
  *

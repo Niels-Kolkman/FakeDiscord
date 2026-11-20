@@ -1,5 +1,5 @@
 /**
- * Kicks, bans and timeouts, live (ISSUE-29).
+ * Kicks, bans and timeouts, live.
  *
  * On every page of a signed-in user (<meta name="user-id">) this listens on
  * the private "App.Models.User.{id}" channel for App\Events\MemberModerated
@@ -90,8 +90,8 @@ export function initModeration({ echo, userId, document, location, dashboardUrl 
     if (!echo || !userId) return null;
 
     const handle = (event) => {
-        // Every page is in the server's presence channel (presence.js,
-        // ISSUE-31), so leave it wherever the user is.
+        // Every page is in the server's presence channel (presence.js),
+        // so leave it wherever the user is.
         const removedFrom = Number(event?.server?.id);
         if (REMOVED.includes(event?.type) && Number.isInteger(removedFrom) && removedFrom > 0) {
             echo.leave(`server.${removedFrom}`);

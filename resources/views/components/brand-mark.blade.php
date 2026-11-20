@@ -1,5 +1,5 @@
 {{--
-    The app's own logo mark (ISSUE-35): two overlapping speech bubbles.
+    The app's own logo mark: two overlapping speech bubbles.
     Drawn for this project; it is not based on any other chat app's logo.
     Decorative: whatever wraps it gives the accessible name.
 --}}

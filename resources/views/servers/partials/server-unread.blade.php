@@ -1,6 +1,6 @@
 {{--
-    A server's unread dot and mention badge in a server list (ISSUE-32):
-    the dashboard (the server rail has its own, ISSUE-35). Expects $state, the
+    A server's unread dot and mention badge in a server list:
+    the dashboard (the server rail has its own). Expects $state, the
     server's App\Support\UnreadState (or NULL). Not live: these lists are
     worked out when the page loads.
 --}}

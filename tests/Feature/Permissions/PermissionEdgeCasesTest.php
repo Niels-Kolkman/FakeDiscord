@@ -17,7 +17,7 @@ use Tests\Concerns\GivesPermissions;
 use Tests\TestCase;
 
 /**
- * ISSUE-27: edge cases around effective permissions that the matrix does not
+ * Edge cases around effective permissions that the matrix does not
  * reach: stale role rows, unknown bits, deleted authors, reactions on other
  * messages, DMs, other servers' channels and the unpin route.
  */

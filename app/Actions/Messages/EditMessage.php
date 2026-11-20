@@ -14,7 +14,7 @@ use App\Support\MentionNotifier;
  * Saving the same content again changes nothing: no "(edited)" and no
  * broadcast, like Discord.
  *
- * Mentions (ISSUE-33) are worked out again on save; people newly mentioned
+ * Mentions are worked out again on save; people newly mentioned
  * in a server channel get a notification and those no longer mentioned
  * lose theirs (App\Support\MentionNotifier::sync()).
  */

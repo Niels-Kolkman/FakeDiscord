@@ -15,18 +15,18 @@ use Illuminate\Validation\Validator;
 
 /**
  * Post a message in a text channel: ChannelPolicy::sendMessages (View
- * Channels and Send Messages, ISSUE-27).
+ * Channels and Send Messages).
  *
- * Attachments (ISSUE-19) also need ChannelPolicy::attachFiles; without it a
+ * Attachments also need ChannelPolicy::attachFiles; without it a
  * message with files fails validation on `attachments`. Up to MessageAttachment::MAX_FILES files in
  * `attachments[]` (multipart), each at most MAX_KILOBYTES and one of
  * ALLOWED_EXTENSIONS, by name and by contents. With files the text is
  * optional, like on Discord.
  *
- * Replies (ISSUE-20): `reply_to_id` is the message being answered. It must
+ * Replies: `reply_to_id` is the message being answered. It must
  * be a message of this channel that has not been deleted.
  *
- * Direct messages (ISSUE-23) use the same rules, with the route's
+ * Direct messages use the same rules, with the route's
  * conversation as the target (target()) and ConversationPolicy::sendMessage
  * deciding who may post.
  */
@@ -131,7 +131,7 @@ class StoreMessageRequest extends FormRequest
                     $validator->errors()->add('content', 'You cannot send messages in a voice channel.');
                 }
 
-                // Attach Files (ISSUE-27). DMs have no permissions.
+                // Attach Files. DMs have no permissions.
                 if ($target instanceof Channel && $this->attachments() !== [] && ! ($this->user()?->can('attachFiles', $target) ?? false)) {
                     $validator->errors()->add('attachments', 'You do not have permission to attach files in this channel.');
                 }
@@ -164,7 +164,7 @@ class StoreMessageRequest extends FormRequest
     }
 
     /**
-     * Where the message goes: the route's DM conversation (ISSUE-23), or
+     * Where the message goes: the route's DM conversation, or
      * else its channel.
      */
     public function target(): Channel|Conversation

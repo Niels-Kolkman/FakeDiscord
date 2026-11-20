@@ -1,4 +1,4 @@
-// ISSUE-38: Tab stays inside open popups (resources/js/focus-trap.js), used
+// Tab stays inside open popups (resources/js/focus-trap.js), used
 // by the inbox (notifications.test.js covers it end to end), the pinned
 // messages panel and the profile card. Run with `npm test`.
 import { test } from 'node:test';
@@ -99,7 +99,7 @@ test('a dialog with nothing to focus keeps focus on itself', () => {
     assert.equal(panel.focused, 1);
 });
 
-// --- Further edge cases (ISSUE-38 test pass) ---
+// --- Further edge cases ---
 
 test('tabindex decides over the tag: -1 removes a button, 0 adds a link without href', () => {
     const skipped = make('button');

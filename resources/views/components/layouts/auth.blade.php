@@ -1,6 +1,6 @@
 @props(['title'])
 
-{{-- data-theme: the signed-in user's theme (ISSUE-37), dark for guests. --}}
+{{-- data-theme: the signed-in user's theme, dark for guests. --}}
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="{{ auth()->user()?->preferredTheme() ?? 'dark' }}">
     <head>

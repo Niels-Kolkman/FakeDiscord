@@ -1,5 +1,5 @@
 {{--
-    A channel's pinned messages (ISSUE-20), newest pin first. With
+    A channel's pinned messages, newest pin first. With
     JavaScript the channel page shows the same list in a panel
     (channel-messages.js, renderPin()); this page is for links and for
     browsers without it. Moderators can unpin from here.

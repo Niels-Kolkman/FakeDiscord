@@ -9,7 +9,7 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 
 /**
- * A channel message was pinned or unpinned (ISSUE-20). Carries the ids,
+ * A channel message was pinned or unpinned. Carries the ids,
  * the new pinned_at (NULL = unpinned) and who pinned it; the browser
  * updates the pin marker and the pinned messages panel. It listens for
  * ".message.pinned" (resources/js/channel-messages.js).

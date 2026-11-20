@@ -16,13 +16,13 @@ use Illuminate\Support\Facades\DB;
 /**
  * A 1:1 direct message or a group DM, outside of any server.
  *
- * 1:1 DMs (ISSUE-23): a pair of users has one direct conversation, found
+ * 1:1 DMs: a pair of users has one direct conversation, found
  * by its direct_key (directKey(), unique). Its messages broadcast on the
  * private "conversation.{id}" channel (broadcastChannel()), which only the
  * participants may join (routes/channels.php). last_message_at orders the
  * DM list in the sidebar (scopeByLatestActivity()).
  *
- * Group DMs (ISSUE-24): up to MAX_PARTICIPANTS people with an optional
+ * Group DMs: up to MAX_PARTICIPANTS people with an optional
  * name and an owner, managed by App\Actions\Conversations\ManageGroupConversation.
  *
  * @property string|null $direct_key
@@ -40,7 +40,7 @@ class Conversation extends Model
     /** How many conversations the sidebar lists. */
     public const SIDEBAR_LIMIT = 50;
 
-    /** The most people in a group DM, the owner included (ISSUE-24). */
+    /** The most people in a group DM, the owner included. */
     public const MAX_PARTICIPANTS = 10;
 
     /** The longest group DM name (conversations.name is 100 characters). */
@@ -168,7 +168,7 @@ class Conversation extends Model
      * first, with their participants loaded. Like Discord, a 1:1 DM nobody
      * has written in yet is left out (opening a DM with someone does not
      * put it in their list), except $active, the one on screen. A group DM
-     * shows from the moment you are added (ISSUE-24).
+     * shows from the moment you are added.
      *
      * @return Collection<int, self>
      */

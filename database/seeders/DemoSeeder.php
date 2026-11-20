@@ -165,7 +165,7 @@ class DemoSeeder extends Seeder
         $moderator->users()->attach($members->first(fn (User $u) => ! $u->is($owner)));
 
         // Like a fresh Discord server: announcements on top, then a "Text
-        // Channels" and a "Voice Channels" category (ISSUE-12).
+        // Channels" and a "Voice Channels" category.
         $categories = [
             Channel::TYPE_TEXT => ChannelCategory::factory()->create(['server_id' => $server->id, 'name' => 'Text Channels', 'position' => 0]),
             Channel::TYPE_VOICE => ChannelCategory::factory()->create(['server_id' => $server->id, 'name' => 'Voice Channels', 'position' => 1]),
@@ -290,7 +290,7 @@ class DemoSeeder extends Seeder
             ]);
         }
 
-        // Orders the DM list in the sidebar (ISSUE-23).
+        // Orders the DM list in the sidebar.
         $conversation->forceFill(['last_message_at' => $conversation->messages()->max('created_at')])->save();
     }
 

@@ -28,7 +28,7 @@ use Tests\Concerns\GivesPermissions;
 use Tests\TestCase;
 
 /**
- * ISSUE-34 edge cases on top of PushNotificationsTest: mutes cleared by
+ * Edge cases on top of PushNotificationsTest: mutes cleared by
  * kick and ban, rejoining unmuted, edits in muted places, the inbox and
  * bell left alone by muting, mutes that are per user and per server, DM
  * payloads for attachments / deleted authors / named groups, blocks in

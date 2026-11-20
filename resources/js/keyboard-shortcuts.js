@@ -1,5 +1,5 @@
 /**
- * Keyboard shortcuts for switching channels (ISSUE-38), like Discord:
+ * Keyboard shortcuts for switching channels, like Discord:
  *
  *   Alt+ArrowUp / Alt+ArrowDown              previous / next channel
  *   Alt+Shift+ArrowUp / Alt+Shift+ArrowDown  previous / next unread channel

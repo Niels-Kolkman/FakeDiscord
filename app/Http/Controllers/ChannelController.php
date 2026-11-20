@@ -20,16 +20,16 @@ use Illuminate\View\View;
 
 /**
  * Open, create, edit and delete channels. Opening one needs
- * ChannelPolicy::view (View Channels, ISSUE-27);
+ * ChannelPolicy::view (View Channels);
  * changing them needs ServerPolicy::manageChannels, and a channel hidden
- * from the member (ISSUE-28) cannot be edited or deleted by them either.
+ * from the member cannot be edited or deleted by them either.
  *
  * Routes use scoped bindings, so a channel id from another server is a 404.
  */
 class ChannelController extends Controller
 {
     /**
-     * Opening a text channel marks it read (ISSUE-32), before the sidebar
+     * Opening a text channel marks it read, before the sidebar
      * works out what is still unread.
      */
     public function show(Request $request, Server $server, Channel $channel, MarkChannelRead $reads): View

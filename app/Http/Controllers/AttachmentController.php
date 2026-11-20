@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
- * Serves message attachments (ISSUE-19) through temporary signed URLs
+ * Serves message attachments through temporary signed URLs
  * (MessageAttachment::url() / downloadUrl()), like Discord's CDN links:
  * whoever has an unexpired link can open the file, without a session, so
  * it also works in <img> tags and download managers. The `signed`

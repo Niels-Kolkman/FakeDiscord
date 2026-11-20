@@ -1,4 +1,4 @@
-// ISSUE-41 (XSS review): the profile card (resources/js/profile-popover.js)
+// XSS review: the profile card (resources/js/profile-popover.js)
 // shows a user's name, username and bio from /users/{id}/profile JSON. It
 // must put them in as text, never as markup. Run with `npm test`. The fake
 // DOM's innerHTML throws, so parsing user text as HTML would fail here too.

@@ -1,4 +1,4 @@
-// ISSUE-38: screen reader lines for messages that arrive live
+// Screen reader lines for messages that arrive live
 // (resources/js/live-announcer.js, used by channel-messages.js).
 // Run with `npm test`. The region's markup is covered by
 // tests/Feature/Layout/AccessibilityTest.php.
@@ -79,7 +79,7 @@ test('the announcer adds one line per message as text, keeping the last few', ()
     assert.equal(region.children[0].textContent, 'line 3');
 });
 
-// --- Further edge cases (ISSUE-38 test pass) ---
+// --- Further edge cases ---
 
 test('a code block is read as its code, without the language or fences, apart from the words around it', () => {
     assert.equal(

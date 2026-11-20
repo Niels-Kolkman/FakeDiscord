@@ -13,7 +13,7 @@ use Symfony\Component\Finder\Finder;
 use Tests\TestCase;
 
 /**
- * ISSUE-37: below md the app shell's panes are drawers
+ * Below md the app shell's panes are drawers
  * (components/layouts/app.blade.php, resources/js/mobile-nav.js), and the
  * neutral colours are theme tokens (resources/css/app.css).
  */

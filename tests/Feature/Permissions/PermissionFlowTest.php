@@ -1,7 +1,7 @@
 <?php
 
 /**
- * ISSUE-39: roles, the role hierarchy and channel overrides as members
+ * Roles, the role hierarchy and channel overrides as members
  * meet them over HTTP (Pest).
  */
 

@@ -1,5 +1,5 @@
 {{--
-    Checkboxes named user_ids[] for picking friends (ISSUE-24): used by
+    Checkboxes named user_ids[] for picking friends: used by
     "Create group DM" on the friends page and "Add friends" on a group page.
     Previously ticked boxes stay ticked after a validation error.
 

@@ -22,7 +22,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Tests\TestCase;
 
 /**
- * ISSUE-14: posting a message stores it and broadcasts MessageSent on the
+ * Posting a message stores it and broadcasts MessageSent on the
  * private "channel.{id}" channel.
  */
 class SendMessageTest extends TestCase

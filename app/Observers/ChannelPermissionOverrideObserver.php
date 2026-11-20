@@ -7,7 +7,7 @@ use App\Models\ChannelPermissionOverride;
 use App\Support\AuditLog;
 
 /**
- * Audit log (ISSUE-30): a role's allow/deny overrides in a channel. The
+ * Audit log: a role's allow/deny overrides in a channel. The
  * target is the channel; the role goes in the changes.
  */
 class ChannelPermissionOverrideObserver

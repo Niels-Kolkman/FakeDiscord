@@ -8,7 +8,7 @@ use App\Models\User;
 use App\Support\AuditLog;
 
 /**
- * Audit log (ISSUE-30): server settings (name, description, icon) and
+ * Audit log: server settings (name, description, icon) and
  * ownership transfers. Creating and deleting a server are not logged: the
  * log belongs to the server and goes with it.
  */

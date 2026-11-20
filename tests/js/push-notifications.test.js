@@ -1,4 +1,4 @@
-// ISSUE-34: browser notifications for mentions and DMs while the tab is
+// Browser notifications for mentions and DMs while the tab is
 // not in focus, and the switch on the settings page. Run with `npm test`
 // (node --test, no deps). The server side (mutes, `push`, the DM event) is
 // covered by tests/Feature/Notifications/PushNotificationsTest.php; here

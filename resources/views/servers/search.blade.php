@@ -1,5 +1,5 @@
 {{--
-    Message search in a server (ISSUE-21), from MessageSearchController.
+    Message search in a server, from MessageSearchController.
     A plain GET form, so it works without JavaScript and every search has
     its own URL. Results are newest first, 25 per page
     (App\Support\MessageSearch), with the matches in <mark>.

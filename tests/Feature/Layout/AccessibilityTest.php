@@ -12,7 +12,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 /**
- * ISSUE-38: the markup the accessibility scripts rely on: the skip link,
+ * The markup the accessibility scripts rely on: the skip link,
  * the new-message announcer (resources/js/live-announcer.js) and the
  * shortcut help for resources/js/keyboard-shortcuts.js. Colours are in
  * ContrastTest.
@@ -90,7 +90,7 @@ class AccessibilityTest extends TestCase
         $this->assertStringContainsString('<p id="dm-shortcuts-help" class="sr-only">Alt+Up and Alt+Down switch between direct messages.</p>', $html);
     }
 
-    // --- Further edge cases (ISSUE-38 test pass) ---
+    // --- Further edge cases ---
 
     /**
      * Every aria-describedby / aria-labelledby on the page points at an id

@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 /**
- * A server role (ISSUE-26): a name, an optional #rrggbb colour, a place in
+ * A server role: a name, an optional #rrggbb colour, a place in
  * the hierarchy (higher position = higher) and an App\Enums\Permission
  * bitmask.
  *

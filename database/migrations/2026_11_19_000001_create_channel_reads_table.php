@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Unread tracking (ISSUE-32): how far each user has read in each server
+     * Unread tracking: how far each user has read in each server
      * channel. Messages with a higher id than last_read_message_id, from
      * someone else, are unread. No row means the user never opened the
      * channel: everything since they joined the server is unread.

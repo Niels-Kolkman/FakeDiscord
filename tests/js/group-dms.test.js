@@ -1,4 +1,4 @@
-// ISSUE-24: group DMs. Run with `npm test` (node --test, no deps).
+// Group DMs. Run with `npm test` (node --test, no deps).
 // The Blade markup is covered by tests/Feature/DirectMessages; here the
 // live part: reloading the open group page when ConversationUpdated arrives.
 import { test } from 'node:test';

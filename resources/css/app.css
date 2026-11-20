@@ -6,7 +6,7 @@
 @source '../**/*.js';
 
 /*
- * Message markdown (ISSUE-36): App\Support\Markdown and resources/js/markdown.js
+ * Message markdown: App\Support\Markdown and resources/js/markdown.js
  * write bare tags (no classes), styled here inside .message-markdown.
  */
 @layer components {
@@ -45,7 +45,7 @@
 }
 
 /*
- * Themes (ISSUE-37). The neutral colours are tokens, so `bg-surface`,
+ * Themes. The neutral colours are tokens, so `bg-surface`,
  * `text-fg-muted`, `border-edge` and so on follow <html data-theme>
  * (the user's saved choice, users.theme). The dark values are the
  * defaults; [data-theme="light"] swaps them. Accent, danger, success and
@@ -73,7 +73,7 @@
     --color-edge: #1f2023;             /* header and pane borders */
 
     /*
-     * Text, from loudest to quietest. Contrast (ISSUE-38, WCAG 2.2 AA,
+     * Text, from loudest to quietest. Contrast (WCAG 2.2 AA,
      * checked by tests/js/contrast.test.js in both themes, on every
      * background above):
      *   fg-strong … fg-subtle, link, danger-fg, warn-fg: 4.5:1, for text
@@ -126,7 +126,7 @@
 }
 
 /*
- * Small screens (ISSUE-37, below Tailwind's md, 768px). With JavaScript
+ * Small screens (below Tailwind's md, 768px). With JavaScript
  * (the layout adds .js to <html>), the server rail + channel sidebar and
  * the member list become drawers that slide over the page: buttons in
  * [data-mobile-bar] and swipes open them (resources/js/mobile-nav.js).

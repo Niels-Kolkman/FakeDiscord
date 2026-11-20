@@ -7,7 +7,7 @@ use App\Models\Role;
 use App\Support\AuditLog;
 
 /**
- * Audit log (ISSUE-30): roles created, changed (name, colour, permission
+ * Audit log: roles created, changed (name, colour, permission
  * flags) and deleted. Moving a role up or down is left out.
  */
 class RoleObserver

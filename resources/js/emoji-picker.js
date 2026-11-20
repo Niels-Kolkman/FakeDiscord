@@ -1,5 +1,5 @@
 /**
- * The composer's emoji picker (ISSUE-36), set up by channel-messages.js
+ * The composer's emoji picker, set up by channel-messages.js
  * for [data-emoji-picker-toggle] and [data-emoji-picker] in
  * messages/panel.blade.php. Both are rendered hidden: inserting needs this
  * script, so without it there is no button.

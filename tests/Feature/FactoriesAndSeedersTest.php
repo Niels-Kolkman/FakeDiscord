@@ -16,7 +16,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
- * ISSUE-4: a factory for every Eloquent model, and the DemoSeeder.
+ * A factory for every Eloquent model, and the DemoSeeder.
  */
 class FactoriesAndSeedersTest extends TestCase
 {

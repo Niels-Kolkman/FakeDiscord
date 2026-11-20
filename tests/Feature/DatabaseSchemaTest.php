@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 /**
- * ISSUE-3: the Discord schema migrates on SQLite, with its foreign keys,
+ * The Discord schema migrates on SQLite, with its foreign keys,
  * cascades, unique constraints and indexes in place.
  */
 class DatabaseSchemaTest extends TestCase

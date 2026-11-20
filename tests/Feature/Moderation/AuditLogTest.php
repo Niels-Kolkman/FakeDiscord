@@ -19,7 +19,7 @@ use Tests\Concerns\GivesPermissions;
 use Tests\TestCase;
 
 /**
- * ISSUE-30: moderation and settings changes go into the server's audit log
+ * Moderation and settings changes go into the server's audit log
  * (who, what, when) through model observers, and the owner can read and
  * filter it.
  */

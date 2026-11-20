@@ -16,7 +16,7 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 /**
- * Friends (ISSUE-22): the friends page with its All / Pending / Blocked
+ * Friends: the friends page with its All / Pending / Blocked
  * tabs, sending a request by username, and accepting, declining,
  * cancelling, removing and unblocking (App\Policies\FriendshipPolicy).
  *
@@ -102,7 +102,7 @@ class FriendController extends Controller
     }
 
     /**
-     * Block `user_id` (ISSUE-25): from the friends list or the profile
+     * Block `user_id`: from the friends list or the profile
      * popover. Ends a request or friendship between the two.
      */
     public function block(Request $request, BlockUser $action): JsonResponse|RedirectResponse

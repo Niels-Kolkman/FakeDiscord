@@ -13,7 +13,7 @@ use Tests\Concerns\GivesPermissions;
 use Tests\TestCase;
 
 /**
- * ISSUE-27: PermissionService works out a member's effective permissions.
+ * PermissionService works out a member's effective permissions.
  */
 class PermissionServiceTest extends TestCase
 {

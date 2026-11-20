@@ -1,9 +1,9 @@
 {{--
-    Left column of the friends page and of a DM (ISSUE-23): Friends, the
+    Left column of the friends page and of a DM: Friends, the
     direct messages (conversations/partials/dm-list.blade.php, latest
     activity first) and a way back to the dashboard. Your servers, with
     their unread dots and mention badges, are in the server rail left of
-    it (components/server-rail.blade.php, ISSUE-35).
+    it (components/server-rail.blade.php).
 
     @var int $incomingCount
     @var \App\Models\Conversation|null $activeConversation  the open DM, or NULL on the friends page
@@ -13,7 +13,7 @@
 @endphp
 
 <nav aria-label="Navigation" aria-describedby="dm-shortcuts-help" class="flex min-w-0 flex-1 flex-col bg-surface-2 md:w-60 md:flex-none">
-    {{-- Keyboard shortcuts (ISSUE-38, resources/js/keyboard-shortcuts.js). --}}
+    {{-- Keyboard shortcuts (resources/js/keyboard-shortcuts.js). --}}
     <p id="dm-shortcuts-help" class="sr-only">Alt+Up and Alt+Down switch between direct messages.</p>
 
     <div class="flex min-h-12 items-center border-b border-edge px-4 py-2 shadow-sm">

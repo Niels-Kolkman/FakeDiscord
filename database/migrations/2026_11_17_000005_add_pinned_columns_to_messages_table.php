@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Pinned messages (ISSUE-20). pinned_at NULL = not pinned; pinned_by_id
+     * Pinned messages. pinned_at NULL = not pinned; pinned_by_id
      * is who pinned it, NULL once that account is deleted. The index serves
      * a channel's pinned list, newest pin first.
      */

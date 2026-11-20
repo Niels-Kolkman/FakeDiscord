@@ -1,5 +1,5 @@
 /**
- * Keeping Tab inside an open popup (ISSUE-38): the inbox panel
+ * Keeping Tab inside an open popup: the inbox panel
  * (notifications.js), the pinned messages panel (channel-messages.js) and
  * the profile card (profile-popover.js). Like a dialog, Tab and Shift+Tab
  * cycle through what can be focused in it until Escape or its close

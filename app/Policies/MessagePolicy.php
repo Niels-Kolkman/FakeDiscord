@@ -7,14 +7,14 @@ use App\Models\User;
 use App\Services\PermissionService;
 
 /**
- * Discovered automatically for App\Models\Message (ISSUE-16).
+ * Discovered automatically for App\Models\Message.
  *
  * Channel messages need the channel to be visible to the user
- * (ChannelPolicy::view, which needs membership and View Channels, ISSUE-27):
+ * (ChannelPolicy::view, which needs membership and View Channels):
  * someone who left keeps their messages but can no longer change them.
  * Moderating needs ChannelPolicy::manageMessages.
  *
- * Direct messages (ISSUE-23) need a seat in the conversation instead; there
+ * Direct messages need a seat in the conversation instead; there
  * are no moderators there, so only the author edits and deletes, and nobody
  * pins (yet).
  */
@@ -43,7 +43,7 @@ class MessagePolicy
     }
 
     /**
-     * Join an existing reaction or take your own back (ISSUE-18), on
+     * Join an existing reaction or take your own back, on
      * anyone's message. Starting a new one is addReaction().
      */
     public function react(User $user, Message $message): bool
@@ -52,7 +52,7 @@ class MessagePolicy
             return false;
         }
 
-        // Timed-out members (ISSUE-29) can read but not react at all.
+        // Timed-out members can read but not react at all.
         $channel = $message->channel;
 
         return $channel === null || ! $this->permissions->isTimedOut($user, $channel->server);
@@ -79,7 +79,7 @@ class MessagePolicy
     }
 
     /**
-     * Pinning and unpinning (ISSUE-20) needs Manage Messages, on anyone's
+     * Pinning and unpinning needs Manage Messages, on anyone's
      * message. Not in DMs.
      */
     public function pin(User $user, Message $message): bool

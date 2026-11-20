@@ -1,4 +1,4 @@
-// ISSUE-37: the theme toggle switches <html data-theme> at once, saves the
+// The theme toggle switches <html data-theme> at once, saves the
 // choice in the background and goes back if saving fails. Run with
 // `npm test`. The server side (PUT /settings/theme, the layouts) is
 // covered by tests/Feature/Settings/ThemeTest.php.

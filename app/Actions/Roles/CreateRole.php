@@ -9,7 +9,7 @@ use Illuminate\Validation\ValidationException;
 
 /**
  * Adds a role at the top of the server's hierarchy, or, with $below, just
- * under the role at that position (ISSUE-27: a member who is not the owner
+ * under the role at that position (a member who is not the owner
  * creates roles right below their own highest role, so they can still
  * manage them). The roles from $below up move one place up.
  */

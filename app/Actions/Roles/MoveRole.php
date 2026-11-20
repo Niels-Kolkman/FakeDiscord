@@ -23,7 +23,7 @@ class MoveRole
     /**
      * The role that move() would swap $role with, or null at that end (and
      * for @everyone). RoleController uses it so a member cannot move a role
-     * past their own highest role (ISSUE-27).
+     * past their own highest role.
      */
     public function neighbour(Role $role, string $direction): ?Role
     {

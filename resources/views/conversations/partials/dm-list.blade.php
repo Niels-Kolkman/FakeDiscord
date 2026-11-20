@@ -1,5 +1,5 @@
 {{--
-    Direct messages in the left sidebar (ISSUE-23): the signed-in user's 1:1
+    Direct messages in the left sidebar: the signed-in user's 1:1
     DMs, latest activity first (App\Models\Conversation::sidebarFor()).
     A DM nobody has written in yet only shows while it is open.
 
