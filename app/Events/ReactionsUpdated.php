@@ -2,11 +2,12 @@
 
 namespace App\Events;
 
+use App\Events\Concerns\QueuesBroadcast;
 use App\Models\Message;
 use App\Support\Reactions;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 
 /**
@@ -18,9 +19,9 @@ use Illuminate\Foundation\Events\Dispatchable;
  * viewer (their other tabs). It listens for ".reactions.updated"
  * (resources/js/channel-messages.js).
  */
-class ReactionsUpdated implements ShouldBroadcastNow
+class ReactionsUpdated implements ShouldBroadcast
 {
-    use Dispatchable, InteractsWithSockets;
+    use Dispatchable, InteractsWithSockets, QueuesBroadcast;
 
     public const NAME = 'reactions.updated';
 
@@ -31,7 +32,7 @@ class ReactionsUpdated implements ShouldBroadcastNow
         public bool $added,
     ) {}
 
-    public function broadcastOn(): PrivateChannel
+    protected function channels(): PrivateChannel
     {
         return new PrivateChannel($this->message->broadcastChannel());
     }
@@ -44,7 +45,7 @@ class ReactionsUpdated implements ShouldBroadcastNow
     /**
      * @return array{message_id: int, channel_id: int|null, conversation_id: int|null, user_id: int, emoji: string, added: bool, reactions: list<array<string, mixed>>}
      */
-    public function broadcastWith(): array
+    protected function payload(): array
     {
         return [
             'message_id' => (int) $this->message->id,

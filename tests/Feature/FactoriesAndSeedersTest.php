@@ -10,6 +10,7 @@ use App\Models\Server;
 use App\Models\User;
 use Database\Seeders\DemoSeeder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Pivot;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -48,7 +49,10 @@ class FactoriesAndSeedersTest extends TestCase
         $models = $class::factory()->count(2)->create();
 
         $this->assertCount(2, $models);
-        $models->each(fn (Model $model) => $this->assertModelExists($model));
+        // A pivot (RoleUser, ISSUE-42) has no id: find its row by its keys.
+        $models->each(fn (Model $model) => $model instanceof Pivot
+            ? $this->assertDatabaseHas($model->getTable(), $model->only($model->getFillable()))
+            : $this->assertModelExists($model));
     }
 
     public function test_message_states_keep_exactly_one_target(): void

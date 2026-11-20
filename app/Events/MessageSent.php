@@ -2,10 +2,11 @@
 
 namespace App\Events;
 
+use App\Events\Concerns\QueuesBroadcast;
 use App\Models\Message;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 
 /**
@@ -15,13 +16,14 @@ use Illuminate\Foundation\Events\Dispatchable;
  * members / participants subscribe. The browser listens for ".message.sent"
  * (resources/js/channel-messages.js).
  *
- * ShouldBroadcastNow: members see the message right away, without waiting
- * for a queue worker. App\Actions\Messages\SendMessage reports a failed
- * broadcast instead of failing the request, since the message is saved.
+ * Queued (ISSUE-42, Concerns\QueuesBroadcast): the sender's request only
+ * adds a job, and the queue worker passes the payload to Reverb. The
+ * message is saved either way: App\Actions\Messages\SendMessage reports a
+ * failure to queue instead of failing the request.
  */
-class MessageSent implements ShouldBroadcastNow
+class MessageSent implements ShouldBroadcast
 {
-    use Dispatchable, InteractsWithSockets;
+    use Dispatchable, InteractsWithSockets, QueuesBroadcast;
 
     public const NAME = 'message.sent';
 
@@ -32,7 +34,7 @@ class MessageSent implements ShouldBroadcastNow
         return "channel.{$channelId}";
     }
 
-    public function broadcastOn(): PrivateChannel
+    protected function channels(): PrivateChannel
     {
         return new PrivateChannel($this->message->broadcastChannel());
     }
@@ -45,7 +47,7 @@ class MessageSent implements ShouldBroadcastNow
     /**
      * @return array<string, mixed>
      */
-    public function broadcastWith(): array
+    protected function payload(): array
     {
         return $this->message->toPayload();
     }

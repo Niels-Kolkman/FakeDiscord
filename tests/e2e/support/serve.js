@@ -1,7 +1,7 @@
 /**
  * Starts the app for the browser tests (Playwright's webServer, ISSUE-40):
  * a fresh database/e2e.sqlite, migrated, then PHP's built-in server on
- * APP_PORT. `php -S` is used instead of `artisan serve` because artisan
+ * APP_PORT and one queue worker for the broadcasts (ISSUE-42). `php -S` is used instead of `artisan serve` because artisan
  * serve drops environment variables that .env also sets, unless --no-reload.
  */
 import { spawn, spawnSync } from 'node:child_process';
@@ -66,7 +66,27 @@ server.stderr.setEncoding('utf8').on('data', (chunk) => {
     }
 });
 
+// One queue worker (ISSUE-42): it sends the broadcasts the requests queue.
+// Started after migrate:fresh, so the jobs table exists.
+const worker = spawn(php, ['artisan', 'queue:work', 'database', '--sleep=1', '--tries=1'], {
+    cwd: ROOT,
+    env,
+    stdio: ['ignore', 'ignore', 'inherit'],
+});
+
 for (const signal of ['SIGINT', 'SIGTERM']) {
-    process.on(signal, () => server.kill());
+    process.on(signal, () => {
+        worker.kill();
+        server.kill();
+    });
 }
-server.on('exit', (code) => process.exit(code ?? 0));
+worker.on('exit', (code) => {
+    if (code !== null && code !== 0) {
+        server.kill();
+        fail(`The queue worker stopped (exit code ${code}).`);
+    }
+});
+server.on('exit', (code) => {
+    worker.kill();
+    process.exit(code ?? 0);
+});

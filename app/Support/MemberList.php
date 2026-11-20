@@ -6,6 +6,7 @@ use App\Models\Role;
 use App\Models\Server;
 use App\Models\ServerMember;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -51,24 +52,13 @@ final readonly class MemberList
      */
     public static function for(Server $server, ?array $connectedUserIds = null): self
     {
-        $members = $server->memberships()->with('user')->get();
-
-        // Hierarchy order, so the first role a member holds is their highest.
-        $roles = $server->roles()
-            ->where('is_default', false)
-            ->orderByDesc('position')
-            ->orderBy('id')
-            ->get();
-
-        /** @var Collection<int, list<int>> $roleIdsByUser */
-        $roleIdsByUser = DB::table('role_user')
-            ->whereIn('role_id', $roles->modelKeys())
-            ->get(['role_id', 'user_id'])
-            ->groupBy('user_id')
-            ->map(fn (Collection $rows): array => $rows->map(fn (object $row): int => (int) $row->role_id)->all());
+        // Who is in the server and which roles they hold is cached per
+        // server (ISSUE-42); who is connected is not.
+        [$members, $roles, $roleIdsByUser] = app(ServerCache::class)
+            ->remember((int) $server->getKey(), 'members', fn (): array => self::roster($server));
 
         foreach ($members as $member) {
-            $held = $roleIdsByUser->get($member->user_id, []);
+            $held = $roleIdsByUser[(int) $member->user_id] ?? [];
             $member->setHighestRole($roles->first(fn (Role $role): bool => in_array($role->id, $held, true)));
         }
 
@@ -106,6 +96,41 @@ final readonly class MemberList
         $groups = array_values(array_filter($allGroups, fn (MemberGroup $group): bool => $group->members->isNotEmpty()));
 
         return new self($groups, $sorted->count(), $online->count(), $statuses, $allGroups);
+    }
+
+    /**
+     * The members (with their user), the roles besides @everyone in
+     * hierarchy order, so the first role a member holds is their highest,
+     * and the ids of the roles each user holds.
+     *
+     * @return array{EloquentCollection<int, ServerMember>, EloquentCollection<int, Role>, array<int, list<int>>}
+     */
+    private static function roster(Server $server): array
+    {
+        $members = $server->memberships()->with('user')->get();
+
+        // Hidden columns (the password hash) are not needed here and are
+        // not written to the cache.
+        foreach ($members as $member) {
+            $user = $member->user;
+            $user->setRawAttributes(array_diff_key($user->getAttributes(), array_flip($user->getHidden())), true);
+        }
+
+        $roles = $server->roles()
+            ->where('is_default', false)
+            ->orderByDesc('position')
+            ->orderBy('id')
+            ->get();
+
+        /** @var array<int, list<int>> $roleIdsByUser */
+        $roleIdsByUser = DB::table('role_user')
+            ->whereIn('role_id', $roles->modelKeys())
+            ->get(['role_id', 'user_id'])
+            ->groupBy('user_id')
+            ->map(fn (Collection $rows): array => $rows->map(fn (object $row): int => (int) $row->role_id)->values()->all())
+            ->all();
+
+        return [$members, $roles, $roleIdsByUser];
     }
 
     /**

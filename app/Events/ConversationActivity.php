@@ -2,10 +2,11 @@
 
 namespace App\Events;
 
+use App\Events\Concerns\QueuesBroadcast;
 use App\Models\Conversation;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 
 /**
@@ -16,9 +17,9 @@ use Illuminate\Foundation\Events\Dispatchable;
  * The browser listens for ".conversation.activity"
  * (resources/js/direct-messages.js).
  */
-class ConversationActivity implements ShouldBroadcastNow
+class ConversationActivity implements ShouldBroadcast
 {
-    use Dispatchable, InteractsWithSockets;
+    use Dispatchable, InteractsWithSockets, QueuesBroadcast;
 
     public const NAME = 'conversation.activity';
 
@@ -27,7 +28,7 @@ class ConversationActivity implements ShouldBroadcastNow
     /**
      * @return list<PrivateChannel>
      */
-    public function broadcastOn(): array
+    protected function channels(): array
     {
         return $this->conversation->participants()
             ->pluck('user_id')
@@ -44,7 +45,7 @@ class ConversationActivity implements ShouldBroadcastNow
     /**
      * @return array{conversation_id: int, last_message_at: string|null}
      */
-    public function broadcastWith(): array
+    protected function payload(): array
     {
         return [
             'conversation_id' => (int) $this->conversation->getKey(),

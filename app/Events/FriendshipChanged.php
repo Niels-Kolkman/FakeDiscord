@@ -2,11 +2,12 @@
 
 namespace App\Events;
 
+use App\Events\Concerns\QueuesBroadcast;
 use App\Models\Friendship;
 use App\Models\User;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 
 /**
@@ -25,9 +26,9 @@ use Illuminate\Foundation\Events\Dispatchable;
  * answer, so the badges are exact without another request.
  * resources/js/friends.js listens for ".friendship.changed".
  */
-class FriendshipChanged implements ShouldBroadcastNow
+class FriendshipChanged implements ShouldBroadcast
 {
-    use Dispatchable, InteractsWithSockets;
+    use Dispatchable, InteractsWithSockets, QueuesBroadcast;
 
     public const NAME = 'friendship.changed';
 
@@ -52,7 +53,7 @@ class FriendshipChanged implements ShouldBroadcastNow
         });
     }
 
-    public function broadcastOn(): PrivateChannel
+    protected function channels(): PrivateChannel
     {
         return new PrivateChannel('App.Models.User.'.$this->recipient->getKey());
     }
@@ -65,7 +66,7 @@ class FriendshipChanged implements ShouldBroadcastNow
     /**
      * @return array{type: string, friendship_id: int, user: array{id: int, name: string, username: string, avatar_url: string}, incoming_count: int}
      */
-    public function broadcastWith(): array
+    protected function payload(): array
     {
         return [
             'type' => $this->type,

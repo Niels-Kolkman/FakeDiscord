@@ -11,6 +11,7 @@ use App\Models\ServerMember;
 use App\Models\User;
 use App\Support\MessageFeed;
 use Illuminate\Broadcasting\Broadcasters\Broadcaster as BaseBroadcaster;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Broadcast;
@@ -97,12 +98,14 @@ class MessageBroadcastEdgeCasesTest extends TestCase
 
     // --- The event -------------------------------------------------------
 
-    public function test_the_event_broadcasts_immediately_on_the_messages_channel(): void
+    public function test_the_event_is_queued_on_the_messages_channel(): void
     {
         $message = Message::factory()->inChannel($this->channel)->create(['user_id' => $this->member->id]);
         $event = new MessageSent($message);
 
-        $this->assertInstanceOf(ShouldBroadcastNow::class, $event);
+        // ISSUE-42: queued, the worker sends it.
+        $this->assertInstanceOf(ShouldBroadcast::class, $event);
+        $this->assertNotContains(ShouldBroadcastNow::class, class_implements(MessageSent::class));
         $this->assertSame("channel.{$this->channel->id}", MessageSent::channelName($this->channel->id));
         $this->assertSame("private-channel.{$this->channel->id}", $event->broadcastOn()->name);
         $this->assertSame('message.sent', $event->broadcastAs());

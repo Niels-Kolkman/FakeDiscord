@@ -90,10 +90,11 @@ class Role extends Model
     }
 
     /**
-     * @return BelongsToMany<User, $this>
+     * @return BelongsToMany<User, $this, RoleUser>
      */
     public function users(): BelongsToMany
     {
-        return $this->belongsToMany(User::class)->withTimestamps();
+        // RoleUser: attach/detach fire events (ISSUE-42, ServerCache).
+        return $this->belongsToMany(User::class)->using(RoleUser::class)->withTimestamps();
     }
 }

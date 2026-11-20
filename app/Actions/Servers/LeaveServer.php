@@ -6,6 +6,7 @@ use App\Models\Server;
 use App\Models\User;
 use App\Support\MentionNotifier;
 use App\Support\NotificationMutes;
+use App\Support\ServerCache;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 
@@ -43,6 +44,9 @@ class LeaveServer
 
             MentionNotifier::forgetServer($user, $server);
             NotificationMutes::forgetServer($user, $server);
+
+            // Plain query deletes: no model events (ISSUE-42).
+            app(ServerCache::class)->forget((int) $server->getKey());
         });
     }
 }

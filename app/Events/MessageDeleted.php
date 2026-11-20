@@ -2,10 +2,11 @@
 
 namespace App\Events;
 
+use App\Events\Concerns\QueuesBroadcast;
 use App\Models\Conversation;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 
 /**
@@ -16,9 +17,9 @@ use Illuminate\Foundation\Events\Dispatchable;
  * A channel message goes out on "channel.{id}"; a DM (ISSUE-23), with a
  * $conversationId and no $channelId, on "conversation.{id}".
  */
-class MessageDeleted implements ShouldBroadcastNow
+class MessageDeleted implements ShouldBroadcast
 {
-    use Dispatchable, InteractsWithSockets;
+    use Dispatchable, InteractsWithSockets, QueuesBroadcast;
 
     public const NAME = 'message.deleted';
 
@@ -28,7 +29,7 @@ class MessageDeleted implements ShouldBroadcastNow
         public ?int $conversationId = null,
     ) {}
 
-    public function broadcastOn(): PrivateChannel
+    protected function channels(): PrivateChannel
     {
         return new PrivateChannel($this->conversationId !== null
             ? Conversation::broadcastChannelName($this->conversationId)
@@ -43,7 +44,7 @@ class MessageDeleted implements ShouldBroadcastNow
     /**
      * @return array{id: int, channel_id: int|null, conversation_id: int|null}
      */
-    public function broadcastWith(): array
+    protected function payload(): array
     {
         return ['id' => $this->messageId, 'channel_id' => $this->channelId, 'conversation_id' => $this->conversationId];
     }

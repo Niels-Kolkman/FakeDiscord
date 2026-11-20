@@ -545,6 +545,7 @@ class AuditLogEdgeCasesTest extends TestCase
     public function test_the_page_query_count_does_not_grow_with_entries_or_actors(): void
     {
         $count = function (): int {
+            $this->coldServerCache();
             DB::flushQueryLog();
             DB::enableQueryLog();
             $this->actingAs($this->owner)->get(route('audit-log.index', $this->server))->assertOk();

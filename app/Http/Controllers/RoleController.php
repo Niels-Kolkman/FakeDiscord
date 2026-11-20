@@ -38,7 +38,9 @@ class RoleController extends Controller
 
         return view('roles.index', [
             'server' => $server,
-            'roles' => $server->rolesInOrder()->withCount('users')->get(),
+            // The view asks the policy about each role, which needs its
+            // server: hand it over instead of a query per role (ISSUE-42).
+            'roles' => $server->rolesInOrder()->withCount('users')->get()->each->setRelation('server', $server),
         ]);
     }
 

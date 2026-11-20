@@ -2,12 +2,13 @@
 
 namespace App\Events;
 
+use App\Events\Concerns\QueuesBroadcast;
 use App\Models\Server;
 use App\Models\User;
 use Carbon\CarbonInterface;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 
 /**
@@ -26,9 +27,9 @@ use Illuminate\Foundation\Events\Dispatchable;
  *
  * The ban reason is not sent: like on Discord, it is for moderators.
  */
-class MemberModerated implements ShouldBroadcastNow
+class MemberModerated implements ShouldBroadcast
 {
-    use Dispatchable, InteractsWithSockets;
+    use Dispatchable, InteractsWithSockets, QueuesBroadcast;
 
     public const NAME = 'member.moderated';
 
@@ -57,7 +58,7 @@ class MemberModerated implements ShouldBroadcastNow
         });
     }
 
-    public function broadcastOn(): PrivateChannel
+    protected function channels(): PrivateChannel
     {
         return new PrivateChannel('App.Models.User.'.$this->recipient->getKey());
     }
@@ -70,7 +71,7 @@ class MemberModerated implements ShouldBroadcastNow
     /**
      * @return array{type: string, server: array{id: int, name: string}, until: string|null}
      */
-    public function broadcastWith(): array
+    protected function payload(): array
     {
         return [
             'type' => $this->type,

@@ -37,7 +37,8 @@ class ChannelPermissionController extends Controller
 
         /** @var User $user */
         $user = $request->user();
-        $roles = $server->rolesInOrder()->get();
+        // Each role's server, for the policy check, without a query each (ISSUE-42).
+        $roles = $server->rolesInOrder()->get()->each->setRelation('server', $server);
         $overrides = $channel->permissionOverrides()->get()->keyBy('role_id');
 
         return view('channels.permissions', [

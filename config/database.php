@@ -38,10 +38,17 @@ return [
             'database' => env('DB_DATABASE', database_path('database.sqlite')),
             'prefix' => '',
             'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
-            'busy_timeout' => null,
-            'journal_mode' => null,
-            'synchronous' => null,
-            'transaction_mode' => 'DEFERRED',
+            // ISSUE-42: the web process, the queue worker and Reverb share
+            // one file. WAL lets readers carry on while someone writes;
+            // busy_timeout (ms) makes a writer wait for the lock instead of
+            // failing with "database is locked"; IMMEDIATE transactions
+            // take that lock up front, where the timeout applies (on every
+            // PHP version, App\Database\SQLiteConnector). synchronous=NORMAL
+            // is safe with WAL and saves an fsync per commit (SD cards).
+            'busy_timeout' => env('DB_BUSY_TIMEOUT', 5000),
+            'journal_mode' => env('DB_JOURNAL_MODE', 'wal'),
+            'synchronous' => env('DB_SYNCHRONOUS', 'normal'),
+            'transaction_mode' => env('DB_TRANSACTION_MODE', 'IMMEDIATE'),
         ],
 
         'mysql' => [

@@ -216,7 +216,9 @@ class ChannelOverridesTest extends TestCase
         $this->giveRole($member, $staff);
         $this->giveRole($member, $muted);
 
-        $all = $this->server->channels()->get();
+        // The policy needs each channel's server; set it instead of lazy
+        // loading it once per channel (an N+1, refused outside production).
+        $all = $this->server->channels()->get()->each->setRelation('server', $this->server);
         $visible = $this->permissions->visibleChannels($member, $this->server, $all);
 
         $expected = $all->filter(fn (Channel $channel): bool => $member->can('view', $channel))->pluck('name')->values()->all();
