@@ -75,7 +75,12 @@ return [
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),
-            'serve' => true,
+            // Off (ISSUE-41): this disk holds private attachments, which
+            // AttachmentController serves. `serve` would add Laravel's own
+            // GET and PUT /storage/{path} routes for signed temporary
+            // URLs, an upload endpoint outside the web group that nothing
+            // here uses.
+            'serve' => false,
             'throw' => false,
             'report' => false,
         ],

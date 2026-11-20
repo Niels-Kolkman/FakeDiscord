@@ -6,6 +6,13 @@ use App\Models\Server;
 use App\Models\User;
 use Illuminate\Support\Facades\Broadcast;
 
+// Every channel here is private or presence, so /broadcasting/auth asks
+// the callback below and refuses guests. The full list and who may join
+// each one is checked in tests/Feature/Security/BroadcastChannelAuthorisationTest.php
+// (ISSUE-41): a new channel must be added there too. The only public
+// channel is "test" (App\Events\TestBroadcast, a tinker smoke test that
+// carries no user data).
+
 // A user's own channel. Friend requests and friendship changes arrive here
 // (App\Events\FriendshipChanged, ISSUE-22), and so does activity in their
 // DMs for the sidebar list (App\Events\ConversationActivity, ISSUE-23).
@@ -25,11 +32,6 @@ Broadcast::channel('channel.{channel}', function (User $user, Channel $channel) 
     return $user->can('view', $channel);
 });
 
-// Typing indicators (ISSUE-17): a presence channel per server channel, used
-// only for "client-typing" whispers between the people viewing it. Same
-// membership rule as above. The returned array is the member info every
-// other subscriber sees, so the name shown in "X is typing…" comes from
-// here (the server nickname, like the member list), not from the whisper.
 // Live messages of a DM (ISSUE-23): MessageSent, MessageUpdated,
 // MessageDeleted and ReactionsUpdated for conversation messages. Only the
 // participants may listen; an unknown conversation id is a 403.
@@ -69,6 +71,11 @@ Broadcast::channel('server.{server}', function (User $user, Server $server) {
     ];
 });
 
+// Typing indicators (ISSUE-17): a presence channel per server channel, used
+// only for "client-typing" whispers between the people viewing it. Same
+// rule as "channel.{channel}". The returned array is the member info every
+// other subscriber sees, so the name shown in "X is typing…" comes from
+// here (the server nickname, like the member list), not from the whisper.
 Broadcast::channel('typing.{channel}', function (User $user, Channel $channel) {
     $member = $channel->server->memberships()->where('user_id', $user->getKey())->first();
 
