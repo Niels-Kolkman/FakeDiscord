@@ -82,7 +82,19 @@ return [
                     'scheme' => env('REVERB_SCHEME', 'https'),
                     'useTLS' => env('REVERB_SCHEME', 'https') === 'https',
                 ],
-                'allowed_origins' => ['*'],
+                // Hosts (not URLs) whose pages may open a websocket, matched
+                // against the Origin header; "*" wildcards work (ISSUE-41).
+                // REVERB_ALLOWED_ORIGINS is a comma-separated list; without
+                // it only the APP_URL host is allowed, plus localhost and
+                // 127.0.0.1 in local/testing (`php artisan serve` is on
+                // 127.0.0.1 while APP_URL says localhost).
+                'allowed_origins' => array_values(array_unique(array_filter(array_map('trim', explode(',', (string) env(
+                    'REVERB_ALLOWED_ORIGINS',
+                    implode(',', array_merge(
+                        [(string) parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST)],
+                        in_array(env('APP_ENV', 'production'), ['local', 'testing'], true) ? ['localhost', '127.0.0.1'] : [],
+                    )),
+                )))))),
                 'ping_interval' => env('REVERB_APP_PING_INTERVAL', 60),
                 'activity_timeout' => env('REVERB_APP_ACTIVITY_TIMEOUT', 30),
                 'max_connections' => env('REVERB_APP_MAX_CONNECTIONS'),

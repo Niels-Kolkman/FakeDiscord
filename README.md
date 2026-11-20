@@ -65,6 +65,9 @@ The browser connects with Laravel Echo + `pusher-js` (`resources/js/echo.js`).
   In production, set your own random `REVERB_APP_KEY` / `REVERB_APP_SECRET`.
 - Private channel rules live in `routes/channels.php`. Channel messages use
   `channel.{id}` (see [Messages](#messages)).
+- Reverb only accepts websockets from pages on the `APP_URL` host. With `APP_ENV=local`
+  it also accepts `localhost` and `127.0.0.1`. Set `REVERB_ALLOWED_ORIGINS`
+  (comma-separated hosts) when the app is served from somewhere else. See [Security](#security).
 
 ### Smoke test
 
@@ -1124,6 +1127,41 @@ defined in `resources/css/app.css` (`bg-surface`, `bg-surface-2`, `text-fg`, `te
 tokens instead of hard-coded greys: `tests/Feature/Layout/MobileLayoutTest.php` fails on a
 hex class for a neutral colour. Accent, danger and status colours (`#5865f2`, `#da373c`, ...)
 stay the same in both themes.
+
+## Security
+
+The hardening pass (ISSUE-41) is pinned down by the tests in `tests/Feature/Security`.
+
+- **Rate limits.** Named limiters live in `App\Support\RateLimits`. Each one counts in
+  its own bucket. An inline `throttle:30,1` shares one bucket per user with every other
+  inline throttle, so mention lookups used to eat the message budget.
+
+  | Limiter        | Routes                                 | Limit                                       |
+  |----------------|----------------------------------------|---------------------------------------------|
+  | `login`        | `POST /login`                          | 5/min per email and IP, 30/min per IP       |
+  | `messages`     | sending in a channel or a DM           | 30/min per user, one budget for both        |
+  | `invites`      | creating invites                       | 20/min per user                             |
+  | `invite-codes` | opening and accepting `/invite/{code}` | 30/min per user, 60/min per IP              |
+
+  The other routes keep their inline `throttle:N,1` limits.
+- **XSS.** Views only print with `{{ }}`. Message markdown (`App\Support\Markdown`,
+  `resources/js/markdown.js`) builds its own tags and escapes everything else. It links
+  only `http(s)` URLs. Live messages are built with DOM methods, never `innerHTML`.
+  Uploads other than images are always sent as downloads, with a sandbox CSP.
+- **Mass assignment.** Every model lists `$fillable`. Nothing is unguarded. Controllers
+  pass named fields, never `$request->all()`. Trusted columns (`email_verified_at`, pins,
+  mentions, owners) are only set with `forceFill()` by the code that owns them.
+- **CSRF and CORS.** Every POST/PUT/PATCH/DELETE route is in the `web` group and needs
+  the CSRF token, with no `except` list. The one exception is Laravel's own
+  `/broadcasting/auth`, which is reviewed in `CsrfCorsTest`. No CORS headers are sent, so
+  other sites cannot read responses. The session cookie is `HttpOnly` and `SameSite=Lax`.
+  `App\Http\Middleware\SecurityHeaders` forbids framing (`X-Frame-Options`,
+  `frame-ancestors`), MIME sniffing and full-path referrers. The private `local` disk
+  has `serve` off, so Laravel adds no `/storage/{path}` routes for it.
+- **Broadcast channels.** All channels in `routes/channels.php` are private or presence
+  channels. The `test` smoke-test channel is the only public one, and it carries no user
+  data. `BroadcastChannelAuthorisationTest` pins the list of channels and who may join
+  each one. When you add a channel, add it there too.
 
 ## Useful commands
 
