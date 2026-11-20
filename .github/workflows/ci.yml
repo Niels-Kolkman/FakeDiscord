@@ -66,7 +66,7 @@ jobs:
           node-version: '22'
           cache: npm
 
-      # The welcome page only emits @vite tags when public/build/manifest.json exists.
+      # Tests that render pages with @vite (not withoutVite()) need public/build/manifest.json.
       - name: Build frontend assets
         run: |
           npm ci

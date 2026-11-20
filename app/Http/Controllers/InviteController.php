@@ -28,7 +28,7 @@ class InviteController extends Controller
         /** @var User $user */
         $user = $request->user();
 
-        // The owner sees every invite; other members only their own.
+        // The owner and Manage Server see every invite; other members only their own.
         $invites = $server->invites()
             ->usable()
             ->unless($user->can('manageInvites', $server), fn ($q) => $q->where('inviter_id', $user->getKey()))
