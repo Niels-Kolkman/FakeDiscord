@@ -32,6 +32,7 @@ use App\Http\Controllers\ServerOwnershipController;
 use App\Http\Controllers\ThemeController;
 use App\Http\Controllers\UserProfileController;
 use App\Http\Controllers\UserStatusController;
+use App\Support\RateLimits;
 use Illuminate\Support\Facades\Route;
 
 // There is no landing page (ISSUE-44): guests go to the login page,
@@ -172,8 +173,9 @@ Route::middleware(['auth', 'verified'])->prefix('dms')->group(function () {
         Route::get('/{conversation}/messages', [ConversationMessageController::class, 'index'])
             ->middleware('throttle:60,1')
             ->name('dms.messages.index');
+        // One sending budget with the channel route (RateLimits::MESSAGES).
         Route::post('/{conversation}/messages', [ConversationMessageController::class, 'store'])
-            ->middleware('throttle:30,1')
+            ->middleware('throttle:'.RateLimits::MESSAGES)
             ->name('dms.messages.store');
         Route::patch('/{conversation}/messages/{message}', [ConversationMessageController::class, 'update'])
             ->middleware('throttle:30,1')
@@ -232,8 +234,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/servers/{server}/channels/{channel}/messages', [MessageController::class, 'index'])
             ->middleware('throttle:60,1')
             ->name('messages.index');
+        // Named limiter (ISSUE-41): its own bucket, shared with DM sends.
         Route::post('/servers/{server}/channels/{channel}/messages', [MessageController::class, 'store'])
-            ->middleware('throttle:30,1')
+            ->middleware('throttle:'.RateLimits::MESSAGES)
             ->name('messages.store');
 
         // Mention autocomplete (ISSUE-33): ?q= after "@" in the composer.
@@ -372,14 +375,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // inviter can revoke it (App\Policies\InvitePolicy).
     Route::get('/servers/{server}/invites', [InviteController::class, 'index'])->name('servers.invites.index');
     Route::post('/servers/{server}/invites', [InviteController::class, 'store'])
-        ->middleware('throttle:20,1')
+        ->middleware('throttle:'.RateLimits::INVITES)
         ->name('servers.invites.store');
     Route::delete('/servers/{server}/invites/{invite}', [InviteController::class, 'destroy'])
         ->scopeBindings()
         ->name('servers.invites.destroy');
 
-    // Opening and accepting an invite. Guests are sent to log in and come back here.
-    Route::middleware('throttle:30,1')->group(function () {
+    // Opening and accepting an invite. Guests are sent to log in and come
+    // back here. Limited per user and per IP against guessing codes.
+    Route::middleware('throttle:'.RateLimits::INVITE_CODES)->group(function () {
         Route::get('/invite/{code}', [InviteController::class, 'show'])->name('invites.show');
         Route::post('/invite/{code}', [InviteController::class, 'accept'])->name('invites.accept');
     });
