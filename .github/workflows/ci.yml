@@ -120,3 +120,46 @@ jobs:
 
       # phpunit.xml's <source> limits the report to app/.
       - run: composer test:coverage
+
+  e2e:
+    name: Browser tests (Playwright)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, pdo_sqlite, sqlite3, fileinfo, gd
+          coverage: none
+
+      - uses: ramsey/composer-install@v3
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      # The Reverb host and port from .env.example are baked into the bundle.
+      - name: Prepare environment and build frontend assets
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          npm ci
+          npm run build
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      # Starts Reverb and the app on a fresh database/e2e.sqlite (playwright.config.js).
+      - run: npm run test:e2e
+
+      - name: Upload traces, screenshots and videos
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results
+          path: |
+            playwright-report/
+            storage/framework/testing/e2e-results/
+          retention-days: 7
