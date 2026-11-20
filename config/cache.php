@@ -15,7 +15,9 @@ return [
     |
     */
 
-    'default' => env('CACHE_STORE', 'database'),
+    // ISSUE-42: files, so cache reads and writes (permissions, member
+    // lists, rate limits) never compete with the app for SQLite's lock.
+    'default' => env('CACHE_STORE', 'file'),
 
     /*
     |--------------------------------------------------------------------------

@@ -122,7 +122,8 @@ function queriesFor(FeatureTestCase $test, User $viewer, string $url, bool $warm
 }
 
 it('runs as many queries for a big server as for a small one', function () {
-    $small = busyServer(members: 3, messages: 6);
+    // 16 messages: enough that some pinned message is also a reply.
+    $small = busyServer(members: 3, messages: 16);
     $big = busyServer(members: 24, messages: 45);
 
     $bigViews = mainViews($big);
@@ -144,6 +145,6 @@ it('runs fewer or as many queries once the server is cached', function () {
 
     // The member list and the viewer's permissions come from the cache.
     $channel = mainViews($scene)['channel'];
-    expect(queriesFor($this, $scene['viewer'], $channel, warm: true))
-        ->toBeLessThan(queriesFor($this, $scene['viewer'], $channel));
+    $cold = queriesFor($this, $scene['viewer'], $channel);
+    expect(queriesFor($this, $scene['viewer'], $channel, warm: true))->toBeLessThan($cold);
 });
